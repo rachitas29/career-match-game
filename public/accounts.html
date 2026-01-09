@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounts - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item active">Accounts</a>
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1>Accounts</h1>
+                        <p>Manage your client database.</p>
+                    </div>
+                    <div>
+                        <a href="new-customer.html" class="btn btn-primary">+ New Account</a>
+                    </div>
+                </div>
+
+                <div class="card" style="max-width: 100%;">
+                    <div id="accountList" class="customer-list">
+                        <p>Loading accounts...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        async function loadAccounts() {
+            const list = document.getElementById('accountList');
+            const result = await api.get('/customers');
+
+            if (result.error) {
+                list.innerHTML = `<p style="color: var(--error)">Error loading accounts: ${result.error}</p>`;
+                return;
+            }
+
+            if (result.customers.length === 0) {
+                list.innerHTML = '<p>No accounts found.</p>';
+                return;
+            }
+
+            list.innerHTML = result.customers.map(c => {
+                let badgeClass = 'badge-corp';
+                if (c.org_type === 'Private') badgeClass = 'badge-priv';
+                if (c.org_type === 'Government') badgeClass = 'badge-gov';
+
+                return `
+                <div class="customer-item" onclick="window.location.href='account-details.html?id=${c.id}'" style="cursor: pointer;">
+                    <div>
+                        <h3>${c.customer_name}</h3>
+                        <p>${c.email_id || 'No email'} • ${c.contact_number || 'No contact'}</p>
+                        ${c.short_name ? `<span style="font-size: 0.8rem; color: var(--text-muted);">${c.short_name}</span>` : ''}
+                    </div>
+                    <div>
+                        <span class="badge ${badgeClass}">${c.org_type || 'Unknown'}</span>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        loadAccounts();
+    </script>
+</body>
+
+</html>

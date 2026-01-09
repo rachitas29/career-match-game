@@ -1,0 +1,162 @@
+/* PO Theme - Extracted from po-line-items.html */
+:root {
+    --po-bg: #00acc1;
+    --po-light: #e0f7fa;
+    --po-accent: #00838f;
+    --po-dark: #006064;
+    --po-header: #ffffff;
+    --po-card: #f1f8e9;
+    --po-border: #b2dfdb;
+}
+
+/* Form Group Style */
+.po-form-group {
+    background: #e0f2f1;
+    padding: 0.75rem;
+    border-radius: 12px;
+    border: 1px solid #b2dfdb;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    height: 100%;
+}
+
+.po-form-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #006064;
+    text-align: center;
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+
+.po-form-group input,
+.po-form-group select {
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+    width: 100%;
+    outline: none;
+    padding: 2px 0;
+}
+
+.po-form-group input:focus,
+.po-form-group select:focus {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+}
+
+/* BG/FD Modal Specific Overrides to match PO Theme */
+.po-modal-card {
+    background: linear-gradient(135deg, #00acc1 0%, #007c91 100%);
+    border: 2px solid white;
+    border-radius: 20px;
+    padding: 1.5rem;
+}
+
+.po-modal-header {
+    text-align: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.po-section-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #b2dfdb;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.po-section-title {
+    color: #00838f;
+    font-weight: 800;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px dashed #b2dfdb;
+    padding-bottom: 0.25rem;
+}
+
+.po-btn-save {
+    background: #0288d1;
+    color: white;
+    border: 2px solid white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    width: 100%;
+}
+
+.po-btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    background: #0277bd;
+}
+
+/* Adjust grid for PO Theme */
+.po-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.po-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.po-span-2 {
+    grid-column: span 2;
+}
+
+.po-span-4 {
+    grid-column: span 4;
+}
+
+/* Tenure Group Style inside PO Theme */
+.po-tenure-group {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.po-tenure-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 30%;
+}
+
+.po-tenure-item span {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #006064;
+}
+
+.po-tenure-item input {
+    background: white;
+    border: 1px solid #b2dfdb;
+    border-radius: 4px;
+    text-align: center;
+    padding: 2px;
+}

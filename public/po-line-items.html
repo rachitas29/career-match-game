@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PO Line Item Details - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/line-items-modal.css">
+    <link rel="stylesheet" href="css/po-theme.css">
+    <style>
+        :root {
+            --po-bg: #00acc1;
+            --po-light: #e0f7fa;
+            --po-accent: #00838f;
+            --po-dark: #006064;
+            --po-header: #ffffff;
+            --po-card: #f1f8e9;
+            --po-border: #b2dfdb;
+        }
+
+        body {
+            background: linear-gradient(135deg, #00acc1 0%, #007c91 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+        }
+
+        .po-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .po-header {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            background: #e0f2f1;
+            padding: 1rem;
+            border-radius: 15px;
+            border: 1px solid #b2dfdb;
+            flex: 1;
+            min-width: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.large {
+            flex: 2;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #006064;
+            text-align: center;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #333;
+            width: 100%;
+        }
+
+        .form-group input:focus {
+            outline: none;
+        }
+
+        .form-group textarea {
+            text-align: left;
+            resize: none;
+        }
+
+        .po-info-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .cyan-box {
+            background: #e0f7fa;
+            padding: 1rem;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #b2dfdb;
+        }
+
+        .milestone-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border-left: 10px solid #00acc1;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-table th {
+            background: #4db6ac;
+            color: white;
+            padding: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            border: 1px solid #ffffff;
+        }
+
+        .summary-table td {
+            padding: 0.75rem;
+            border: 1px solid #e0f2f1;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-po {
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+
+        .btn-edit {
+            background: #0288d1;
+            color: white;
+        }
+
+        .btn-save-item {
+            background: #00796b;
+            color: white;
+        }
+
+        .btn-save-db {
+            background: #0d47a1;
+            color: white;
+        }
+
+        .btn-add-billing {
+            background: #ffb300;
+            color: #333;
+        }
+
+        .btn-add-milestone {
+            background: #0288d1;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .btn-po:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-po:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .date-picker-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .date-picker-group select {
+            flex: 1;
+        }
+
+        .notes-text {
+            color: #00acc1;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal Overlay Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="po-container">
+        <h1 class="po-header">PO LINE ITEM DETAILS</h1>
+
+        <!-- PO General Info (Read-only for context) -->
+        <div class="po-info-box">
+            <div class="form-group">
+                <label>PO Line Item No</label>
+                <input type="text" id="line_item_no" placeholder="(Editable and non mandatory)">
+            </div>
+            <div class="form-group">
+                <label>PO Line Item Type ▼</label>
+                <select id="line_item_type">
+                    <option value="Software">Software</option>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Services">Services</option>
+                    <option value="Support/AMC">Support/AMC</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>PO Number (Type & Enter to Search)</label>
+                <div style="display: flex; gap: 4px;">
+                    <input type="text" id="display_po_number" style="flex: 1;" placeholder="Enter PO #">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>PO Date (display)</label>
+                <input type="text" id="display_po_date" readonly>
+            </div>
+            <div class="form-group">
+                <label>PO Value (display)</label>
+                <input type="text" id="display_po_value" readonly>
+            </div>
+        </div>
+
+        <!-- Line Item Entry -->
+        <div class="form-row">
+            <div class="form-group large">
+                <label>PO Line Item Description</label>
+                <textarea id="description" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>PO Line Item Quantity</label>
+                <input type="number" id="li_quantity" value="1">
+            </div>
+            <div class="form-group">
+                <label>GST Rate</label>
+                <input type="number" id="gst_rate" value="18">
+            </div>
+            <div class="form-group">
+                <label>HSN/SAC Code (8 digit)</label>
+                <input type="text" id="hsn_sac_code" maxlength="8">
+            </div>
+            <button class="btn-po btn-add-milestone" style="min-width: auto;" id="addMorePOItems">ADD MORE PO LINE ITEMS
+                (Once billing done)</button>
+        </div>
+
+        <!-- Milestone Entry -->
+        <div class="milestone-section">
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                <button class="btn-po btn-add-milestone" style="min-width: 250px;">ADD MORE MILE STONES TO SAME LINE
+                    ITEM</button>
+                <div class="form-group">
+                    <label>Mile Stone</label>
+                    <input type="text" id="ms_name" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>MileStone Quantity</label>
+                    <input type="number" id="ms_quantity" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Milestone Unit Price</label>
+                    <input type="number" id="ms_unit_price" value="0">
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label>Payment Cycle (%) ▼</label>
+                    <select id="ms_payment_cycle">
+                        <option value="10">10%</option>
+                        <option value="20">20%</option>
+                        <option value="30">30% till</option>
+                        <option value="100">100%</option>
+                    </select>
+                </div>
+                <div class="form-group large">
+                    <label>MileStone Cycle Value</label>
+                    <input type="text" id="ms_cycle_value" readonly style="background: #f1f8e9;">
+                </div>
+                <div class="form-group">
+                    <label>Expected Delivery Time (mandatory)</label>
+                    <div class="date-picker-group">
+                        <select id="ms_day"></select>
+                        <select id="ms_month"></select>
+                        <select id="ms_year"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Documents to be submitted</label>
+                    <textarea id="ms_documents" rows="2"></textarea>
+                </div>
+                <div class="form-group large">
+                    <label>Payment Terms and Conditions (optional)</label>
+                    <textarea id="ms_payment_terms" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="notes-text">Notes: PO Line Item Cycle Value = Invoice Taxable Value</div>
+
+        <!-- Summary Table -->
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Line Item No</th>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Cycle Value</th>
+                    <th>Mile Stone</th>
+                    <th>Payment Terms</th>
+                    <th>Document to be submitted</th>
+                    <th>Expected Delivery Time</th>
+                </tr>
+            </thead>
+            <tbody id="summaryTableBody">
+                <!-- Rows will be added here -->
+            </tbody>
+        </table>
+
+        <!-- Action Buttons -->
+        <div class="action-btns">
+            <button class="btn-po btn-edit">EDIT PO LINE ITEM</button>
+            <button class="btn-po btn-save-item" onclick="saveLineItem()">SAVE PO LINE ITEM</button>
+            <button class="btn-po btn-save-db" onclick="saveToDB()">SAVE PO to DB</button>
+            <button class="btn-po btn-add-billing" onclick="openInvoiceFormModal()">ADD BILLING DETAILS FOR LINE
+                ITEM</button>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        const poNumber = new URLSearchParams(window.location.search).get('po_number');
+        let currentLineItems = [];
+        let currentPO = null;
+
+        // Initialize date dropdowns
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const daySelect = document.getElementById('ms_day');
+        const monthSelect = document.getElementById('ms_month');
+        const yearSelect = document.getElementById('ms_year');
+
+        for (let i = 1; i <= 31; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i;
+            daySelect.appendChild(opt);
+        }
+
+        months.forEach((m, i) => {
+            const opt = document.createElement('option');
+            opt.value = i + 1;
+            opt.textContent = m;
+            monthSelect.appendChild(opt);
+        });
+
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i <= currentYear + 10; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i;
+            yearSelect.appendChild(opt);
+        }
+
+        // Fetch PO Details
+        async function loadPODetails(targetNum) {
+            const numToLoad = targetNum || poNumber;
+            if (!numToLoad) return;
+
+            try {
+                // Fetch both in parallel for efficiency
+                const [poRes, lineItemsRes] = await Promise.all([
+                    api.get(`/purchase-orders/${numToLoad}`),
+                    api.get(`/purchase-orders/${numToLoad}/line-items`)
+                ]);
+
+                if (poRes.purchase_order) {
+                    currentPO = poRes.purchase_order;
+                    document.getElementById('display_po_number').value = currentPO.po_number;
+                    document.getElementById('display_po_date').value = currentPO.po_date;
+                    document.getElementById('display_po_value').value = parseFloat(currentPO.po_value).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+                    // If a new PO number was searched and found, redirect to update URL
+                    if (targetNum && targetNum !== poNumber) {
+                        window.location.href = `po-line-items.html?po_number=${encodeURIComponent(targetNum)}`;
+                        return; // Stop further execution to allow redirection
+                    }
+
+                    currentLineItems = lineItemsRes.line_items || [];
+                    renderTable();
+                } else if (targetNum) {
+                    alert('Purchase Order "' + targetNum + '" not found.');
+                }
+            } catch (err) {
+                console.error('Error loading PO details:', err);
+            }
+        }
+
+        // Add Enter-to-search functionality
+        document.getElementById('display_po_number').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const newNum = e.target.value.trim();
+                if (newNum) loadPODetails(newNum);
+            }
+        });
+
+        function calculateCycleValue() {
+            const qty = parseFloat(document.getElementById('ms_quantity').value) || 0;
+            const price = parseFloat(document.getElementById('ms_unit_price').value) || 0;
+            const cyclePct = parseFloat(document.getElementById('ms_payment_cycle').value) || 100;
+            const value = (qty * price * cyclePct) / 100;
+            document.getElementById('ms_cycle_value').value = value.toFixed(2);
+        }
+
+        document.getElementById('ms_quantity').addEventListener('input', calculateCycleValue);
+        document.getElementById('ms_unit_price').addEventListener('input', calculateCycleValue);
+        document.getElementById('ms_payment_cycle').addEventListener('change', calculateCycleValue);
+
+        function saveLineItem() {
+            const lineItem = {
+                line_item_no: document.getElementById('line_item_no').value,
+                line_item_type: document.getElementById('line_item_type').value,
+                description: document.getElementById('description').value,
+                quantity: document.getElementById('li_quantity').value,
+                gst_rate: document.getElementById('gst_rate').value,
+                hsn_sac_code: document.getElementById('hsn_sac_code').value,
+                milestones: [
+                    {
+                        milestone_name: document.getElementById('ms_name').value,
+                        quantity: document.getElementById('ms_quantity').value,
+                        unit_price: document.getElementById('ms_unit_price').value,
+                        payment_cycle_pct: document.getElementById('ms_payment_cycle').value,
+                        cycle_value: document.getElementById('ms_cycle_value').value,
+                        documents: document.getElementById('ms_documents').value,
+                        payment_terms: document.getElementById('ms_payment_terms').value,
+                        delivery_date: `${document.getElementById('ms_year').value}-${document.getElementById('ms_month').value.padStart(2, '0')}-${document.getElementById('ms_day').value.padStart(2, '0')}`
+                    }
+                ]
+            };
+
+            // In a real app, we might support multiple milestones per line item before saving to table
+            // For now, let's keep it simple as per UI
+            currentLineItems.push(lineItem);
+            renderTable();
+            // Clear inputs
+            // document.getElementById('description').value = '';
+            // ...
+        }
+
+        let editingItemId = null;
+
+        function renderTable() {
+            const tbody = document.getElementById('summaryTableBody');
+            tbody.innerHTML = '';
+            currentLineItems.forEach((li, idx) => {
+                li.milestones.forEach(ms => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${li.line_item_no || (idx + 1)}</td>
+                        <td>${li.description}</td>
+                        <td>${li.quantity}</td>
+                        <td>${ms.cycle_value}</td>
+                        <td>${ms.milestone_name}</td>
+                        <td>${li.payment_terms || ms.payment_terms || '-'}</td>
+                        <td>${li.documents || ms.documents || '-'}</td>
+                        <td>${ms.delivery_date}</td>
+                        <td>
+                            <button onclick="editItem(${li.id})" class="btn-po" style="min-width:auto; padding:0.25rem 0.5rem; background:#0288d1; font-size:0.7rem; margin-bottom: 2px;">Edit</button>
+                            <button onclick="deleteItem(${li.id})" class="btn-po" style="min-width:auto; padding:0.25rem 0.5rem; background:#d32f2f; font-size:0.7rem;">Del</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function editItem(id) {
+            const li = currentLineItems.find(item => item.id == id);
+            if (!li) return;
+
+            editingItemId = id;
+            document.getElementById('line_item_no').value = li.line_item_no || '';
+            document.getElementById('line_item_type').value = li.line_item_type || 'Software';
+            document.getElementById('description').value = li.description || '';
+            document.getElementById('li_quantity').value = li.quantity || 1;
+            document.getElementById('gst_rate').value = li.gst_rate || 18;
+            document.getElementById('hsn_sac_code').value = li.hsn_sac_code || '';
+
+            if (li.milestones && li.milestones.length > 0) {
+                const ms = li.milestones[0];
+                document.getElementById('ms_name').value = ms.milestone_name || '';
+                document.getElementById('ms_quantity').value = ms.quantity || 1;
+                document.getElementById('ms_unit_price').value = ms.unit_price || 0;
+                document.getElementById('ms_payment_cycle').value = ms.payment_cycle_pct || 100;
+                document.getElementById('ms_cycle_value').value = ms.cycle_value || 0;
+                document.getElementById('ms_documents').value = ms.documents || '';
+                document.getElementById('ms_payment_terms').value = ms.payment_terms || '';
+
+                if (ms.delivery_date) {
+                    const parts = ms.delivery_date.split('-');
+                    if (parts.length === 3) {
+                        document.getElementById('ms_year').value = parseInt(parts[0]);
+                        document.getElementById('ms_month').value = parseInt(parts[1]);
+                        document.getElementById('ms_day').value = parseInt(parts[2]);
+                    }
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Are you sure you want to delete this line item?')) return;
+            try {
+                const res = await api.delete(`/line-items/${id}`);
+                if (!res.error) {
+                    loadPODetails();
+                } else {
+                    alert('Error: ' + res.error);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function saveToDB() {
+            if (!poNumber) return alert('No PO Number');
+
+            const lineItem = {
+                line_item_no: document.getElementById('line_item_no').value,
+                line_item_type: document.getElementById('line_item_type').value,
+                description: document.getElementById('description').value,
+                quantity: document.getElementById('li_quantity').value,
+                gst_rate: document.getElementById('gst_rate').value,
+                hsn_sac_code: document.getElementById('hsn_sac_code').value,
+                milestones: [
+                    {
+                        milestone_name: document.getElementById('ms_name').value,
+                        quantity: document.getElementById('ms_quantity').value,
+                        unit_price: document.getElementById('ms_unit_price').value,
+                        payment_cycle_pct: document.getElementById('ms_payment_cycle').value,
+                        cycle_value: document.getElementById('ms_cycle_value').value,
+                        documents: document.getElementById('ms_documents').value,
+                        payment_terms: document.getElementById('ms_payment_terms').value,
+                        delivery_date: `${document.getElementById('ms_year').value}-${document.getElementById('ms_month').value.padStart(2, '0')}-${document.getElementById('ms_day').value.padStart(2, '0')}`
+                    }
+                ]
+            };
+
+            try {
+                let res;
+                if (editingItemId) {
+                    res = await api.put(`/line-items/${editingItemId}`, lineItem);
+                } else {
+                    res = await api.post(`/purchase-orders/${poNumber}/line-items`, lineItem);
+                }
+
+                if (!res.error) {
+                    alert('Saved successfully!');
+                    editingItemId = null;
+                    // Reset form fields
+                    document.getElementById('description').value = '';
+                    document.getElementById('ms_name').value = '';
+                    loadPODetails();
+                } else {
+                    alert('Error: ' + res.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to save to database');
+            }
+        }
+
+        loadPODetails();
+    </script>
+    <div id="bgFdModal" class="modal-overlay">
+        <div class="po-modal-card" style="width: 95%; max-width: 1100px;">
+            <div class="po-modal-header">
+                <span>BANK GUARANTEE AND FIXED DEPOSIT DETAILS</span>
+                <button onclick="closeBgModal()"
+                    style="background:none; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-bottom: 1rem;">
+                <div class="po-form-group" style="width: 150px;">
+                    <label>PO Value(display)</label>
+                    <div id="s_po_value" style="text-align: center; font-weight: 800; font-size: 1rem; color: #006064;">
+                        $0.00</div>
+                </div>
+                <div class="po-form-group" style="width: 180px;">
+                    <label>Opening Balance of BG Limit</label>
+                    <input type="number" id="m_opening_balance" oninput="calculateBgFd()" placeholder="0.00">
+                </div>
+            </div>
+
+            <!-- BG Section -->
+            <div class="po-section-container">
+                <div class="po-grid-4">
+                    <div class="po-form-group">
+                        <label>BG Number(it can be blank)</label>
+                        <input type="text" id="m_bg_number" placeholder="">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG Start Date</label>
+                        <input type="date" id="m_bg_start_date" onchange="calculateBgFd()">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG Tenure</label>
+                        <div class="po-tenure-group">
+                            <div class="po-tenure-item"><span>DD</span><input id="m_bg_tenure_dd" type="number"
+                                    oninput="calculateBgFd()"></div>
+                            <div class="po-tenure-item"><span>MM</span><input id="m_bg_tenure_mm" type="number"
+                                    oninput="calculateBgFd()"></div>
+                            <div class="po-tenure-item"><span>YY</span><input id="m_bg_tenure_yy" type="number"
+                                    oninput="calculateBgFd()"></div>
+                        </div>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG End Date(display)</label>
+                        <input type="text" id="m_bg_end_date" readonly>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>Bank Guarantee Percentage</label>
+                        <input type="number" id="m_bg_percentage" oninput="calculateBgFd()">
+                    </div>
+
+                    <div class="po-form-group po-span-2">
+                        <label>Bank Guarantee Value = PO Value * BG %</label>
+                        <input type="text" id="m_bg_value" readonly>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG Claim Period Required</label>
+                        <div style="display:flex; justify-content:center; gap:1rem; margin-top: 5px;">
+                            <label style="display:inline-flex; align-items:center; gap:4px;"><input type="radio"
+                                    name="m_claim_required" value="Yes" onchange="calculateBgFd()"> Yes</label>
+                            <label style="display:inline-flex; align-items:center; gap:4px;"><input type="radio"
+                                    name="m_claim_required" value="No" onchange="calculateBgFd()"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG Status</label>
+                        <select id="m_bg_status">
+                            <option>Draft</option>
+                            <option selected>Active</option>
+                            <option>Expired</option>
+                            <option>Returned</option>
+                        </select>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG Claim Period</label>
+                        <div class="po-tenure-group">
+                            <div class="po-tenure-item"><span>DD</span><input id="m_claim_dd" type="number"
+                                    oninput="calculateBgFd()"></div>
+                            <div class="po-tenure-item"><span>MM</span><input id="m_claim_mm" type="number"
+                                    oninput="calculateBgFd()"></div>
+                            <div class="po-tenure-item"><span>YY</span><input id="m_claim_yy" type="number"
+                                    oninput="calculateBgFd()"></div>
+                        </div>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>BG Claim Date(display)</label>
+                        <input type="text" id="m_bg_claim_date" readonly>
+                    </div>
+
+                    <div class="po-form-group po-span-4" style="background: #b2dfdb;">
+                        <label>BG Limit Remaining(when BG number is there, then OB – BGV will show as BGR)</label>
+                        <input type="text" id="m_bg_limit_rem" readonly style="font-weight: 800; color: #004d40;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- FD Section -->
+            <div class="po-section-container">
+                <div class="po-grid-3">
+                    <div class="po-form-group">
+                        <label>% of FD on BG Amount</label>
+                        <input type="number" id="m_fd_percentage" oninput="calculateBgFd()">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>FD Number</label>
+                        <input type="text" id="m_fd_number">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>FD Start Date</label>
+                        <input type="date" id="m_fd_start_date">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>FD Margin(Actual) Agst. PBG(display)</label>
+                        <input type="text" id="m_fd_margin" readonly>
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>FD Maturity Date</label>
+                        <input type="date" id="m_fd_maturity_date">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>FD Maturity Amount</label>
+                        <input type="number" id="m_fd_maturity_amount">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>Rate of Interest</label>
+                        <input type="number" id="m_roi">
+                    </div>
+
+                    <div class="po-form-group">
+                        <label>FD Status</label>
+                        <select id="m_fd_status">
+                            <option selected>Active</option>
+                            <option>Released</option>
+                            <option>Liquidated</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <button class="po-btn-save" onclick="saveBgFdLocal()">SAVE BG and FD DETAILS<br><span
+                        style="font-size: 0.8rem; font-weight: normal;">(All Details are mandatory)</span></button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- NEW BILLING MODAL -->
+    <div id="billingModal" class="modal-overlay">
+        <div class="po-modal-card"
+            style="width: 95%; max-width: 1300px; max-height: 95vh; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(135deg, #00acc1 0%, #007c91 100%);">
+            <div class="po-modal-header">
+                <span>BILLING DETAILS FOR SELECTED LINE ITEMS</span>
+                <button onclick="closeBillingModal()"
+                    style="background:none; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding: 0.5rem;">
+
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-bottom: 2rem;">
+                    <div class="po-form-group" style="min-width: 180px;">
+                        <label>PO Number(display)</label>
+                        <input type="text" id="bill_po_number" readonly>
+                    </div>
+                    <div class="po-form-group" style="min-width: 180px;">
+                        <label>PO Value(display)</label>
+                        <input type="text" id="bill_po_value" readonly>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 2rem; align-items: flex-start; margin-bottom: 2rem;">
+
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Invoice No</label>
+                                <input type="text" id="bill_invoice_no">
+                            </div>
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Invoice Date</label>
+                                <input type="date" id="bill_invoice_date">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Invoice Taxable Value(A)</label>
+                                <input type="number" id="bill_taxable_val" oninput="calcBillTotal()">
+                            </div>
+                            <div class="po-form-group" style="flex: 1.5;">
+                                <label>Invoice GST @18% on Taxable Value(B)</label>
+                                <input type="number" id="bill_gst_val" readonly>
+                            </div>
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Total Invoice Value (C=A+B)</label>
+                                <input type="number" id="bill_total_val" readonly>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Credit Period</label>
+                                <input type="text" id="bill_credit_period">
+                            </div>
+                            <div class="po-form-group" style="flex: 1.5;">
+                                <label>Due Date(InvD + Credit Period)</label>
+                                <input type="date" id="bill_due_date">
+                            </div>
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Status ▼</label>
+                                <select id="bill_status">
+                                    <option>Pending</option>
+                                    <option>Received</option>
+                                    <option>Cancel</option>
+                                </select>
+                                <div style="font-size: 0.65rem; text-align: center; color: #006064;">
+                                    Pending/Received/Cancel</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Payment Received</label>
+                                <input type="text" id="bill_payment_rec">
+                            </div>
+                            <div class="po-form-group" style="flex: 1;">
+                                <label>Remarks</label>
+                                <input type="text" id="bill_remarks">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="width: 280px; display: flex; flex-direction: column; gap: 1rem;">
+                        <div
+                            style="background: #00bcd4; padding: 1rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); text-align: center; color: black; font-size: 0.85rem; font-weight: 700; min-height: 80px; display: flex; align-items: center; justify-content: center;">
+                            Autogenerated email For Payment Reminder(2 days before due date)
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="po-btn-save"
+                                style="flex: 1; background: #9ccc65; font-size: 0.8rem; padding: 0.75rem 0.25rem;">EDIT
+                                INVOICE</button>
+                            <button class="po-btn-save"
+                                style="flex: 1; background: #9ccc65; font-size: 0.8rem; padding: 0.75rem 0.25rem;">CANCEL
+                                INVOICE</button>
+                        </div>
+
+                        <button class="po-btn-save" style="background: #0277bd; font-size: 0.9rem;">SAVE
+                            INVOICE</button>
+                        <button class="po-btn-save" style="background: #01579b; font-size: 0.9rem;">PAYMENT</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem; overflow-x: auto;">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th style="background: #8bc34a;">Line Item No</th>
+                                <th style="background: #8bc34a;">Description</th>
+                                <th style="background: #8bc34a;">Quantity</th>
+                                <th style="background: #8bc34a;">Cycle Value</th>
+                                <th style="background: #8bc34a;">Mile Stone</th>
+                                <th style="background: #8bc34a;">Payment Terms</th>
+                                <th style="background: #8bc34a;">Document to be submitted</th>
+                                <th style="background: #8bc34a;">Expected Delivery Time</th>
+                                <th style="background: #8bc34a;">Invoice No</th>
+                                <th style="background: #8bc34a;">Invoice Date</th>
+                                <th style="background: #8bc34a;">Invoice Value</th>
+                                <th style="background: #8bc34a;">Payment Received</th>
+                                <th style="background: #8bc34a;">Pending Amount</th>
+                                <th style="background: #8bc34a;">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billingGridBody">
+                            <!-- Rows go here -->
+                        </tbody>
+                    </table>
+                    <div
+                        style="text-align: center; color: white; font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem;">
+                        (grid should have invoices for the total quantity of items)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        // BG Box Logic for PO Line Items Page
+
+        async function openBgModal() {
+            document.getElementById('bgFdModal').classList.add('open');
+
+            // Load existing data if available
+            if (poNumber) {
+                try {
+                    const res = await api.get(`/purchase-orders/${poNumber}/bg-fd`);
+                    if (res.bg_fd) {
+                        const d = res.bg_fd;
+
+                        const setVal = (id, val) => {
+                            const el = document.getElementById(id);
+                            if (el) el.value = val !== undefined && val !== null ? val : '';
+                        };
+
+                        setVal('m_opening_balance', d.opening_balance_bg_limit);
+                        setVal('m_bg_number', d.bg_number);
+                        setVal('m_bg_start_date', d.bg_start_date);
+                        setVal('m_bg_tenure_dd', d.bg_tenure_dd || 0);
+                        setVal('m_bg_tenure_mm', d.bg_tenure_mm || 0);
+                        setVal('m_bg_tenure_yy', d.bg_tenure_yy || 0);
+                        setVal('m_bg_percentage', d.bg_percentage || 10);
+                        setVal('m_bg_status', d.bg_status || 'Active');
+
+                        if (d.bg_claim_period_required === 'Yes') {
+                            document.querySelector('input[name="m_claim_required"][value="Yes"]').checked = true;
+                        } else {
+                            document.querySelector('input[name="m_claim_required"][value="No"]').checked = true;
+                        }
+
+                        setVal('m_claim_dd', d.bg_claim_period_dd || 0);
+                        setVal('m_claim_mm', d.bg_claim_period_mm || 0);
+                        setVal('m_claim_yy', d.bg_claim_period_yy || 0);
+
+                        setVal('m_fd_percentage', d.fd_percentage_on_bg || 10);
+                        setVal('m_fd_number', d.fd_number);
+                        setVal('m_roi', d.rate_of_interest || 6.5);
+                        setVal('m_fd_start_date', d.fd_start_date);
+                        setVal('m_fd_maturity_date', d.fd_maturity_date);
+                        setVal('m_fd_maturity_amount', d.fd_maturity_amount);
+                        setVal('m_fd_status', d.fd_status || 'Active');
+                    }
+                } catch (e) {
+                    console.error("Error loading BG data", e);
+                }
+            }
+            calculateBgFd();
+        }
+
+        function closeBgModal() {
+            document.getElementById('bgFdModal').classList.remove('open');
+        }
+
+        window.calculateBgFd = function () {
+            const poValue = currentPO ? (parseFloat(currentPO.po_value) || 0) : 0;
+            const ob = parseFloat(document.getElementById('m_opening_balance').value) || 0;
+            const bgPercent = parseFloat(document.getElementById('m_bg_percentage').value) || 0;
+            const fdPercent = parseFloat(document.getElementById('m_fd_percentage').value) || 0;
+            const startDateStr = document.getElementById('m_bg_start_date').value;
+
+            const getPositiveVal = (id) => {
+                const el = document.getElementById(id);
+                let val = parseInt(el.value) || 0;
+                if (val < 0) { val = 0; el.value = 0; }
+                return val;
+            };
+
+            const tenureDd = getPositiveVal('m_bg_tenure_dd');
+            const tenureMm = getPositiveVal('m_bg_tenure_mm');
+            const tenureYy = getPositiveVal('m_bg_tenure_yy');
+            const claimDd = getPositiveVal('m_claim_dd');
+            const claimMm = getPositiveVal('m_claim_mm');
+            const claimYy = getPositiveVal('m_claim_yy');
+
+            const isClaimRequired = document.querySelector('input[name="m_claim_required"]:checked')?.value === 'Yes';
+            const claimInputs = [document.getElementById('m_claim_dd'), document.getElementById('m_claim_mm'), document.getElementById('m_claim_yy')];
+            const claimDateInput = document.getElementById('m_bg_claim_date');
+
+            if (!isClaimRequired) {
+                claimInputs.forEach(input => {
+                    input.value = '';
+                    input.disabled = true;
+                    input.style.backgroundColor = '#f1f5f9';
+                });
+                claimDateInput.value = '';
+                claimDateInput.disabled = true;
+            } else {
+                claimInputs.forEach(input => {
+                    input.disabled = false;
+                    input.style.backgroundColor = 'white';
+                    if (input.value === '') input.value = (input.id === 'm_claim_mm') ? 3 : 0;
+                });
+                claimDateInput.disabled = false; // readonly but not disabled so value is submitted? actually just display
+            }
+
+            document.getElementById('s_po_value').textContent = '$' + poValue.toLocaleString();
+            document.getElementById('s_ob').textContent = '$' + ob.toLocaleString();
+
+            const bgValue = (poValue * bgPercent) / 100;
+            document.getElementById('m_bg_value').value = bgValue.toFixed(2);
+            document.getElementById('s_bg_calc').textContent = '$' + bgValue.toLocaleString();
+
+            const limitRemaining = ob - bgValue;
+            document.getElementById('m_bg_limit_rem').value = limitRemaining.toFixed(2);
+
+            const fdMargin = (bgValue * fdPercent) / 100;
+            document.getElementById('m_fd_margin').value = fdMargin.toFixed(2);
+
+            if (startDateStr) {
+                const [y, m, d] = startDateStr.split('-').map(Number);
+                const startDate = new Date(y, m - 1, d);
+
+                const endDate = new Date(startDate);
+                endDate.setFullYear(endDate.getFullYear() + tenureYy);
+                endDate.setMonth(endDate.getMonth() + tenureMm);
+                endDate.setDate(endDate.getDate() + tenureDd);
+
+                const formatYMD = (date) => {
+                    if (!date || isNaN(date.getTime())) return '';
+                    const yy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    return `${yy}-${mm}-${dd}`;
+                };
+
+                document.getElementById('m_bg_end_date').value = formatYMD(endDate);
+
+                if (isClaimRequired) {
+                    const claimDate = new Date(endDate);
+                    claimDate.setFullYear(claimDate.getFullYear() + claimYy);
+                    claimDate.setMonth(claimDate.getMonth() + claimMm);
+                    claimDate.setDate(claimDate.getDate() + claimDd);
+                    document.getElementById('m_bg_claim_date').value = formatYMD(claimDate);
+                }
+            }
+        }
+
+        async function saveBgFdLocal() {
+            if (!poNumber) return alert("PO Number not found.");
+
+            const mandatory = ['m_opening_balance', 'm_bg_percentage', 'm_bg_start_date'];
+            for (let id of mandatory) {
+                if (!document.getElementById(id).value) {
+                    alert('All fields are mandatory per the policy!');
+                    return;
+                }
+            }
+
+            const bgFdData = {
+                opening_balance_bg_limit: document.getElementById('m_opening_balance').value,
+                bg_number: document.getElementById('m_bg_number').value,
+                bg_start_date: document.getElementById('m_bg_start_date').value,
+                bg_tenure_dd: document.getElementById('m_bg_tenure_dd').value,
+                bg_tenure_mm: document.getElementById('m_bg_tenure_mm').value,
+                bg_tenure_yy: document.getElementById('m_bg_tenure_yy').value,
+                bg_end_date: document.getElementById('m_bg_end_date').value,
+                bg_percentage: document.getElementById('m_bg_percentage').value,
+                bg_value: document.getElementById('m_bg_value').value,
+                bg_claim_period_required: document.querySelector('input[name="m_claim_required"]:checked')?.value || 'No',
+                bg_status: document.getElementById('m_bg_status').value,
+                bg_claim_period_dd: document.getElementById('m_claim_dd').value,
+                bg_claim_period_mm: document.getElementById('m_claim_mm').value,
+                bg_claim_period_yy: document.getElementById('m_claim_yy').value,
+                bg_claim_date: document.getElementById('m_bg_claim_date').value,
+                bg_limit_remaining: document.getElementById('m_bg_limit_rem').value,
+                fd_percentage_on_bg: document.getElementById('m_fd_percentage').value,
+                fd_number: document.getElementById('m_fd_number').value,
+                fd_start_date: document.getElementById('m_fd_start_date').value,
+                fd_margin_actual: document.getElementById('m_fd_margin').value,
+                fd_maturity_date: document.getElementById('m_fd_maturity_date').value,
+                fd_maturity_amount: document.getElementById('m_fd_maturity_amount').value,
+                rate_of_interest: document.getElementById('m_roi').value,
+                fd_status: document.getElementById('m_fd_status').value
+            };
+
+            try {
+                const res = await api.post(`/purchase-orders/${poNumber}/bg-fd`, bgFdData);
+                if (res.error) {
+                    alert('Error saving details: ' + res.error);
+                } else {
+                    alert('BG & FD Details saved successfully to Database!');
+                    closeBgModal();
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error: ' + e.message);
+            }
+        }
+        // NEW BILLING MODAL LOGIC
+        // NEW BILLING MODAL LOGIC
+        function openInvoiceFormModal() {
+            console.log("Opening Invoice Form Modal");
+            const modal = document.getElementById('billingModal');
+            if (modal) {
+                modal.classList.add('open');
+                // Copy PO info
+                const poNum = document.getElementById('display_po_number').value;
+                const poVal = document.getElementById('display_po_value').value;
+                if (poNum) document.getElementById('bill_po_number').value = poNum;
+                if (poVal) document.getElementById('bill_po_value').value = poVal;
+            } else {
+                console.error("Billing Modal not found!");
+            }
+        }
+
+        function closeBillingModal() {
+            document.getElementById('billingModal').classList.remove('open');
+        }
+
+        window.calcBillTotal = function () {
+            const taxable = parseFloat(document.getElementById('bill_taxable_val').value) || 0;
+            const gst = taxable * 0.18;
+            document.getElementById('bill_gst_val').value = gst.toFixed(2);
+            document.getElementById('bill_total_val').value = (taxable + gst).toFixed(2);
+        }
+    </script>
+</body>
+
+</html>

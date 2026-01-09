@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item active">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1 id="greeting">Welcome back!</h1>
+                        <p>Here's what's happening with your business today.</p>
+                    </div>
+                    <div>
+                        <a href="new-task.html" class="btn btn-primary">+ New Task</a>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <div class="card" style="padding: 1.5rem;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Total Accounts
+                        </p>
+                        <h2 style="font-size: 2rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;"
+                            id="totalAccounts">-</h2>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--success);">
+                            <span>↑ 12%</span>
+                            <span style="color: var(--text-muted); font-weight: 400;">vs last month</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 1.5rem;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Active Leads</p>
+                        <h2 style="font-size: 2rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;"
+                            id="totalLeads">-</h2>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--info);">
+                            <span>New</span>
+                            <span style="color: var(--text-muted); font-weight: 400;">opportunities</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 1.5rem;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Pending Tasks</p>
+                        <h2 style="font-size: 2rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;"
+                            id="totalTasks">-</h2>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--warning);">
+                            <span>Action needed</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 1.5rem;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Products</p>
+                        <h2 style="font-size: 2rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 0.5rem;"
+                            id="totalProducts">-</h2>
+                        <div
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                            <span>In catalog</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity / Quick Links Section -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                    <div>
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                            <h3 style="color: var(--primary-dark); font-size: 1.25rem;">Recent Accounts</h3>
+                            <a href="accounts.html" style="font-size: 0.9rem;">View All</a>
+                        </div>
+                        <div class="card" style="padding: 0;">
+                            <div id="recentAccountsList" style="display: flex; flex-direction: column;">
+                                <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--primary-dark); font-size: 1.25rem; margin-bottom: 1rem;">Quick Actions
+                        </h3>
+                        <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <a href="new-lead.html" class="btn btn-secondary" style="justify-content: flex-start;">+ Add
+                                New Lead</a>
+                            <a href="new-contact.html" class="btn btn-secondary" style="justify-content: flex-start;">+
+                                Add Contact</a>
+                            <a href="new-product.html" class="btn btn-secondary" style="justify-content: flex-start;">+
+                                Add Product</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Good evening';
+            if (hour < 12) greeting = 'Good morning';
+            else if (hour < 18) greeting = 'Good afternoon';
+
+            const user = api.getCurrentUser();
+            // Just use email part before @ as name for now
+            const name = user.email ? user.email.split('@')[0] : 'User';
+            // Capitalize
+            const capName = name.charAt(0).toUpperCase() + name.slice(1);
+
+            document.getElementById('greeting').textContent = `${greeting}, ${capName}!`;
+        }
+
+        async function loadStats() {
+            // Parallel fetch for dashboard performance
+            const [accounts, leads, tasks, products] = await Promise.all([
+                api.get('/customers'),
+                api.get('/leads'),
+                api.get('/tasks'),
+                api.get('/products')
+            ]);
+
+            // Update Counts
+            if (accounts.customers) document.getElementById('totalAccounts').textContent = accounts.customers.length;
+            if (leads.leads) document.getElementById('totalLeads').textContent = leads.leads.filter(l => l.status !== 'Lost').length;
+            if (tasks.tasks) document.getElementById('totalTasks').textContent = tasks.tasks.filter(t => t.status !== 'Done').length;
+            if (products.products) document.getElementById('totalProducts').textContent = products.products.length;
+
+            // Populate Recent Accounts (Top 5)
+            const recentList = document.getElementById('recentAccountsList');
+            if (accounts.customers && accounts.customers.length > 0) {
+                const recent = accounts.customers.slice(-5).reverse(); // Show newest first
+                recentList.innerHTML = recent.map(c => `
+                    <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; color: var(--primary-dark);">${c.customer_name}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">${c.email_id || 'No email'}</div>
+                        </div>
+                        <span class="badge ${c.org_type === 'Government' ? 'badge-gov' : (c.org_type === 'Private' ? 'badge-priv' : 'badge-corp')}">${c.org_type || 'N/A'}</span>
+                    </div>
+                `).join('');
+                // Remove last border
+                recentList.lastElementChild.style.borderBottom = 'none';
+            } else {
+                recentList.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No accounts yet.</div>';
+            }
+        }
+
+        setGreeting();
+        loadStats();
+    </script>
+</body>
+
+</html>

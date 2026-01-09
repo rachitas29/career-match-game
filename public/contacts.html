@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacts - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="contacts.html" class="nav-item active">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1>Contacts</h1>
+                        <p>People associated with your accounts.</p>
+                    </div>
+                    <div>
+                        <a href="new-contact.html" class="btn btn-primary">+ New Contact</a>
+                    </div>
+                </div>
+
+                <div class="card" style="max-width: 100%;">
+                    <div id="contactList" class="customer-list">
+                        <p>Loading contacts...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        async function loadContacts() {
+            const list = document.getElementById('contactList');
+            const result = await api.get('/contacts');
+
+            if (result.error) {
+                list.innerHTML = `<p style="color: var(--error)">Error loading contacts: ${result.error}</p>`;
+                return;
+            }
+
+            if (result.contacts.length === 0) {
+                list.innerHTML = '<p>No contacts found.</p>';
+                return;
+            }
+
+            list.innerHTML = result.contacts.map(c => `
+                <div class="customer-item">
+                    <div>
+                        <h3>${c.name}</h3>
+                        <p>${c.role || 'No Role'} ${c.account_name ? 'at <strong>' + c.account_name + '</strong>' : ''}</p>
+                        <p style="font-size: 0.85rem; margin: 0;">${c.email || ''} <br> ${c.phone || ''}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        loadContacts();
+    </script>
+</body>
+
+</html>

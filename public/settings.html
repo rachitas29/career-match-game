@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item active">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container" style="max-width: 800px;">
+                <div class="dashboard-header">
+                    <div>
+                        <h1>Settings</h1>
+                        <p>Manage your profile and preferences.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="col-span-12">
+                        <div class="card">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Profile Information</h3>
+                            <form id="profileForm" style="display: grid; gap: 1rem;">
+                                <div>
+                                    <label>Full Name</label>
+                                    <input type="text" id="name" placeholder="Your Name">
+                                </div>
+                                <div>
+                                    <label>Email Address</label>
+                                    <input type="email" id="email" placeholder="email@example.com">
+                                </div>
+                                <div>
+                                    <label>Phone Number</label>
+                                    <input type="text" id="phone" placeholder="+1 ...">
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-primary" style="width: auto;">Save
+                                        Profile</button>
+                                </div>
+                            </form>
+                            <div id="profileMsg" style="margin-top: 1rem; display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-12">
+                        <div class="card">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Security</h3>
+                            <form id="passwordForm" style="display: grid; gap: 1rem;">
+                                <div>
+                                    <label>New Password</label>
+                                    <input type="password" id="password" placeholder="Min. 8 characters" required
+                                        minlength="8">
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-secondary" style="width: auto;">Update
+                                        Password</button>
+                                </div>
+                            </form>
+                            <div id="passwordMsg" style="margin-top: 1rem; display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-12">
+                        <div class="card">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Application</h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">Version 1.0.0 (Premium)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        // Load existing profile
+        const user = api.getCurrentUser();
+        if (user) {
+            document.getElementById('name').value = user.name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('phone').value = user.phone || '';
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const getVal = (id) => document.getElementById(id).value;
+
+            const data = {
+                id: user.id,
+                name: getVal('name'),
+                email: getVal('email'),
+                phone: getVal('phone')
+            };
+
+            const result = await api.put('/user', data); // Make sure api.js has put method
+            const msg = document.getElementById('profileMsg');
+
+            if (result.error) {
+                msg.textContent = result.error;
+                msg.style.color = 'var(--error)';
+            } else {
+                msg.textContent = 'Profile updated successfully!';
+                msg.style.color = 'var(--success)';
+                // Update local storage user object if needed
+                user.name = data.name;
+                user.email = data.email;
+                user.phone = data.phone;
+                localStorage.setItem('user', JSON.stringify(user));
+            }
+            msg.style.display = 'block';
+            msg.style.display = 'block';
+        });
+
+        // Password Update Logic
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = 'Updating...';
+            btn.disabled = true;
+
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('passwordMsg');
+
+            if (!password || password.length < 8) {
+                msg.textContent = 'Password must be at least 8 characters.';
+                msg.style.color = 'var(--danger)'; // Using var(--danger) from styles.css
+                msg.style.display = 'block';
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            const result = await api.put('/change-password', {
+                id: user.id,
+                new_password: password
+            });
+
+            if (result.error) {
+                msg.textContent = result.error;
+                msg.style.color = 'var(--danger)';
+            } else {
+                msg.textContent = 'Password updated successfully! Please log in again.';
+                msg.style.color = 'var(--success)';
+                document.getElementById('password').value = '';
+                setTimeout(() => api.logout(), 2000);
+            }
+            msg.style.display = 'block';
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Purchase Order - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/line-items-modal.css">
+    <style>
+        /* Local overrides for this specific form polish to match new-customer.html */
+        .page-header {
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+            text-align: center;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--brand-light);
+            color: var(--brand-dark);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .action-bar {
+            position: sticky;
+            bottom: 20px;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-xl);
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            z-index: 50;
+        }
+
+        /* Segmented Control for BG (Inspired by MSME in new-customer.html) */
+        .segmented-control {
+            display: flex;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            width: fit-content;
+        }
+
+        .segmented-control label {
+            margin: 0;
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control input[type="radio"]:checked+span {
+            color: var(--brand-dark);
+        }
+
+        .segmented-control label:has(input:checked) {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: var(--brand-dark);
+        }
+
+        /* Updated Professional & Elegant Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            width: 98%;
+            max-width: 1250px;
+            max-height: 98vh;
+            transform: scale(0.9) translateY(40px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .modal-overlay.open .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            background: #ffffff;
+            color: var(--primary-dark);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0;
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Dashboard-style Summary Bar */
+        .bg-fd-summary-bar {
+            background: #f8fafc;
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 0.15rem;
+            letter-spacing: 0.05em;
+        }
+
+        .summary-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bg-fd-content {
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        .form-container-row {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 1.25rem;
+        }
+
+        .bg-section,
+        .fd-section {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem;
+            position: relative;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            transition: border-color 0.3s;
+        }
+
+        .bg-section:hover,
+        .fd-section:hover {
+            border-color: var(--brand-light);
+        }
+
+        .bg-section::before,
+        .fd-section::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 4px;
+            height: 24px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .bg-section::before {
+            background: var(--brand);
+        }
+
+        .fd-section::before {
+            background: #3b82f6;
+        }
+
+        .section-header-compact {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-left: 0.25rem;
+        }
+
+        .section-grid-compact {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.4rem 0.75rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .field-group.span-2 {
+            grid-column: span 2;
+        }
+
+        .field-group.span-3 {
+            grid-column: span 3;
+        }
+
+        .field-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .field-group input,
+        .field-group select {
+            padding: 0.35rem 0.6rem;
+            border: 1.5px solid #f1f5f9;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+
+        .field-group input:focus {
+            border-color: var(--brand);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+        }
+
+        .field-group input[readonly] {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border-color: transparent;
+        }
+
+        .tenure-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            background: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .tenure-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .tenure-item span {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .tenure-item input {
+            padding: 0.25rem;
+            text-align: center;
+            background: white;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .bg-claim-row {
+            grid-column: span 3;
+            background: #f0fdf4;
+            border-radius: 8px;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #dcfce7;
+            display: grid;
+            grid-template-columns: auto 1fr 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .modal-footer {
+            padding: 0.75rem 1.5rem;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn-save-bg {
+            background: var(--brand-gradient);
+            color: white;
+            border: none;
+            padding: 0.6rem 2rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-save-bg:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item active">Accounts</a>
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div style="margin-bottom: 2rem;">
+                    <a id="cancelLink" href="accounts.html" style="color: var(--text-muted); font-size: 0.9rem;">&larr;
+                        Cancel and return to Accounts</a>
+                </div>
+
+                <div class="page-header">
+                    <h1
+                        style="font-size: 2.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem; letter-spacing: -0.02em;">
+                        Edit Purchase Order
+                    </h1>
+                    <p style="color: #64748b; font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                        Update the order details and associated bank guarantees.
+                    </p>
+                </div>
+
+                <form id="poForm">
+                    <div class="form-section">
+
+                        <!-- SECTION 1: Account Selection -->
+                        <div class="card">
+                            <div class="section-title">
+                                <div class="section-icon">🏢</div>
+                                Customer Details
+                            </div>
+                            <div class="form-grid">
+                                <div class="col-span-8">
+                                    <label for="account_id">Registered Entity</label>
+                                    <select id="account_id" disabled>
+                                        <option value="" disabled selected>Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-4">
+                                    <label>Client ID Reference</label>
+                                    <div id="clientIdRef"
+                                        style="background: #f1f5f9; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: #64748b; font-weight: 600; font-family: monospace;">
+                                        ---</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECTION 2: Order Core Details -->
+                        <div class="card">
+                            <div class="section-title">
+                                <div class="section-icon">📑</div>
+                                PO Core Details
+                            </div>
+                            <div class="form-grid">
+                                <div class="col-span-4">
+                                    <label for="po_number">PO Number <span style="color: var(--danger)">*</span></label>
+                                    <input type="text" id="po_number" placeholder="e.g. PO/2024/001" required>
+                                </div>
+                                <div class="col-span-4">
+                                    <label for="po_date">PO Date <span style="color: var(--danger)">*</span></label>
+                                    <input type="date" id="po_date" required>
+                                </div>
+                                <div class="col-span-4">
+                                    <label for="po_value">PO Value (Total Amount) <span
+                                            style="color: var(--danger)">*</span></label>
+                                    <input type="number" step="0.01" id="po_value" placeholder="0.00" required>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                    <div class="segmented-control">
+                                        <label>
+                                            <input type="radio" name="bank_guarantee" value="No" checked
+                                                onchange="toggleBgBtn()">
+                                            <span>No BG Required</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="bank_guarantee" value="Yes"
+                                                onchange="toggleBgBtn()">
+                                            <span>BG Attached / Required</span>
+                                        </label>
+                                    </div>
+                                    <button type="button" id="fillBgBtn" class="btn btn-secondary"
+                                        style="font-size: 0.8rem; opacity: 0.5; cursor: not-allowed;" disabled
+                                        onclick="openBgModal()">
+                                        📑 Edit BG & FD Details
+                                    </button>
+                                    <button type="button" id="manageLineItemsBtn" class="btn btn-primary"
+                                        style="font-size: 0.8rem;"
+                                        onclick="openLineItemsModal(document.getElementById('po_number').value)">
+                                        📦 Manage Line Item Details
+                                    </button>
+                                    <div id="bgStatusIndicator"
+                                        style="display: none; font-size: 0.8rem; color: #0d9488; font-weight: 700; align-items: center; gap: 0.5rem;">
+                                        <span>✅</span> BG Details Included
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 3: Logistics & Notes -->
+                            <div class="card" style="margin-top: 2rem;">
+                                <div class="section-title">
+                                    <div class="section-icon">🚛</div>
+                                    Billing & Shipping
+                                </div>
+                                <div class="form-grid">
+                                    <div class="col-span-6">
+                                        <label for="bill_to">Bill To Address (if specific)</label>
+                                        <input type="text" id="bill_to" placeholder="As per master data...">
+                                    </div>
+                                    <div class="col-span-6">
+                                        <label for="ship_to">Ship To Address (Delivery Location)</label>
+                                        <input type="text" id="ship_to" placeholder="Enter delivery location...">
+                                    </div>
+                                    <div class="col-span-12">
+                                        <label for="notes">Additional Remarks / Special Instructions</label>
+                                        <textarea id="notes" rows="3" placeholder="Click to add notes..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sticky Action Bar -->
+                        <div class="action-bar">
+                            <div id="statusMsg" style="font-weight: 500; font-size: 0.9rem;"></div>
+                            <div style="display: flex; gap: 1rem;">
+                                <a id="cancelBtn" href="accounts.html" class="btn btn-secondary">Discard Changes</a>
+                                <button type="submit" class="btn btn-primary"
+                                    style="padding-left: 2rem; padding-right: 2rem;">
+                                    Update Purchase Order &rarr;
+                                </button>
+                            </div>
+                        </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for BG/FD Details -->
+    <div id="bgFdModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Bank Guarantee & FD Dashboard</h2>
+                <button onclick="closeBgModal()"
+                    style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:0.5rem; display:flex; align-items:center; justify-content:center; border-radius:50%; width:40px; height:40px; transition:all 0.2s;">&times;</button>
+            </div>
+
+            <div class="bg-fd-summary-bar">
+                <div class="summary-item">
+                    <div class="summary-info">
+                        <span class="summary-label">📋 Purchase Order Value</span>
+                        <span id="s_po_value" class="summary-value">$0.00</span>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-info">
+                        <span class="summary-label">🏦 Opening BG Limit</span>
+                        <span id="s_ob" class="summary-value">$0.00</span>
+                    </div>
+                </div>
+                <div class="summary-item" style="border-left: 3px solid var(--brand);">
+                    <div class="summary-info">
+                        <span class="summary-label">⚖️ Calculated BG Value</span>
+                        <span id="s_bg_calc" class="summary-value" style="color: var(--brand);">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-fd-content">
+                <div class="form-container-row">
+                    <!-- BG Section -->
+                    <div class="bg-section">
+                        <div class="section-header-compact">🛡️ Bank Guarantee Parameters</div>
+                        <div class="section-grid-compact">
+                            <div class="field-group">
+                                <label>BG Reference Number</label>
+                                <input type="text" id="m_bg_number" placeholder="PO-BG-XXXX">
+                            </div>
+                            <div class="field-group">
+                                <label>OB BG Limit ($)</label>
+                                <input type="number" id="m_opening_balance" oninput="calculateBgFd()"
+                                    placeholder="0.00">
+                            </div>
+                            <div class="field-group">
+                                <label>Effective Start Date</label>
+                                <input type="date" id="m_bg_start_date" onchange="calculateBgFd()">
+                            </div>
+                            <div class="field-group">
+                                <label>Contractual Tenure</label>
+                                <div class="tenure-group">
+                                    <div class="tenure-item">
+                                        <span>Days</span>
+                                        <input type="number" id="m_bg_tenure_dd" value="0" min="0"
+                                            oninput="calculateBgFd()">
+                                    </div>
+                                    <div class="tenure-item">
+                                        <span>Months</span>
+                                        <input type="number" id="m_bg_tenure_mm" value="0" min="0"
+                                            oninput="calculateBgFd()">
+                                    </div>
+                                    <div class="tenure-item">
+                                        <span>Years</span>
+                                        <input type="number" id="m_bg_tenure_yy" value="1" min="0"
+                                            oninput="calculateBgFd()">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field-group">
+                                <label>Maturity / End Date</label>
+                                <input type="date" id="m_bg_end_date" readonly>
+                            </div>
+                            <div class="field-group">
+                                <label>BG Percentage (%)</label>
+                                <input type="number" id="m_bg_percentage" value="10" oninput="calculateBgFd()">
+                            </div>
+                            <div class="field-group">
+                                <label>Calculated BG Value</label>
+                                <input type="text" id="m_bg_value" readonly
+                                    style="background: #f0fdf4; color: #166534; font-weight: 700;">
+                            </div>
+                            <div class="field-group">
+                                <label>Current BG Status</label>
+                                <select id="m_bg_status">
+                                    <option>Active</option>
+                                    <option>Pending Issuance</option>
+                                    <option>Expired / Returned</option>
+                                    <option>Invoked</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label>Remaining BG Limit</label>
+                                <input type="text" id="m_bg_limit_rem" readonly
+                                    style="color: #9a3412; font-weight: 700;">
+                            </div>
+
+                            <div class="bg-claim-row">
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: #166534;">Claim Period
+                                        Required?</span>
+                                    <div style="display: flex; gap: 0.75rem; margin-top: 0.25rem;">
+                                        <label
+                                            style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; margin: 0; cursor: pointer;">
+                                            <input type="radio" name="m_claim_required" value="Yes" checked
+                                                onchange="calculateBgFd()"> Yes
+                                        </label>
+                                        <label
+                                            style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; margin: 0; cursor: pointer;">
+                                            <input type="radio" name="m_claim_required" value="No"
+                                                onchange="calculateBgFd()"> No
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="field-group">
+                                    <label>Claim Tenure Extension</label>
+                                    <div class="tenure-group">
+                                        <div class="tenure-item">
+                                            <span>DD</span>
+                                            <input type="number" id="m_claim_dd" value="0" min="0"
+                                                oninput="calculateBgFd()">
+                                        </div>
+                                        <div class="tenure-item">
+                                            <span>MM</span>
+                                            <input type="number" id="m_claim_mm" value="3" min="0"
+                                                oninput="calculateBgFd()">
+                                        </div>
+                                        <div class="tenure-item">
+                                            <span>YY</span>
+                                            <input type="number" id="m_claim_yy" value="0" min="0"
+                                                oninput="calculateBgFd()">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field-group">
+                                    <label>Final BG Claim Date</label>
+                                    <input type="date" id="m_bg_claim_date" readonly
+                                        style="background: #f0f9ff; color: #0369a1; border-color: #bae6fd;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FD Section -->
+                    <div class="fd-section">
+                        <div class="section-header-compact">💰 Fixed Deposit Linkage</div>
+                        <div class="section-grid-compact">
+                            <div class="field-group span-3">
+                                <label>FD Margin Percentage (%)</label>
+                                <input type="number" id="m_fd_percentage" value="10" oninput="calculateBgFd()">
+                            </div>
+                            <div class="field-group span-3">
+                                <label>FD Certificate Number</label>
+                                <input type="text" id="m_fd_number" placeholder="Enter FD Certificate #">
+                            </div>
+                            <div class="field-group">
+                                <label>Issue Date</label>
+                                <input type="date" id="m_fd_start_date">
+                            </div>
+                            <div class="field-group">
+                                <label>ROI (% p.a.)</label>
+                                <input type="number" step="0.01" id="m_roi" value="6.5">
+                            </div>
+                            <div class="field-group">
+                                <label>Required Margin</label>
+                                <input type="text" id="m_fd_margin" readonly
+                                    style="background: #fff7ed; color: #9a3412; font-weight: 700;">
+                            </div>
+                            <div class="field-group">
+                                <label>Maturity Date</label>
+                                <input type="date" id="m_fd_maturity_date">
+                            </div>
+                            <div class="field-group">
+                                <label>Maturity Amount</label>
+                                <input type="number" step="0.01" id="m_fd_maturity_amount" placeholder="0.00">
+                            </div>
+                            <div class="field-group">
+                                <label>Deposit Status</label>
+                                <select id="m_fd_status">
+                                    <option>Active</option>
+                                    <option>Liquidated</option>
+                                    <option>Pledged</option>
+                                    <option>Released</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div
+                            style="margin-top: 0.5rem; padding: 0.5rem; background: #eff6ff; border-radius: 8px; border: 1px solid #dbeafe;">
+                            <p style="font-size: 0.65rem; color: #1e40af; line-height: 1.3; margin: 0;">
+                                ℹ️ <strong>System Note:</strong> FD margin is auto-calculated based on bank policy.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeBgModal()" class="btn btn-secondary" style="border-radius: 12px;">Discard
+                    Changes</button>
+                <button onclick="saveBgFdLocal()" class="btn-save-bg">Update Details &rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/line-items-logic.js"></script>
+    <script>
+        // Line Item Modal HTML Injection
+        const lineItemModalHTML = `
+        <div id="lineItemsModal" class="li-modal-overlay">
+            <div class="li-modal-card">
+                <div class="li-modal-header">
+                    <h2 class="li-modal-title">📦 Line Item Entry Workspace</h2>
+                    <button onclick="closeLineItemsModal()" class="li-modal-close" title="Close Workspace">&times;</button>
+                </div>
+                
+                <div class="li-modal-body">
+                    <!-- Unit A: Context Context -->
+                    <div class="li-context-bar">
+                        <div class="li-context-item">
+                            <label>PO REF:</label>
+                            <input type="text" id="li_display_po_number" readonly>
+                        </div>
+                        <div class="li-context-item">
+                            <label>DATE:</label>
+                            <input type="text" id="li_display_po_date" readonly>
+                        </div>
+                        <div class="li-context-item">
+                            <label>TOTAL VAL:</label>
+                            <input type="text" id="li_display_po_value" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Unit B: Parallel Input Workspace (Non-Scrolling) -->
+                    <div class="li-form-container">
+                        <!-- Left Block: Item Specs -->
+                        <div class="form-block">
+                            <div class="form-title">Line Item Identification & Specs</div>
+                            <div class="li-compact-grid">
+                                <div class="li-field">
+                                    <label>Line#</label>
+                                    <input type="text" id="li_line_item_no" placeholder="01">
+                                </div>
+                                <div class="li-field">
+                                    <label>Asset Category</label>
+                                    <select id="li_line_item_type">
+                                        <option>Software</option>
+                                        <option>Hardware</option>
+                                        <option>Services</option>
+                                        <option>Support/AMC</option>
+                                    </select>
+                                </div>
+                                <div class="li-field">
+                                    <label>HSN/SAC</label>
+                                    <input type="text" id="li_hsn_sac_code" maxlength="8" placeholder="8-digit code" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                                </div>
+                                <div class="li-field full">
+                                    <label>Project Description / Scope of Work</label>
+                                    <textarea id="li_description" placeholder="Short description..."></textarea>
+                                </div>
+                                <div class="li-field">
+                                    <label>Qty</label>
+                                    <input type="number" id="li_li_quantity" value="0" min="0" oninput="if(this.value<0)this.value=0">
+                                </div>
+                                <div class="li-field">
+                                    <label>GST Rate %</label>
+                                    <input type="number" id="li_gst_rate" value="18">
+                                </div>
+                                <div class="li-field" style="justify-content: flex-end;">
+                                    <button type="button" class="btn-utility" onclick="resetLineItemForm()">+ Add more PO line items</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Block: Payment Milestone -->
+                        <div class="form-block">
+                            <div class="form-title" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Financial Milestone Details</span>
+                                <button type="button" class="btn-utility btn-mini" onclick="addMilestoneToSelection()">+ Add Another Milestone</button>
+                            </div>
+                            <div class="li-compact-grid">
+                                <div class="li-field" style="grid-column: span 2;">
+                                    <label>Milestone Name</label>
+                                    <input type="text" id="ms_name" placeholder="Trigger point">
+                                </div>
+                                <div class="li-field">
+                                    <label>Cycle %</label>
+                                    <select id="ms_payment_cycle" onchange="calculateMsCycleValue()">
+                                        <option value="10">10%</option>
+                                        <option value="20">20%</option>
+                                        <option value="30">30%</option>
+                                        <option value="100" selected>100%</option>
+                                    </select>
+                                </div>
+                                <div class="li-field">
+                                    <label>Milestone Qty</label>
+                                    <input type="number" id="ms_quantity" value="0" min="0" oninput="calculateMsCycleValue()">
+                                </div>
+                                <div class="li-field">
+                                    <label>Unit Price</label>
+                                    <input type="number" id="ms_unit_price" value="0" min="0" oninput="calculateMsCycleValue()">
+                                </div>
+                                <div class="li-field">
+                                    <label>Cycle Val (Taxable)</label>
+                                    <input type="text" id="ms_cycle_value" readonly style="background:#fefce8; font-weight:700;">
+                                </div>
+                                <div class="li-field full">
+                                    <label>Delivery Timeline (Day/Month/Year)</label>
+                                    <div style="display: flex; gap: 4px;">
+                                        <select id="ms_day" style="flex:1"></select>
+                                        <select id="ms_month" style="flex:1"></select>
+                                        <select id="ms_year" style="flex:1.5"></select>
+                                    </div>
+                                </div>
+                                <div class="li-field half">
+                                    <label>Docs Required</label>
+                                    <textarea id="ms_documents" placeholder="Proof..."></textarea>
+                                </div>
+                                <div class="li-field half" style="grid-column: span 1.5;">
+                                    <label>Specific Terms</label>
+                                    <textarea id="ms_payment_terms" placeholder="Riders..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tax-strip">PO Line Item Cycle Value = Invoice Taxable Value</div>
+
+                    <!-- Unit C: Results Grid (Internally Scrolling) -->
+                    <div class="li-table-wrapper">
+                        <table class="li-pro-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">#</th>
+                                    <th>Description</th>
+                                    <th style="width: 50px;">Qty</th>
+                                    <th style="width: 100px;">Milestone</th>
+                                    <th>Cycle Value</th>
+                                    <th>Payment Terms</th>
+                                    <th>Documents</th>
+                                    <th>Timeline</th>
+                                    <th style="text-align: right; width: 120px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="li_summaryTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="li-modal-footer">
+                    <button onclick="editLineItemFromGrid()" class="btn-pro btn-blue">Edit Item</button>
+                    <button id="mainSaveBtn" onclick="saveLineItemToDB()" class="btn-pro btn-green">Save Line Item</button>
+                    <button onclick="commitPOToDB()" class="btn-pro btn-navy">Save PO to DB</button>
+                    <button onclick="openBillingModal();" class="btn-pro btn-orange">Add Billing</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', lineItemModalHTML);
+        api.checkAuth();
+
+        const poNumber = new URLSearchParams(window.location.search).get('po_number');
+        if (!poNumber) {
+            alert('No Purchase Order Number provided');
+            window.location.href = 'accounts.html';
+        }
+
+        let currentPo = null;
+        let bgFdData = null;
+
+        function toggleBgBtn() {
+            const isBg = document.querySelector('input[name="bank_guarantee"]:checked').value === 'Yes';
+            const btn = document.getElementById('fillBgBtn');
+
+            if (isBg) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.classList.replace('btn-secondary', 'btn-primary');
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.classList.replace('btn-primary', 'btn-secondary');
+                bgFdData = null;
+                document.getElementById('bgStatusIndicator').style.display = 'none';
+            }
+        }
+
+        window.calculateBgFd = function () {
+            const poValue = parseFloat(document.getElementById('po_value').value) || 0;
+            const ob = parseFloat(document.getElementById('m_opening_balance').value) || 0;
+            const bgPercent = parseFloat(document.getElementById('m_bg_percentage').value) || 0;
+            const fdPercent = parseFloat(document.getElementById('m_fd_percentage').value) || 0;
+            const startDateStr = document.getElementById('m_bg_start_date').value;
+
+            // Ensure no negative values in tenure/claim fields and update UI
+            const getPositiveVal = (id) => {
+                const el = document.getElementById(id);
+                let val = parseInt(el.value) || 0;
+                if (val < 0) {
+                    val = 0;
+                    el.value = 0;
+                }
+                return val;
+            };
+
+            const tenureDd = getPositiveVal('m_bg_tenure_dd');
+            const tenureMm = getPositiveVal('m_bg_tenure_mm');
+            const tenureYy = getPositiveVal('m_bg_tenure_yy');
+
+            const claimDd = getPositiveVal('m_claim_dd');
+            const claimMm = getPositiveVal('m_claim_mm');
+            const claimYy = getPositiveVal('m_claim_yy');
+
+            const isClaimRequired = document.querySelector('input[name="m_claim_required"]:checked')?.value === 'Yes';
+            const claimInputs = [document.getElementById('m_claim_dd'), document.getElementById('m_claim_mm'), document.getElementById('m_claim_yy')];
+            const claimDateInput = document.getElementById('m_bg_claim_date');
+
+            if (!isClaimRequired) {
+                claimInputs.forEach(input => {
+                    input.value = '';
+                    input.disabled = true;
+                    input.style.backgroundColor = '#f1f5f9';
+                });
+                claimDateInput.value = '';
+                claimDateInput.disabled = true;
+                claimDateInput.readOnly = true;
+                claimDateInput.style.backgroundColor = '#f1f5f9';
+            } else {
+                claimInputs.forEach(input => {
+                    input.disabled = false;
+                    input.style.backgroundColor = 'white';
+                    if (input.value === '') input.value = (input.id === 'm_claim_mm') ? 3 : 0;
+                });
+                claimDateInput.disabled = false;
+                claimDateInput.readOnly = false;
+                claimDateInput.style.backgroundColor = 'white';
+            }
+
+            document.getElementById('s_po_value').textContent = '$' + poValue.toLocaleString();
+            document.getElementById('s_ob').textContent = '$' + ob.toLocaleString();
+
+            const bgValue = (poValue * bgPercent) / 100;
+            document.getElementById('m_bg_value').value = bgValue.toFixed(2);
+            document.getElementById('s_bg_calc').textContent = '$' + bgValue.toLocaleString();
+
+            const limitRemaining = ob - bgValue;
+            document.getElementById('m_bg_limit_rem').value = limitRemaining.toFixed(2);
+
+            const fdMargin = (bgValue * fdPercent) / 100;
+            document.getElementById('m_fd_margin').value = fdMargin.toFixed(2);
+
+            // Dates calculation - Using local date parts for reliability
+            if (startDateStr) {
+                const [y, m, d] = startDateStr.split('-').map(Number);
+                const startDate = new Date(y, m - 1, d);
+
+                // End Date
+                const endDate = new Date(startDate);
+                endDate.setFullYear(endDate.getFullYear() + tenureYy);
+                endDate.setMonth(endDate.getMonth() + tenureMm);
+                endDate.setDate(endDate.getDate() + tenureDd);
+
+                const formatYMD = (date) => {
+                    if (!date || isNaN(date.getTime())) return '';
+                    const yy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    return `${yy}-${mm}-${dd}`;
+                };
+
+                const formattedEndDate = formatYMD(endDate);
+                document.getElementById('m_bg_end_date').value = formattedEndDate;
+
+                // Claim Date
+                if (isClaimRequired) {
+                    const claimDate = new Date(endDate);
+                    claimDate.setFullYear(claimDate.getFullYear() + claimYy);
+                    claimDate.setMonth(claimDate.getMonth() + claimMm);
+                    claimDate.setDate(claimDate.getDate() + claimDd);
+                    document.getElementById('m_bg_claim_date').value = formatYMD(claimDate);
+                }
+            }
+
+            // Sync with internal state so that latest calculated values are sent to server
+            if (typeof bgFdData !== 'undefined' && bgFdData) {
+                bgFdData.bg_value = document.getElementById('m_bg_value').value;
+                bgFdData.bg_limit_remaining = document.getElementById('m_bg_limit_rem').value;
+                bgFdData.fd_margin_actual = document.getElementById('m_fd_margin').value;
+                bgFdData.bg_end_date = document.getElementById('m_bg_end_date').value;
+                bgFdData.bg_claim_date = document.getElementById('m_bg_claim_date').value;
+            }
+        }
+
+        function openBgModal() {
+            document.getElementById('bgFdModal').classList.add('open');
+
+            // If user hasn't modified details yet in this session, pre-fill from what was loaded from DB
+            // If they have modified, we keep the session variable bgFdData
+            if (!bgFdData) {
+                // Try loading from localStorage as a fallback/session recovery
+                const saved = localStorage.getItem('pending_bg_details');
+                if (saved) bgFdData = JSON.parse(saved);
+            }
+
+            if (bgFdData) {
+                document.getElementById('m_opening_balance').value = bgFdData.opening_balance_bg_limit || '';
+                document.getElementById('m_bg_number').value = bgFdData.bg_number || '';
+                document.getElementById('m_bg_start_date').value = bgFdData.bg_start_date || '';
+                document.getElementById('m_bg_tenure_dd').value = bgFdData.bg_tenure_dd || 0;
+                document.getElementById('m_bg_tenure_mm').value = bgFdData.bg_tenure_mm || 0;
+                document.getElementById('m_bg_tenure_yy').value = bgFdData.bg_tenure_yy || 0;
+                document.getElementById('m_bg_percentage').value = bgFdData.bg_percentage || 10;
+                document.getElementById('m_bg_status').value = bgFdData.bg_status || 'Active';
+
+                if (bgFdData.bg_claim_period_required === 'Yes') {
+                    document.querySelector('input[name="m_claim_required"][value="Yes"]').checked = true;
+                } else {
+                    document.querySelector('input[name="m_claim_required"][value="No"]').checked = true;
+                }
+
+                document.getElementById('m_claim_dd').value = bgFdData.bg_claim_period_dd || 0;
+                document.getElementById('m_claim_mm').value = bgFdData.bg_claim_period_mm || 0;
+                document.getElementById('m_claim_yy').value = bgFdData.bg_claim_period_yy || 0;
+
+                document.getElementById('m_fd_percentage').value = bgFdData.fd_percentage_on_bg || 10;
+                document.getElementById('m_fd_number').value = bgFdData.fd_number || '';
+                document.getElementById('m_roi').value = bgFdData.rate_of_interest || 6.5;
+                document.getElementById('m_fd_start_date').value = bgFdData.fd_start_date || '';
+                document.getElementById('m_fd_maturity_date').value = bgFdData.fd_maturity_date || '';
+                document.getElementById('m_fd_maturity_amount').value = bgFdData.fd_maturity_amount || '';
+                document.getElementById('m_fd_status').value = bgFdData.fd_status || 'Active';
+            }
+
+            calculateBgFd();
+        }
+
+        function closeBgModal() {
+            document.getElementById('bgFdModal').classList.remove('open');
+        }
+
+        function saveBgFdLocal() {
+            const mandatory = ['m_opening_balance', 'm_bg_percentage', 'm_bg_start_date'];
+            for (let id of mandatory) {
+                if (!document.getElementById(id).value) {
+                    alert('All fields are mandatory per the policy!');
+                    return;
+                }
+            }
+
+            // Correctly update the variable that will be sent via API
+            bgFdData = {
+                opening_balance_bg_limit: document.getElementById('m_opening_balance').value,
+                bg_number: document.getElementById('m_bg_number').value,
+                bg_start_date: document.getElementById('m_bg_start_date').value,
+                bg_tenure_dd: document.getElementById('m_bg_tenure_dd').value,
+                bg_tenure_mm: document.getElementById('m_bg_tenure_mm').value,
+                bg_tenure_yy: document.getElementById('m_bg_tenure_yy').value,
+                bg_end_date: document.getElementById('m_bg_end_date').value,
+                bg_percentage: document.getElementById('m_bg_percentage').value,
+                bg_value: document.getElementById('m_bg_value').value,
+                bg_claim_period_required: document.querySelector('input[name="m_claim_required"]:checked')?.value || 'No',
+                bg_status: document.getElementById('m_bg_status').value,
+                bg_claim_period_dd: document.getElementById('m_claim_dd').value,
+                bg_claim_period_mm: document.getElementById('m_claim_mm').value,
+                bg_claim_period_yy: document.getElementById('m_claim_yy').value,
+                bg_claim_date: document.getElementById('m_bg_claim_date').value,
+                bg_limit_remaining: document.getElementById('m_bg_limit_rem').value,
+                fd_percentage_on_bg: document.getElementById('m_fd_percentage').value,
+                fd_number: document.getElementById('m_fd_number').value,
+                fd_start_date: document.getElementById('m_fd_start_date').value,
+                fd_margin_actual: document.getElementById('m_fd_margin').value,
+                fd_maturity_date: document.getElementById('m_fd_maturity_date').value,
+                fd_maturity_amount: document.getElementById('m_fd_maturity_amount').value,
+                rate_of_interest: document.getElementById('m_roi').value,
+                fd_status: document.getElementById('m_fd_status').value
+            };
+
+            // Also sync to localStorage for consistency if needed, though we use the variable
+            localStorage.setItem('pending_bg_details', JSON.stringify(bgFdData));
+            document.getElementById('bgStatusIndicator').style.display = 'flex';
+            closeBgModal();
+        }
+
+        async function initPage() {
+            // Clear any stale local storage from previous sessions
+            localStorage.removeItem('pending_bg_details');
+
+            // Load PO data
+            const poRes = await api.get(`/purchase-orders/${poNumber}`);
+            if (poRes.error || !poRes.purchase_order) {
+                alert('Error loading purchase order: ' + (poRes.error || 'Not found'));
+                window.location.href = 'accounts.html';
+                return;
+            }
+
+            currentPo = poRes.purchase_order;
+
+            // Load Customer data for context
+            const custRes = await api.get(`/customers/${currentPo.account_id}`);
+            const select = document.getElementById('account_id');
+            const clientRef = document.getElementById('clientIdRef');
+
+            if (custRes.customer) {
+                const opt = document.createElement('option');
+                opt.value = custRes.customer.id;
+                opt.textContent = custRes.customer.customer_name;
+                opt.selected = true;
+                select.appendChild(opt);
+                clientRef.textContent = currentPo.client_id || custRes.customer.unique_client_id || 'N/A';
+
+                document.getElementById('cancelLink').href = `account-details.html?id=${currentPo.account_id}`;
+                document.getElementById('cancelBtn').href = `account-details.html?id=${currentPo.account_id}`;
+            }
+
+            // Populate PO fields
+            document.getElementById('po_number').value = currentPo.po_number || '';
+            document.getElementById('po_date').value = currentPo.po_date || '';
+            document.getElementById('po_value').value = currentPo.po_value || '';
+            document.getElementById('bill_to').value = currentPo.bill_to || '';
+            document.getElementById('ship_to').value = currentPo.ship_to || '';
+            document.getElementById('notes').value = currentPo.notes || '';
+
+            if (currentPo.bank_guarantee === 'Yes') {
+                document.querySelector('input[name="bank_guarantee"][value="Yes"]').checked = true;
+                toggleBgBtn();
+
+                // Load BG/FD Details
+                const bgRes = await api.get(`/purchase-orders/${poNumber}/bg-fd`);
+                if (bgRes.bg_fd) {
+                    bgFdData = bgRes.bg_fd;
+                    document.getElementById('bgStatusIndicator').style.display = 'flex';
+
+                    // Populate modal fields
+                    document.getElementById('m_opening_balance').value = bgFdData.opening_balance_bg_limit || '';
+                    document.getElementById('m_bg_number').value = bgFdData.bg_number || '';
+                    document.getElementById('m_bg_start_date').value = bgFdData.bg_start_date || '';
+                    document.getElementById('m_bg_tenure_dd').value = bgFdData.bg_tenure_dd || 0;
+                    document.getElementById('m_bg_tenure_mm').value = bgFdData.bg_tenure_mm || 0;
+                    document.getElementById('m_bg_tenure_yy').value = bgFdData.bg_tenure_yy || 0;
+                    document.getElementById('m_bg_percentage').value = bgFdData.bg_percentage || 10;
+                    document.getElementById('m_bg_status').value = bgFdData.bg_status || 'Active';
+
+                    if (bgFdData.bg_claim_period_required === 'Yes') {
+                        document.querySelector('input[name="m_claim_required"][value="Yes"]').checked = true;
+                    } else {
+                        document.querySelector('input[name="m_claim_required"][value="No"]').checked = true;
+                    }
+
+                    document.getElementById('m_claim_dd').value = bgFdData.bg_claim_period_dd || 0;
+                    document.getElementById('m_claim_mm').value = bgFdData.bg_claim_period_mm || 0;
+                    document.getElementById('m_claim_yy').value = bgFdData.bg_claim_period_yy || 0;
+
+                    document.getElementById('m_fd_percentage').value = bgFdData.fd_percentage_on_bg || 10;
+                    document.getElementById('m_fd_number').value = bgFdData.fd_number || '';
+                    document.getElementById('m_roi').value = bgFdData.rate_of_interest || 6.5;
+                    document.getElementById('m_fd_start_date').value = bgFdData.fd_start_date || '';
+                    document.getElementById('m_fd_maturity_date').value = bgFdData.fd_maturity_date || '';
+                    document.getElementById('m_fd_maturity_amount').value = bgFdData.fd_maturity_amount || '';
+                    document.getElementById('m_fd_status').value = bgFdData.fd_status || 'Active';
+                }
+            }
+        }
+
+        document.getElementById('poForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Updating...';
+            btn.disabled = true;
+
+            const user = api.getCurrentUser();
+            const data = {
+                user_id: user.id,
+                account_id: currentPo.account_id,
+                client_id: document.getElementById('clientIdRef').textContent,
+                po_number: document.getElementById('po_number').value,
+                po_date: document.getElementById('po_date').value,
+                po_value: document.getElementById('po_value').value,
+                bank_guarantee: document.querySelector('input[name="bank_guarantee"]:checked')?.value || 'No',
+                bill_to: document.getElementById('bill_to').value,
+                ship_to: document.getElementById('ship_to').value,
+                notes: document.getElementById('notes').value
+            };
+
+            const response = await api.put(`/purchase-orders/${poNumber}`, data);
+            const statusMsg = document.getElementById('statusMsg');
+
+            if (response.error) {
+                statusMsg.textContent = '❌ ' + response.error;
+                statusMsg.style.color = 'var(--danger)';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } else {
+                // Now save BG/FD details if they exist and BG is selected
+                if (data.bank_guarantee === 'Yes' && bgFdData) {
+                    await api.post(`/purchase-orders/${data.po_number}/bg-fd`, bgFdData);
+                    localStorage.removeItem('pending_bg_details');
+                }
+
+                statusMsg.textContent = '✅ Purchase Order Updated Successfully!';
+                statusMsg.style.color = 'var(--success)';
+                setTimeout(() => {
+                    window.location.href = `account-details.html?id=${currentPo.account_id}`;
+                }, 1000);
+            }
+        });
+
+        initPage();
+    </script>
+    <div id="bgFdModal" class="modal-overlay">
+        <div class="modal-card"
+            style="max-width: 1000px; background: #e0f2fe; border-radius: 4px; border: 2px solid #0891b2;">
+            <div class="modal-header"
+                style="background: linear-gradient(to right, #06b6d4, #0891b2); padding: 0.5rem 1rem; border-bottom: none;">
+                <h2 class="modal-title"
+                    style="color: white; font-weight: 800; font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                    BANK GUARANTEE AND FIXED DEPOSIT DETAILS</h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button onclick="closeBgModal()"
+                        style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Top Summary Bubbles floating right logic -->
+            <div
+                style="display: flex; justify-content: flex-end; padding: 0.5rem 1rem; gap: 1rem; margin-top: -10px; position: relative; z-index: 10;">
+                <div
+                    style="background: #ccfbf1; padding: 0.25rem 0.75rem; border-radius: 8px; border: 1px solid #99f6e4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
+                    <div style="font-size: 0.65rem; color: #0f766e; font-weight: 700; margin-bottom: 2px;">PO Value
+                        (display)</div>
+                    <div id="s_po_value" style="font-size: 0.9rem; font-weight: 800; color: #115e59;">$0.00</div>
+                </div>
+                <div
+                    style="background: #ccfbf1; padding: 0.25rem 0.75rem; border-radius: 8px; border: 1px solid #99f6e4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
+                    <div style="font-size: 0.65rem; color: #0f766e; font-weight: 700; margin-bottom: 2px;">Opening
+                        Balance of BG Limit</div>
+                    <input type="number" id="m_opening_balance" oninput="calculateBgFd()" placeholder="0.00"
+                        style="width: 100px; text-align: center; border: 1px solid #2dd4bf; border-radius: 4px; font-weight: 700; color: #134e4a; background: #f0fdf4;">
+                </div>
+            </div>
+
+            <div class="modal-body" style="padding: 0.5rem 1rem;">
+
+                <!-- BG SECTION -->
+                <div
+                    style="background: #ecfeff; border: 2px solid #a5f3fc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; position: relative;">
+                    <!-- Section Title implied by grouping -->
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: end;">
+
+                        <!-- Row 1 -->
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Number (can be blank)</label>
+                            <input type="text" id="m_bg_number" placeholder="BG-XXXX"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Start Date</label>
+                            <input type="date" id="m_bg_start_date" onchange="calculateBgFd()"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Tenure (DD MM YY)</label>
+                            <div class="tenure-group" style="background: #e0f2fe; border: 1px solid #bae6fd;">
+                                <div class="tenure-item">
+                                    <span>DD</span>
+                                    <input type="number" id="m_bg_tenure_dd" value="0" min="0"
+                                        oninput="calculateBgFd()">
+                                </div>
+                                <div class="tenure-item">
+                                    <span>MM</span>
+                                    <input type="number" id="m_bg_tenure_mm" value="0" min="0"
+                                        oninput="calculateBgFd()">
+                                </div>
+                                <div class="tenure-item">
+                                    <span>YY</span>
+                                    <input type="number" id="m_bg_tenure_yy" value="0" min="0"
+                                        oninput="calculateBgFd()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                End Date(display)</label>
+                            <input type="text" id="m_bg_end_date" readonly
+                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">Bank
+                                Guarantee Percentage</label>
+                            <input type="number" id="m_bg_percentage" value="10" oninput="calculateBgFd()"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group span-2" style="grid-column: span 2;">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">Bank
+                                Guarantee Value = PO Value * BG %</label>
+                            <input type="text" id="m_bg_value" readonly
+                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Claim Period Required</label>
+                            <div
+                                style="display: flex; gap: 1rem; align-items: center; background: #cffafe; padding: 0.4rem; border-radius: 4px; border: 1px solid #67e8f9;">
+                                <label
+                                    style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #0e7490; font-weight: 600; cursor: pointer;">
+                                    <input type="radio" name="m_claim_required" value="Yes" checked
+                                        onchange="calculateBgFd()"> Yes
+                                </label>
+                                <label
+                                    style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #0e7490; font-weight: 600; cursor: pointer;">
+                                    <input type="radio" name="m_claim_required" value="No" onchange="calculateBgFd()">
+                                    No
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Status</label>
+                            <select id="m_bg_status" style="background: #cffafe; border: 1px solid #67e8f9;">
+                                <option>Draft</option>
+                                <option>Requested</option>
+                                <option selected>Active</option>
+                                <option>Expired</option>
+                                <option>Returned</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Claim Period (DD MM YY)</label>
+                            <div class="tenure-group" style="background: #e0f2fe; border: 1px solid #bae6fd;">
+                                <div class="tenure-item">
+                                    <span>DD</span>
+                                    <input type="number" id="m_claim_dd" value="0" min="0" oninput="calculateBgFd()">
+                                </div>
+                                <div class="tenure-item">
+                                    <span>MM</span>
+                                    <input type="number" id="m_claim_mm" value="3" min="0" oninput="calculateBgFd()">
+                                </div>
+                                <div class="tenure-item">
+                                    <span>YY</span>
+                                    <input type="number" id="m_claim_yy" value="0" min="0" oninput="calculateBgFd()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Claim Date(display)</label>
+                            <input type="text" id="m_bg_claim_date" readonly
+                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
+                        </div>
+
+                        <div class="field-group">
+                            <!-- Spacer or empty -->
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="field-group span-4" style="grid-column: span 4;">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
+                                Limit Remaining (when BG number is there, then OB – BGV will show as BGR)</label>
+                            <input type="text" id="m_bg_limit_rem" readonly
+                                style="background: #ccfbf1; color: #047857; border: 1px solid #5eead4; font-weight: 800; font-size: 1.1rem; text-align: center;">
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- FD SECTION -->
+                <div style="background: #ecfeff; border: 2px solid #a5f3fc; border-radius: 8px; padding: 1rem;">
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: end;">
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">% of
+                                FD on BG Amount</label>
+                            <input type="number" id="m_fd_percentage" value="10" oninput="calculateBgFd()"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
+                                Number</label>
+                            <input type="text" id="m_fd_number" placeholder="FD-XXXX"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
+                                Start Date</label>
+                            <input type="date" id="m_fd_start_date"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
+                                Margin(Actual) Agst. PBG(display)</label>
+                            <input type="text" id="m_fd_margin" readonly
+                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
+                                Maturity Date</label>
+                            <input type="date" id="m_fd_maturity_date"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
+                                Maturity Amount</label>
+                            <input type="number" id="m_fd_maturity_amount"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">Rate
+                                of Interest</label>
+                            <input type="number" step="0.01" id="m_roi" value="6.5"
+                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                        </div>
+
+                        <div class="field-group">
+                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
+                                Status</label>
+                            <select id="m_fd_status" style="background: #cffafe; border: 1px solid #67e8f9;">
+                                <option selected>Active</option>
+                                <option>Liquidated</option>
+                                <option>Released</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer"
+                style="background: transparent; border-top: none; justify-content: center; padding-bottom: 1.5rem;">
+                <!-- Replaced Cancel button with just the Save button as per image main focus, kept cancel logic in X or separate if needed, but image shows huge blue area -->
+                <div style="background: #0284c7; padding: 2rem; border-radius: 4px; width: 100%; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;"
+                    onclick="saveBgFdLocal()">
+                    <div style="text-align: center;">
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700;">SAVE BG and FD DETAILS</h3>
+                        <p style="margin: 0; font-size: 0.8rem; opacity: 0.8;">(All Details are mandatory)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+CREATE TABLE customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                customer_name TEXT,
+                short_name TEXT,
+                msme_status TEXT, 
+                address TEXT,
+                gst_number TEXT,
+                pan_number TEXT,
+                org_type TEXT, 
+                contact_person TEXT,
+                contact_number TEXT,
+                email_id TEXT,
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+
+Columns: id, user_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes, created_at

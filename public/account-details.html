@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Details - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* ===== Sleek Activity Timeline v3 ===== */
+
+        /* Timeline Container */
+        .timeline-container {
+            position: relative;
+            padding-left: 2.5rem;
+        }
+
+        /* Thin Timeline Line */
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 0.65rem;
+            top: 0.5rem;
+            bottom: 0.5rem;
+            width: 1px;
+            background: linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 100%);
+        }
+
+        /* Timeline Item - Ultra Sleek */
+        .timeline-item {
+            position: relative;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 8px;
+            background: transparent;
+            transition: all 0.2s ease;
+            animation: fadeIn 0.3s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeline-item:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .timeline-item:nth-child(2) {
+            animation-delay: 0.04s;
+        }
+
+        .timeline-item:nth-child(3) {
+            animation-delay: 0.08s;
+        }
+
+        .timeline-item:nth-child(4) {
+            animation-delay: 0.12s;
+        }
+
+        .timeline-item:nth-child(5) {
+            animation-delay: 0.16s;
+        }
+
+        .timeline-item:hover {
+            background: #f8fafc;
+        }
+
+        /* Small Refined Icon */
+        .timeline-icon {
+            position: absolute;
+            left: -2.15rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            border: 2px solid white;
+            z-index: 2;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline-icon.call {
+            background: #b4c7dc;
+        }
+
+        /* Powder Blue */
+        .timeline-icon.meeting {
+            background: #a3b18a;
+        }
+
+        /* Olive Green */
+        .timeline-icon.email {
+            background: #d4a5a5;
+        }
+
+        /* Mauve/Dusty Rose */
+        .timeline-icon.note {
+            background: #c9b8a8;
+        }
+
+        /* Warm Taupe */
+
+        /* Header Row */
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Activity Type - Subtle Muted */
+        .activity-type {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .activity-type.call {
+            color: #64748b;
+        }
+
+        .activity-type.meeting {
+            color: #64748b;
+        }
+
+        .activity-type.email {
+            color: #64748b;
+        }
+
+        .activity-type.note {
+            color: #64748b;
+        }
+
+        /* Timestamp */
+        .timeline-time {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .timeline-time .highlight {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Timeline Squeezing */
+        .timeline-column {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        /* Purchase Order Specific Styles */
+        .po-form-container {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .po-input-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .po-input {
+            background: #dcfce7 !important;
+            /* Soft green from image */
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 500;
+            color: #166534;
+            padding: 0.75rem 1rem !important;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .po-input::placeholder {
+            color: #166534;
+            opacity: 0.7;
+        }
+
+        .po-btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .po-btn-blue {
+            background: #0284c7;
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .po-btn-orange {
+            background: #f59e0b;
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            height: auto;
+            min-height: 80px;
+            line-height: 1.2;
+        }
+
+        .po-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(105%);
+        }
+
+        /* Hover-only Actions */
+        .timeline-actions {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .timeline-item:hover .timeline-actions {
+            opacity: 1;
+        }
+
+        .btn-calendar {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.3rem 0.6rem;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 4px;
+            color: #64748b;
+            font-size: 0.65rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-calendar:hover {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Past Activities */
+        .timeline-item.past {
+            opacity: 0.5;
+        }
+
+        .timeline-item.past:hover {
+            opacity: 0.85;
+        }
+
+        /* Today Indicator */
+        .timeline-item.today {
+            background: #f0fdf4;
+            border-left: 2px solid #10b981;
+            margin-left: -2px;
+        }
+
+        .timeline-item.today::after {
+            content: 'now';
+            position: absolute;
+            right: 0.75rem;
+            top: 0.5rem;
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: #059669;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .timeline-item.today:hover::after {
+            display: none;
+        }
+
+        /* Separator between days */
+        .timeline-date-separator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0 1rem;
+            padding-left: 0.5rem;
+        }
+
+        .timeline-date-separator span {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+
+        .timeline-date-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, #e2e8f0, transparent);
+        }
+
+        /* Empty State */
+        .timeline-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #94a3b8;
+        }
+
+        .timeline-empty-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.4;
+        }
+
+        .timeline-empty p {
+            margin: 0;
+        }
+
+        .timeline-empty .subtitle {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        /* Pagination */
+        .timeline-pagination {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .btn-load-more {
+            width: 100%;
+            padding: 0.875rem;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px dashed #cbd5e1;
+            border-radius: var(--radius-md);
+            color: var(--brand-dark);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load-more:hover {
+            border-style: solid;
+            border-color: var(--brand);
+            background: var(--brand-light);
+        }
+
+        .btn-collapse {
+            width: 100%;
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-collapse:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.2s;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .modal-overlay.open .modal-card {
+            transform: translateY(0);
+        }
+
+        /* Interaction Form Layout */
+        .interaction-form {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .interaction-form:focus-within {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .interaction-textarea {
+            width: 100%;
+            min-height: 80px;
+            border: none;
+            padding: 0;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            color: #334155;
+            resize: none;
+            outline: none;
+            background: transparent;
+        }
+
+        .interaction-textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        .interaction-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .interaction-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .interaction-select-wrapper,
+        .interaction-reminder-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f8fafc;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .interaction-select-wrapper select,
+        .interaction-reminder-wrapper input {
+            background: transparent;
+            border: none;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            outline: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .interaction-icon {
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-log {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-log:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-log:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav"><a href="dashboard.html" class="nav-item">Dashboard</a><a href="accounts.html"
+                    class="nav-item active">Accounts</a><a href="contacts.html" class="nav-item">Contacts</a><a
+                    href="leads.html" class="nav-item">Leads</a><a href="tasks.html" class="nav-item">Tasks</a><a
+                    href="products.html" class="nav-item">Products</a><a href="settings.html"
+                    class="nav-item">Settings</a></nav>
+        </aside>
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div style="margin-bottom: 1rem;"><a href="accounts.html"
+                        style="color: var(--text-muted); font-size: 0.9rem;">&larr;
+                        Back to Accounts</a></div>
+                <div class="dashboard-header" style="border: none; margin-bottom: 2rem;">
+                    <div>
+                        <h1 id="accName">Loading...</h1>
+                        <p id="accMeta" style="color: var(--text-muted);"></p>
+                    </div>
+                    <div><button onclick="openEditModal()" class="btn btn-secondary">Edit Account</button></div>
+                </div>
+                <!-- Edit Modal -->
+                <div id="editModal" class="modal-overlay">
+                    <div class="modal-card"
+                        style="max-width: 600px; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+
+                        <!-- Modal Header -->
+                        <div
+                            style="background: var(--bg-surface); padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="margin: 0; color: var(--primary-dark); font-size: 1.25rem;">Edit Account Details
+                            </h2>
+                            <button onclick="closeEditModal()"
+                                style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0.25rem;">&times;</button>
+                        </div>
+
+                        <!-- Modal Body (Scrollable) -->
+                        <div style="padding: 2rem; overflow-y: auto; max-height: calc(85vh - 140px);">
+                            <form id="editForm">
+                                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                                    <!-- Identity Section -->
+                                    <div style="display: grid; gap: 1rem;">
+                                        <h4
+                                            style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                            Identity</h4>
+                                        <div>
+                                            <label class="form-label">Account Name</label>
+                                            <input type="text" id="edit_name" required
+                                                placeholder="Company or Client Name">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                            <div>
+                                                <label class="form-label">Organization Type</label>
+                                                <select id="edit_org_type">
+                                                    <option value="Corporate">Corporate</option>
+                                                    <option value="Private">Private</option>
+                                                    <option value="Government">Government</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label">Short Code</label>
+                                                <input type="text" id="edit_short_name" placeholder="e.g. ACME">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Section -->
+                                    <div style="display: grid; gap: 1rem;">
+                                        <h4
+                                            style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 0.5rem;">
+                                            Contact Information</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                            <div>
+                                                <label class="form-label">Email Address</label>
+                                                <input type="email" id="edit_email" placeholder="contact@example.com">
+                                            </div>
+                                            <div>
+                                                <label class="form-label">Phone Number</label>
+                                                <input type="text" id="edit_phone" placeholder="+91 ...">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Location Section -->
+                                    <div>
+                                        <h4
+                                            style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 0.5rem;">
+                                            Location</h4>
+                                        <label class="form-label">Business Address</label>
+                                        <textarea id="edit_address" rows="3"
+                                            placeholder="Full Street Address..."></textarea>
+                                    </div>
+
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div
+                            style="padding: 1.5rem 2rem; background: var(--bg-surface); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem;">
+                            <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+                            <button type="button"
+                                onclick="document.getElementById('editForm').dispatchEvent(new Event('submit'))"
+                                class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-grid"
+                    style="background: transparent; border: none; box-shadow: none; padding: 0 !important; display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem;">
+                    <!-- Left Column: Details -->
+                    <div class="col-span-4" style="background: transparent; padding: 0;">
+                        <div class="card" style="margin-bottom: 1.5rem;">
+                            <h3 style="margin-bottom: 1rem; color: var(--primary-dark);">Contact Info</h3>
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem;">
+                                <div><label>Email</label>
+                                    <div id="accEmail">-</div>
+                                </div>
+                                <div><label>Phone</label>
+                                    <div id="accPhone">-</div>
+                                </div>
+                                <div><label>Address</label>
+                                    <div id="accAddress">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="margin-bottom: 1.5rem;">
+                            <h3 style="margin-bottom: 1rem; color: var(--primary-dark);">People</h3>
+                            <div id="contactsMiniList">
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Loading contacts...</p>
+                            </div><button class="btn btn-secondary"
+                                style="width: 100%; margin-top: 1rem; font-size: 0.8rem;"
+                                onclick="location.href='new-contact.html'">+Add Contact</button>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-bottom: 1rem; color: var(--primary-dark);">Planned Tasks</h3>
+                            <div id="tasksMiniList">
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Loading tasks...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right Column: Main Area (PO + Timeline) -->
+                    <div class="col-span-8" style="background: transparent; padding: 0;">
+
+                        <!-- Purchase Orders Summary Section -->
+                        <div class="card" style="margin-bottom: 2rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <h3 style="margin: 0; color: var(--primary-dark);">Purchase Orders</h3>
+                                <a id="createPoBtn" href="#" class="btn btn-primary" style="font-size: 0.75rem;">Create
+                                    Purchase
+                                    Order</a>
+                            </div>
+
+                            <div id="poList">
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Loading purchase orders...</p>
+                            </div>
+                        </div>
+
+                        <!-- Activity Timeline (Squeezed & Elegant) -->
+                        <div class="timeline-column">
+                            <div class="card" style="padding: 1.5rem;">
+                                <h3 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Activity Timeline</h3>
+                                <!-- New Interaction Form -->
+                                <div class="interaction-form">
+                                    <textarea id="noteContent" class="interaction-textarea"
+                                        placeholder="Log a call, meeting, or note..."></textarea>
+                                    <div class="interaction-footer">
+                                        <div class="interaction-controls">
+                                            <div class="interaction-select-wrapper">
+                                                <span class="interaction-icon">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <path
+                                                            d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                                                        </path>
+                                                    </svg>
+                                                </span>
+                                                <select id="noteType">
+                                                    <option value="Note">Note</option>
+                                                    <option value="Call">Call</option>
+                                                    <option value="Meeting">Meeting</option>
+                                                    <option value="Email">Email</option>
+                                                </select>
+                                            </div>
+                                            <div class="interaction-reminder-wrapper">
+                                                <span class="interaction-icon">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                                    </svg>
+                                                </span>
+                                                <span
+                                                    style="font-size: 0.75rem; color: #64748b; font-weight: 500; margin-right: 0.25rem; white-space: nowrap;">Remind
+                                                    me:</span>
+                                                <input type="datetime-local" id="reminderDate" title="Set a reminder">
+                                            </div>
+                                        </div>
+                                        <button class="btn-log" onclick="addInteraction()">Log Activity</button>
+                                    </div>
+                                </div>
+                                <!-- Timeline Feed -->
+                                <div id="timelineFeed">
+                                    <p style="color: var(--text-muted);">No activity yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="js/api.js"></script>
+    <script src="js/ics.js"></script>
+    <script>api.checkAuth();
+        const urlParams = new URLSearchParams(window.location.search);
+        const accountId = urlParams.get('id');
+
+        if (!accountId) {
+            alert('No account ID provided');
+            window.location.href = 'accounts.html';
+        }
+
+        let currentAccount = null;
+
+        async function loadData() {
+
+            // Load Account Details
+            const accRes = await api.get(`/customers/${accountId}`);
+
+            if (accRes.customer) {
+                currentAccount = accRes.customer;
+                const c = accRes.customer;
+                document.getElementById('accName').textContent = c.customer_name;
+
+                document.getElementById('accMeta').innerHTML = `
+                    <span class="badge" style="background: var(--brand-light); color: var(--brand-dark); font-weight: 700; font-family: monospace;">${c.unique_client_id || 'NO-ID'}</span>
+                    <span style="margin: 0 0.5rem; opacity: 0.3;">|</span>
+                    ${c.org_type} • ${c.short_name || 'No Code'}
+                `;
+                document.getElementById('accEmail').textContent = c.email_id || '-';
+                document.getElementById('accPhone').textContent = c.contact_number || '-';
+                document.getElementById('accAddress').textContent = c.address || '-';
+            }
+
+            // Load Contacts
+            const contactRes = await api.get('/contacts');
+
+            if (contactRes.contacts) {
+                const linked = contactRes.contacts.filter(ct => ct.account_id == accountId);
+                const contactList = document.getElementById('contactsMiniList');
+
+                if (linked.length > 0) {
+                    contactList.innerHTML = linked.map(ct => `
+                        <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                             <div style="width: 2rem; height: 2rem; background: var(--brand-light); color: var(--brand); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; margin-right: 0.75rem;">
+                                ${ct.name.charAt(0)}
+                            </div> 
+                            <div> 
+                                <div style="font-weight: 600; font-size: 0.9rem;">${ct.name}</div> 
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${ct.role || 'No Role'}</div> 
+                             </div> 
+                        </div>`).join('');
+                } else {
+                    contactList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No contacts linked.</p>';
+                }
+            }
+
+            // Load Linked Tasks
+            const user = api.getCurrentUser();
+
+            const tasksRes = await api.get(`/tasks?account_id=${accountId}`);
+            const taskList = document.getElementById('tasksMiniList');
+
+            if (tasksRes.tasks && tasksRes.tasks.length > 0) {
+                // Filter for pending only
+                const pending = tasksRes.tasks.filter(t => t.status !== 'Done');
+
+                if (pending.length > 0) {
+                    taskList.innerHTML = pending.map(t => `
+                         <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.5rem;" > 
+                            <div style="font-weight: 600; font-size: 0.9rem;" >${t.title}</div> 
+                            <div style="font-size: 0.8rem; color: ${t.type === 'Call' ? 'var(--info)' : 'var(--text-muted)'};" >
+                                ${t.type} • Due ${t.due_date || 'No Date'}
+                            </div> 
+                        </div>`).join('');
+                } else {
+                    taskList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No open tasks.</p>';
+                }
+            } else {
+                taskList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No tasks.</p>';
+            }
+
+            loadTimeline();
+            loadPurchaseOrders();
+        }
+
+        async function loadPurchaseOrders() {
+            const clientId = currentAccount ? currentAccount.unique_client_id : '';
+            document.getElementById('createPoBtn').href = `new-purchase-order.html?account_id=${accountId}&client_id=${clientId}`;
+            const res = await api.get(`/purchase-orders?account_id=${accountId}`);
+            const poList = document.getElementById('poList');
+
+            if (res.purchase_orders && res.purchase_orders.length > 0) {
+                poList.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                    ${res.purchase_orders.map(po => `
+                            <div class="card" style="padding: 1rem; background: #f0fdf4 !important; border: 1px solid #bbf7d0; box-shadow: none;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+                                    <span style="font-weight: 700; color: #166534; font-size: 0.9rem;">#${po.po_number}</span>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                        <span style="font-size: 0.75rem; color: #166534; opacity: 0.8;">${new Date(po.po_date).toLocaleDateString()}</span>
+                                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                            <a href="edit-purchase-order.html?po_number=${po.po_number}" style="font-size: 0.7rem; color: #15803d; text-decoration: underline; font-weight: 600;">Edit</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #166534; font-family: monospace; margin-bottom: 0.5rem; font-weight: 600;">Ref: ${po.client_id || 'N/A'}</div>
+                                <div style="font-size: 1.1rem; font-weight: 800; color: #0e7490; margin-bottom: 0.5rem;">$${parseFloat(po.po_value).toLocaleString()}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">
+                                    ${po.bank_guarantee === 'Yes' ? '✅ BG Attached' : '❌ No BG'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                poList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No purchase orders found for this account.</p>';
+            }
+        }
+
+        async function deletePurchaseOrder(poNumber) {
+            if (!confirm(`Are you sure you want to delete Purchase Order #${poNumber}?\n\nThis will permanently delete:\n• The Purchase Order\n• All Line Items\n• All Milestones\n\nThis action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const res = await api.delete(`/purchase-orders/${encodeURIComponent(poNumber)}`);
+                if (res.error) {
+                    alert('Error deleting Purchase Order: ' + res.error);
+                } else {
+                    alert('Purchase Order deleted successfully!');
+                    loadPurchaseOrders(); // Refresh the list
+                }
+            } catch (err) {
+                console.error('Error deleting PO:', err);
+                alert('Failed to delete Purchase Order');
+            }
+        }
+
+        let allInteractions = [];
+        const PAGE_SIZE = 5;
+        let currentPage = 1;
+
+        async function loadTimeline() {
+            const user = api.getCurrentUser();
+
+            const res = await api.get(`/interactions?account_id=${accountId}`);
+            allInteractions = res.interactions || [];
+            currentPage = 1;
+            renderTimeline();
+        }
+
+        function renderTimeline() {
+            const feed = document.getElementById('timelineFeed');
+            const itemsToShow = allInteractions.slice(0, currentPage * PAGE_SIZE);
+            const hasMore = allInteractions.length > itemsToShow.length;
+
+            // Helper function for activity icons (clean SVG icons)
+            function getActivityIcon(type) {
+                const icons = {
+                    'Call': '<svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>',
+                    'Meeting': '<svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+                    'Email': '<svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+                    'Note': '<svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>'
+                };
+                return icons[type] || '<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="8"/></svg>';
+            }
+
+            // Helper function for relative time
+            function getRelativeTime(date) {
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (minutes < 1) return 'Just now';
+                if (minutes < 60) return `${minutes} min ago`;
+                if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                if (days === 1) return 'Yesterday';
+                if (days < 7) return `${days} days ago`;
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+
+            if (itemsToShow.length > 0) {
+                const today = new Date().toDateString();
+
+                let html = '<div class="timeline-container">';
+
+                html += itemsToShow.map((i, index) => {
+                    const activityDate = new Date(i.date);
+                    const isToday = activityDate.toDateString() === today;
+                    const isPast = activityDate < new Date() && !isToday;
+                    const itemClass = isToday ? 'timeline-item today' : (isPast ? 'timeline-item past' : 'timeline-item');
+                    const typeClass = i.type.toLowerCase();
+                    const relativeTime = getRelativeTime(activityDate);
+                    const fullDateTime = activityDate.toLocaleString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    return `
+                    <div class="${itemClass}" style="animation-delay: ${index * 0.05}s;">
+                        <div class="timeline-icon ${typeClass}">${getActivityIcon(i.type)}</div>
+                        <div class="timeline-header">
+                            <span class="activity-type ${typeClass}">${i.type}</span>
+                            <span class="timeline-time"><span class="highlight">${relativeTime}</span> · ${fullDateTime}</span>
+                        </div>
+                        <div class="timeline-content">${i.details}</div>
+                        <div class="timeline-actions">
+                            <button class="btn-calendar" onclick="ICS.download('${i.type}', '${i.details.replace(/'/g, "\\'")}', '${i.date}')">
+                                📅 Calendar
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                html += '</div>'; // Close timeline-container
+
+                // Pagination
+                if (hasMore || currentPage > 1) {
+                    html += '<div class="timeline-pagination">';
+                    if (hasMore) {
+                        html += `<button class="btn-load-more" onclick="showMoreActivities()">
+                            ↓ Show More (${allInteractions.length - itemsToShow.length} remaining)
+                        </button>`;
+                    }
+                    if (currentPage > 1) {
+                        html += `<button class="btn-collapse" onclick="showLessActivities()">
+                            ↑ Collapse
+                        </button>`;
+                    }
+                    html += '</div>';
+                }
+
+                feed.innerHTML = html;
+            } else {
+                feed.innerHTML = `
+                    <div class="timeline-empty">
+                        <div class="timeline-empty-icon">📭</div>
+                        <p>No activity yet</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Log your first interaction above</p>
+                    </div>`;
+            }
+        }
+
+        function showMoreActivities() {
+            currentPage++;
+            renderTimeline();
+        }
+
+        function showLessActivities() {
+            currentPage = 1;
+            renderTimeline();
+            // Scroll back to timeline section
+            document.getElementById('timelineFeed').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function addInteraction() {
+            const contentInput = document.getElementById('noteContent');
+            const content = contentInput.value.trim();
+            const type = document.getElementById('noteType').value;
+            const reminderInput = document.getElementById('reminderDate');
+            const reminderDate = reminderInput.value;
+
+            if (!content) {
+                alert('Please enter some details for the activity.');
+                contentInput.focus();
+                return;
+            }
+
+            const btn = document.querySelector('button[onclick="addInteraction()"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Logging...';
+            btn.disabled = true;
+
+            const user = api.getCurrentUser();
+
+            const res = await api.post('/interactions', {
+                user_id: user.id,
+                account_id: accountId,
+                type: type,
+                details: content,
+                date: new Date().toISOString(),
+                reminder_date: reminderDate || null
+            });
+
+            if (res.error) {
+                alert('Error logging activity: ' + res.error);
+            } else {
+                // If reminder date is set, automatically download ICS file
+                if (reminderDate) {
+                    ICS.download(`${type}: ${content.substring(0, 50)}`, content, reminderDate);
+                }
+                contentInput.value = '';
+                reminderInput.value = '';
+                await loadTimeline();
+            }
+
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+
+        loadData();
+
+        // Modal Logic
+        const modal = document.getElementById('editModal');
+        const form = document.getElementById('editForm');
+
+        function openEditModal() {
+            if (!currentAccount) return;
+            document.getElementById('edit_name').value = currentAccount.customer_name || '';
+            document.getElementById('edit_org_type').value = currentAccount.org_type || 'Corporate';
+            document.getElementById('edit_short_name').value = currentAccount.short_name || '';
+            document.getElementById('edit_email').value = currentAccount.email_id || '';
+            document.getElementById('edit_phone').value = currentAccount.contact_number || '';
+            document.getElementById('edit_address').value = currentAccount.address || '';
+
+            modal.classList.add('open');
+        }
+
+        function closeEditModal() {
+            modal.classList.remove('open');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
+
+            const updatedData = {
+                user_id: api.getCurrentUser().id,
+                customer_name: document.getElementById('edit_name').value,
+                org_type: document.getElementById('edit_org_type').value,
+                short_name: document.getElementById('edit_short_name').value,
+                email_id: document.getElementById('edit_email').value,
+                contact_number: document.getElementById('edit_phone').value,
+                address: document.getElementById('edit_address').value,
+                // Preserve other fields
+                msme_status: currentAccount.msme_status,
+                gst_number: currentAccount.gst_number,
+                pan_number: currentAccount.pan_number,
+                contact_person: currentAccount.contact_person,
+                notes: currentAccount.notes
+            };
+
+            const result = await api.put(`/customers/${accountId}`, updatedData);
+
+            if (result.error) {
+                alert('Error updating account: ' + result.error);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } else {
+                closeEditModal();
+                loadData(); // Reload to show changes
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

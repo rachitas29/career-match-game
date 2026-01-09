@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Contact - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .form-grid>div {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="contacts.html" class="nav-item active">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container" style="max-width: 800px;">
+                <div style="margin-bottom: 1rem;">
+                    <a href="contacts.html" style="color: var(--text-muted); font-size: 0.9rem;">&larr; Back to
+                        Contacts</a>
+                </div>
+
+                <div class="page-title-bar">
+                    <h1 style="color: var(--primary-dark); margin: 0; font-size: 1.8rem; font-weight: 700;">Add Contact
+                    </h1>
+                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Create a new contact profile.</p>
+                </div>
+
+                <form id="contactForm" class="form-grid">
+                    <div class="col-span-12">
+                        <label>Associate with Account (Optional)</label>
+                        <select id="account_id">
+                            <option value="">Select Account...</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-6">
+                        <label>Full Name</label>
+                        <input type="text" id="name" required placeholder="John Doe">
+                    </div>
+                    <div class="col-span-6">
+                        <label>Role / Job Title</label>
+                        <input type="text" id="role" placeholder="Manager">
+                    </div>
+
+                    <div class="col-span-6">
+                        <label>Email</label>
+                        <input type="email" id="email" placeholder="john@example.com">
+                    </div>
+                    <div class="col-span-6">
+                        <label>Phone</label>
+                        <input type="text" id="phone" placeholder="+1 234 567 8900">
+                    </div>
+
+                    <div class="col-span-12" style="margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary">Save Contact</button>
+                    </div>
+                </form>
+                <div id="statusMsg" style="margin-top: 1rem; text-align: center; display: none;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        // Load accounts for dropdown
+        async function loadAccounts() {
+            const result = await api.get('/customers');
+            if (result.customers) {
+                const select = document.getElementById('account_id');
+                result.customers.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.customer_name;
+                    select.appendChild(opt);
+                });
+            }
+        }
+        loadAccounts();
+
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const getVal = (id) => document.getElementById(id).value;
+            const user = api.getCurrentUser();
+
+            const data = {
+                user_id: user.id,
+                account_id: getVal('account_id') || null,
+                name: getVal('name'),
+                role: getVal('role'),
+                email: getVal('email'),
+                phone: getVal('phone')
+            };
+
+            const result = await api.post('/contacts', data);
+            const statusMsg = document.getElementById('statusMsg');
+
+            if (result.error) {
+                statusMsg.textContent = result.error;
+                statusMsg.style.color = 'var(--error)';
+            } else {
+                statusMsg.textContent = 'Contact Saved!';
+                statusMsg.style.color = 'var(--success)';
+                setTimeout(() => window.location.href = 'contacts.html', 1000);
+            }
+            statusMsg.style.display = 'block';
+        });
+    </script>
+</body>
+
+</html>

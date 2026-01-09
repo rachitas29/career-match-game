@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item active">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1>Leads</h1>
+                        <p>Track your potential business opportunities.</p>
+                    </div>
+                    <div>
+                        <a href="new-lead.html" class="btn btn-primary">+ New Lead</a>
+                    </div>
+                </div>
+
+                <div class="card" style="max-width: 100%;">
+                    <div id="leadList" class="customer-list">
+                        <p>Loading leads...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        api.checkAuth();
+
+        async function loadLeads() {
+            const list = document.getElementById('leadList');
+            const result = await api.get('/leads');
+
+            if (result.error) {
+                list.innerHTML = `<p style="color: var(--error)">Error loading leads: ${result.error}</p>`;
+                return;
+            }
+
+            if (result.leads.length === 0) {
+                list.innerHTML = '<p>No leads found. Start selling!</p>';
+                return;
+            }
+
+            list.innerHTML = result.leads.map(l => {
+                let badgeColor = '#94a3b8'; // Default grey
+                if (l.status === 'New') badgeColor = '#3b82f6'; // Blue
+                if (l.status === 'Contacted') badgeColor = '#f59e0b'; // Amber
+                if (l.status === 'Qualified') badgeColor = '#8b5cf6'; // Purple
+                if (l.status === 'Won') badgeColor = '#22c55e'; // Green
+                if (l.status === 'Lost') badgeColor = '#ef4444'; // Red
+
+                return `
+                <div class="customer-item">
+                    <div>
+                        <h3>${l.name}</h3>
+                        <p style="margin-bottom: 0.25rem;">${l.company_name || 'Individual'}</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">${l.email || ''}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">$${l.value || 0}</span>
+                        <span style="background: ${badgeColor}; color: white; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${l.status}</span>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        loadLeads();
+    </script>
+</body>
+
+</html>

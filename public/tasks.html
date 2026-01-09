@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item active">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1>Tasks</h1>
+                        <p>Manage your to-dos and calls.</p>
+                    </div>
+                    <div>
+                        <a href="new-task.html" class="btn btn-primary">+ New Task</a>
+                    </div>
+                </div>
+
+                <div class="card" style="max-width: 100%;">
+                    <div id="taskList" class="customer-list">
+                        <p>Loading tasks...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ics.js"></script>
+    <script>
+        api.checkAuth();
+
+        async function completeTask(id) {
+            if (!confirm('Mark this task as done?')) return;
+            await api.post('/tasks/complete', { id });
+            loadTasks(); // Recruit
+        }
+
+        async function loadTasks() {
+            const list = document.getElementById('taskList');
+            const result = await api.get('/tasks');
+
+            if (result.error) {
+                list.innerHTML = `<p style="color: var(--error)">Error: ${result.error}</p>`;
+                return;
+            }
+
+            if (result.tasks.length === 0) {
+                list.innerHTML = '<p>No tasks found.</p>';
+                return;
+            }
+
+            list.innerHTML = result.tasks.map(t => {
+                const isDone = t.status === 'Done';
+                const opacity = isDone ? '0.5' : '1';
+                const decoration = isDone ? 'line-through' : 'none';
+
+                return `
+                <div class="customer-item" style="opacity: ${opacity};">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="checkbox" ${isDone ? 'checked disabled' : ''} onclick="completeTask(${t.id})" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                        <div>
+                            <h3 style="text-decoration: ${decoration}">${t.title}</h3>
+                            <p>${t.type} • Due: ${t.due_date || 'No Date'}</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                        <span class="badge ${isDone ? 'badge-gov' : 'badge-corp'}">${t.status}</span>
+                        ${!isDone ? `<button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; width: auto;" 
+                            onclick="ICS.download('Task: ${t.title.replace(/'/g, "\\'")}', '${(t.description || '').replace(/'/g, "\\'")}', '${t.due_date}')">
+                            📅 Add to Outlook
+                        </button>` : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        loadTasks();
+    </script>
+</body>
+
+</html>
