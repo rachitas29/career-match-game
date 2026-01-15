@@ -201,10 +201,10 @@ app.get('/api/contacts', (req, res) => {
 // Routes - Leads
 app.post('/api/leads', (req, res) => {
     const { user_id, name, company_name, email, status, value } = req.body;
-    if (!name || !user_id) return res.status(400).json({ error: 'Name and User ID required' });
+    if (!name || !user_id) return res.status(400).json({ error: 'Name and User ID are required' });
 
     const sql = `INSERT INTO leads (user_id, name, company_name, email, status, value) VALUES (?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, name, company_name, email, status || 'New', value || 0], function (err) {
+    db.run(sql, [user_id, name, company_name, email, status, value], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Lead created', leadId: this.lastID });
     });
@@ -222,11 +222,11 @@ app.get('/api/leads', (req, res) => {
 
 // Routes - Tasks
 app.post('/api/tasks', (req, res) => {
-    const { user_id, account_id, title, type, description, due_date } = req.body;
-    if (!title || !user_id) return res.status(400).json({ error: 'Title and User ID required' });
+    const { user_id, account_id, title, type, description, due_date, status } = req.body;
+    if (!title || !user_id) return res.status(400).json({ error: 'Title and User ID are required' });
 
-    const sql = `INSERT INTO tasks (user_id, account_id, title, type, description, due_date) VALUES (?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, account_id, title, type, description, due_date], function (err) {
+    const sql = `INSERT INTO tasks (user_id, account_id, title, type, description, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [user_id, account_id, title, type, description, due_date, status], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Task created', taskId: this.lastID });
     });
@@ -237,14 +237,17 @@ app.get('/api/tasks', (req, res) => {
     const accountId = req.query.account_id;
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
-    let sql = "SELECT * FROM tasks WHERE user_id = ?";
+    let sql = `
+        SELECT tasks.*, customers.customer_name as account_name 
+        FROM tasks 
+        LEFT JOIN customers ON tasks.account_id = customers.id
+        WHERE tasks.user_id = ?`;
     let params = [userId];
 
     if (accountId) {
-        sql += " AND account_id = ?";
+        sql += " AND tasks.account_id = ?";
         params.push(accountId);
     }
-    sql += " ORDER BY due_date ASC";
 
     db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -252,18 +255,19 @@ app.get('/api/tasks', (req, res) => {
     });
 });
 
-app.post('/api/tasks/complete', (req, res) => {
-    const { id } = req.body;
-    db.run("UPDATE tasks SET status = 'Done' WHERE id = ?", [id], (err) => {
+app.put('/api/tasks/:id', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    db.run("UPDATE tasks SET status = ? WHERE id = ?", [status, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Task completed' });
+        res.json({ message: 'Task updated' });
     });
 });
 
 // Routes - Products
 app.post('/api/products', (req, res) => {
     const { user_id, name, sku, price, description } = req.body;
-    if (!name || !price) return res.status(400).json({ error: 'Name and Price required' });
+    if (!name || !user_id) return res.status(400).json({ error: 'Product Name and User ID are required' });
 
     const sql = `INSERT INTO products (user_id, name, sku, price, description) VALUES (?, ?, ?, ?, ?)`;
     db.run(sql, [user_id, name, sku, price, description], function (err) {
@@ -285,31 +289,56 @@ app.get('/api/products', (req, res) => {
 // Routes - Interactions
 app.post('/api/interactions', (req, res) => {
     const { user_id, account_id, type, details, date } = req.body;
-    if (!account_id || !user_id) return res.status(400).json({ error: 'Account and User ID required' });
+    if (!type || !user_id) return res.status(400).json({ error: 'Type and User ID are required' });
 
-    const interactionDate = date || new Date().toISOString();
     const sql = `INSERT INTO interactions (user_id, account_id, type, details, date) VALUES (?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, account_id, type, details, interactionDate], function (err) {
+    db.run(sql, [user_id, account_id, type, details, date || new Date().toISOString()], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Interaction logged', interactionId: this.lastID });
     });
 });
 
-// Routes - Purchase Orders
+app.get('/api/interactions', (req, res) => {
+    const userId = req.query.user_id;
+    const accountId = req.query.account_id;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    let sql = `
+        SELECT interactions.*, customers.customer_name as account_name 
+        FROM interactions 
+        LEFT JOIN customers ON interactions.account_id = customers.id
+        WHERE interactions.user_id = ?`;
+    let params = [userId];
+
+    if (accountId) {
+        sql += " AND interactions.account_id = ?";
+        params.push(accountId);
+    }
+    sql += " ORDER BY date DESC";
+
+    db.all(sql, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ interactions: rows });
+    });
+});
+
+// Purchase Orders Routes
 app.post('/api/purchase-orders', (req, res) => {
-    console.log('POST /api/purchase-orders:', req.body);
     const { user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount } = req.body;
-    if (!user_id || !account_id || !po_number) {
-        return res.status(400).json({ error: 'User ID, Account ID, and PO Number are required' });
+
+    if (!po_number || !user_id) {
+        return res.status(400).json({ error: 'PO Number and User ID are required' });
     }
 
-    const sql = `INSERT INTO purchase_orders (user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount) 
+    const sql = `INSERT INTO purchase_orders (po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    db.run(sql, [user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount || null], function (err) {
+    const params = [po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount];
+
+    db.run(sql, params, function (err) {
         if (err) {
-            if (err.message.includes('UNIQUE constraint failed: purchase_orders.po_number')) {
-                return res.status(409).json({ error: 'Purchase Order number already exists. Please use a unique PO number.' });
+            if (err.message.includes('UNIQUE constraint failed')) {
+                return res.status(400).json({ error: 'PO Number already exists' });
             }
             return res.status(500).json({ error: err.message });
         }
@@ -326,76 +355,14 @@ app.get('/api/purchase-orders/:po_number', (req, res) => {
     });
 });
 
-app.put('/api/purchase-orders/:po_number', (req, res) => {
-    const { po_number: param_po_number } = req.params;
-    const { user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount } = req.body;
-
-    if (!user_id || !account_id || !po_number) {
-        return res.status(400).json({ error: 'User ID, Account ID, and PO Number are required' });
-    }
-
-    const sql = `UPDATE purchase_orders SET 
-        user_id = ?, account_id = ?, client_id = ?, po_number = ?, po_date = ?, 
-        po_value = ?, bank_guarantee = ?, bill_to = ?, ship_to = ?, notes = ?, 
-        bg_number = ?, bg_expiry_date = ?, bg_bank_name = ?, bg_amount = ?
-        WHERE po_number = ?`;
-
-    const params = [user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount || null, param_po_number];
-
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'Purchase Order not found' });
-        res.json({ message: 'Purchase Order updated' });
-    });
-});
-
-// BG and FD Details
-app.get('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
-    const { po_number } = req.params;
-    db.get("SELECT * FROM bg_fd_details WHERE po_number = ?", [po_number], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ bg_fd: row || null });
-    });
-});
-
-app.post('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
-    const { po_number } = req.params;
-    const {
-        opening_balance_bg_limit, bg_number, bg_start_date, bg_tenure_dd, bg_tenure_mm, bg_tenure_yy,
-        bg_end_date, bg_percentage, bg_value, bg_claim_period_required, bg_status,
-        bg_claim_period_dd, bg_claim_period_mm, bg_claim_period_yy, bg_claim_date, bg_limit_remaining,
-        fd_percentage_on_bg, fd_number, fd_start_date, fd_margin_actual, fd_maturity_date, fd_maturity_amount,
-        rate_of_interest, fd_status
-    } = req.body;
-
-    const sql = `INSERT OR REPLACE INTO bg_fd_details (
-        po_number, opening_balance_bg_limit, bg_number, bg_start_date, bg_tenure_dd, bg_tenure_mm, bg_tenure_yy,
-        bg_end_date, bg_percentage, bg_value, bg_claim_period_required, bg_status,
-        bg_claim_period_dd, bg_claim_period_mm, bg_claim_period_yy, bg_claim_date, bg_limit_remaining,
-        fd_percentage_on_bg, fd_number, fd_start_date, fd_margin_actual, fd_maturity_date, fd_maturity_amount,
-        rate_of_interest, fd_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    const params = [
-        po_number, opening_balance_bg_limit, bg_number, bg_start_date, bg_tenure_dd, bg_tenure_mm, bg_tenure_yy,
-        bg_end_date, bg_percentage, bg_value, bg_claim_period_required, bg_status,
-        bg_claim_period_dd, bg_claim_period_mm, bg_claim_period_yy, bg_claim_date, bg_limit_remaining,
-        fd_percentage_on_bg, fd_number, fd_start_date, fd_margin_actual, fd_maturity_date, fd_maturity_amount,
-        rate_of_interest, fd_status
-    ];
-
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'BG/FD details saved', id: this.lastID });
-    });
-});
-
 app.get('/api/purchase-orders', (req, res) => {
-    const { user_id, account_id } = req.query;
-    if (!user_id) return res.status(400).json({ error: 'User ID required' });
+    const userId = req.query.user_id;
+    const account_id = req.query.account_id;
+
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     let sql = "SELECT * FROM purchase_orders WHERE user_id = ?";
-    let params = [user_id];
+    let params = [userId];
 
     if (account_id) {
         sql += " AND account_id = ?";
@@ -406,6 +373,23 @@ app.get('/api/purchase-orders', (req, res) => {
     db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ purchase_orders: rows });
+    });
+});
+
+app.put('/api/purchase-orders/:po_number', (req, res) => {
+    const { po_number } = req.params;
+    const { po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, user_id, po_number: new_po_number } = req.body;
+
+    const sql = `UPDATE purchase_orders SET 
+        po_number = ?, po_date = ?, po_value = ?, bank_guarantee = ?, bill_to = ?, ship_to = ?, notes = ?, account_id = ?, client_id = ?
+        WHERE po_number = ? AND user_id = ?`;
+
+    const params = [new_po_number || po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, po_number, user_id];
+
+    db.run(sql, params, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'Purchase Order not found or no changes made' });
+        res.json({ message: 'Purchase Order updated successfully', po_number: new_po_number || po_number });
     });
 });
 
@@ -426,6 +410,14 @@ app.get('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
     db.get('SELECT * FROM bg_fd_details WHERE po_number = ?', [po_number], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ bg_fd: row });
+    });
+});
+
+app.delete('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
+    const { po_number } = req.params;
+    db.run('DELETE FROM bg_fd_details WHERE po_number = ?', [po_number], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'BG/FD details deleted successfully' });
     });
 });
 
@@ -488,13 +480,23 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
 
             const lineItemId = this.lastID;
             if (milestones && milestones.length > 0) {
-                const milestoneSql = `INSERT INTO po_milestones (line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, cycle_value, documents, payment_terms, delivery_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const milestoneSql = `INSERT INTO po_milestones (
+                    line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, 
+                    cycle_value, documents, payment_terms, delivery_date, 
+                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 let completed = 0;
                 let errorOccurred = false;
 
                 milestones.forEach(m => {
-                    db.run(milestoneSql, [lineItemId, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct, m.cycle_value, m.documents, m.payment_terms, m.delivery_date], (err) => {
+                    const mParams = [
+                        lineItemId, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
+                        m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
+                        m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
+                        m.payment_received || 0, m.pending_amount || 0, m.remarks || null
+                    ];
+                    db.run(milestoneSql, mParams, (err) => {
                         if (err && !errorOccurred) {
                             errorOccurred = true;
                             db.run('ROLLBACK');
@@ -529,7 +531,13 @@ app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
                        'cycle_value', m.cycle_value,
                        'documents', m.documents,
                        'payment_terms', m.payment_terms,
-                       'delivery_date', m.delivery_date
+                       'delivery_date', m.delivery_date,
+                       'invoice_no', m.invoice_no,
+                       'invoice_date', m.invoice_date,
+                       'invoice_value', m.invoice_value,
+                       'payment_received', m.payment_received,
+                       'pending_amount', m.pending_amount,
+                       'remarks', m.remarks
                    )
                ) FROM po_milestones m WHERE m.line_item_id = li.id) as milestones
         FROM po_line_items li
@@ -585,39 +593,239 @@ app.put('/api/line-items/:id', (req, res) => {
                 return res.status(500).json({ error: err.message });
             }
 
-            // Simple approach: Delete old milestones and insert new ones
-            db.run('DELETE FROM po_milestones WHERE line_item_id = ?', [id], (err) => {
+            if (!milestones || milestones.length === 0) {
+                // If no milestones, delete existing ones for this line item
+                db.run('DELETE FROM po_milestones WHERE line_item_id = ?', [id], (err) => {
+                    if (err) {
+                        db.run('ROLLBACK');
+                        return res.status(500).json({ error: err.message });
+                    }
+                    db.run('COMMIT');
+                    res.json({ message: 'Line item updated' });
+                });
+                return;
+            }
+
+            // Get existing milestones to differentiate between update and insert
+            db.all('SELECT id FROM po_milestones WHERE line_item_id = ?', [id], (err, existingMilestones) => {
                 if (err) {
                     db.run('ROLLBACK');
                     return res.status(500).json({ error: err.message });
                 }
 
-                if (milestones && milestones.length > 0) {
-                    const milestoneSql = `INSERT INTO po_milestones (line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, cycle_value, documents, payment_terms, delivery_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const existingIds = existingMilestones.map(m => m.id);
+                const incomingIds = milestones.map(m => m.id).filter(id => id);
+                const toDelete = existingIds.filter(eid => !incomingIds.includes(eid));
 
-                    let completed = 0;
-                    let errorOccurred = false;
+                const milestoneInsertSql = `INSERT INTO po_milestones (
+                    line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, 
+                    cycle_value, documents, payment_terms, delivery_date,
+                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-                    milestones.forEach(m => {
-                        db.run(milestoneSql, [id, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct, m.cycle_value, m.documents, m.payment_terms, m.delivery_date], (err) => {
+                const milestoneUpdateSql = `UPDATE po_milestones SET 
+                    milestone_name = ?, quantity = ?, unit_price = ?, payment_cycle_pct = ?, 
+                    cycle_value = ?, documents = ?, payment_terms = ?, delivery_date = ?,
+                    invoice_no = ?, invoice_date = ?, invoice_value = ?, payment_received = ?, pending_amount = ?, remarks = ?
+                    WHERE id = ?`;
+
+                let completedCount = 0;
+                let errorOccurred = false;
+
+                const finalizeUpdate = () => {
+                    completedCount++;
+                    if (completedCount === (milestones.length + (toDelete.length > 0 ? 1 : 0)) && !errorOccurred) {
+                        db.run('COMMIT');
+                        res.json({ message: 'Line item and milestones updated' });
+                    }
+                };
+
+                // Delete removed milestones
+                if (toDelete.length > 0) {
+                    const deleteSql = `DELETE FROM po_milestones WHERE id IN (${toDelete.join(',')})`;
+                    db.run(deleteSql, (err) => {
+                        if (err && !errorOccurred) {
+                            errorOccurred = true;
+                            db.run('ROLLBACK');
+                            return res.status(500).json({ error: err.message });
+                        }
+                        finalizeUpdate();
+                    });
+                }
+
+                // Update/Insert milestones
+                milestones.forEach(m => {
+                    if (errorOccurred) return;
+
+                    const mParams = [
+                        m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
+                        m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
+                        m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
+                        m.payment_received || 0, m.pending_amount || 0, m.remarks || null
+                    ];
+
+                    if (m.id && existingIds.includes(m.id)) {
+                        // Update
+                        db.run(milestoneUpdateSql, [...mParams, m.id], (err) => {
                             if (err && !errorOccurred) {
                                 errorOccurred = true;
                                 db.run('ROLLBACK');
                                 return res.status(500).json({ error: err.message });
                             }
-                            completed++;
-                            if (completed === milestones.length && !errorOccurred) {
-                                db.run('COMMIT');
-                                res.json({ message: 'Line item updated' });
-                            }
+                            finalizeUpdate();
                         });
-                    });
-                } else {
-                    db.run('COMMIT');
-                    res.json({ message: 'Line item updated' });
-                }
+                    } else {
+                        // Insert
+                        db.run(milestoneInsertSql, [id, ...mParams], (err) => {
+                            if (err && !errorOccurred) {
+                                errorOccurred = true;
+                                db.run('ROLLBACK');
+                                return res.status(500).json({ error: err.message });
+                            }
+                            finalizeUpdate();
+                        });
+                    }
+                });
             });
         });
+    });
+});
+
+app.post('/api/purchase-orders/:po_number/invoices', (req, res) => {
+    const { po_number } = req.params;
+    const invoices = req.body;
+
+    if (!Array.isArray(invoices) || invoices.length === 0) {
+        return res.status(400).json({ error: 'Invoices must be a non-empty array' });
+    }
+
+    db.serialize(() => {
+        db.run('BEGIN TRANSACTION', (err) => {
+            if (err) return res.status(500).json({ error: 'Failed to start transaction: ' + err.message });
+
+            let processed = 0;
+            let errorOccurred = false;
+
+            const rollback = (errMsg) => {
+                if (errorOccurred) return;
+                errorOccurred = true;
+                db.run('ROLLBACK', () => {
+                    if (!res.headersSent) res.status(500).json({ error: errMsg });
+                });
+            };
+
+            invoices.forEach(inv => {
+                if (errorOccurred) return;
+
+                const mId = (inv.milestone_id && inv.milestone_id !== 'undefined' && inv.milestone_id !== 'null') ? inv.milestone_id : null;
+                const liId = (inv.line_item_id && inv.line_item_id !== 'undefined' && inv.line_item_id !== 'null') ? inv.line_item_id : null;
+
+                const checkSql = `SELECT id FROM invoices WHERE (milestone_id = ? AND milestone_id IS NOT NULL) OR (line_item_id = ? AND milestone_id IS NULL)`;
+                const checkParams = [mId, liId];
+
+                db.get(checkSql, checkParams, (err, existingRow) => {
+                    if (err) return rollback('Check error: ' + err.message);
+                    if (errorOccurred) return;
+
+                    if (existingRow) {
+                        const updateInvoicesSql = `UPDATE invoices SET 
+                            invoice_no = ?, invoice_date = ?, 
+                            taxable_value = ?, gst_value = ?, total_value = ?, credit_period = ?, 
+                            due_date = ?, payment_received = ?, pending_amount = ?, status = ?, remarks = ?
+                            WHERE id = ?`;
+
+                        const updateParams = [
+                            inv.invoice_no, inv.invoice_date,
+                            inv.taxable_value || 0, inv.gst_value || 0, inv.total_value || 0, inv.credit_period || 0,
+                            inv.due_date, inv.payment_received || 0, inv.pending_amount || 0, inv.status, inv.remarks,
+                            existingRow.id
+                        ];
+
+                        db.run(updateInvoicesSql, updateParams, function (err) {
+                            if (err) return rollback('Invoices update error: ' + err.message);
+                            if (this.changes === 0) {
+                                console.warn(`No invoice record updated for ID ${existingRow.id}. This may be an error.`);
+                            }
+                            handleMilestoneUpdate();
+                        });
+                    } else {
+                        const params = [
+                            po_number, liId, mId,
+                            inv.invoice_no, inv.invoice_date,
+                            inv.taxable_value || 0, inv.gst_value || 0, inv.total_value || 0, inv.credit_period || 0,
+                            inv.due_date, inv.payment_received || 0, inv.pending_amount || 0, inv.status, inv.remarks
+                        ];
+
+                        const insertSql = `INSERT INTO invoices (
+                            po_number, line_item_id, milestone_id, invoice_no, invoice_date, 
+                            taxable_value, gst_value, total_value, credit_period, 
+                            due_date, payment_received, pending_amount, status, remarks
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+                        db.run(insertSql, params, function (err) {
+                            if (err) return rollback('Invoices insert error: ' + err.message);
+                            handleMilestoneUpdate();
+                        });
+                    }
+
+                    function handleMilestoneUpdate() {
+                        if (errorOccurred) return;
+
+                        const finalize = () => {
+                            processed++;
+                            if (processed === invoices.length && !errorOccurred) {
+                                db.run('COMMIT', (err) => {
+                                    if (err) return rollback('Commit error: ' + err.message);
+                                    res.json({ message: 'Invoices and milestones updated', count: processed });
+                                });
+                            }
+                        };
+
+                        if (mId) {
+                            // Construct summary for milestones table
+                            const fullRemarks = `Credit Period - ${inv.credit_period || 0} Status - ${inv.status || 'Pending'} Remarks - ${inv.remarks || ''}`;
+
+                            const updateSql = `UPDATE po_milestones SET 
+                                invoice_no = ?, invoice_date = ?, invoice_value = ?, 
+                                payment_received = ?, pending_amount = ?, remarks = ?
+                                WHERE id = ?`;
+                            db.run(updateSql, [
+                                inv.invoice_no, inv.invoice_date, inv.total_value,
+                                inv.payment_received, inv.pending_amount, fullRemarks,
+                                mId
+                            ], function (err) {
+                                if (err) return rollback('Milestone update error: ' + err.message);
+                                finalize();
+                            });
+                        } else if (liId) {
+                            const updateSql = `UPDATE po_line_items SET 
+                                invoice_no = ?, invoice_date = ?, invoice_value = ?, 
+                                payment_received = ?, pending_amount = ?, remarks = ?
+                                WHERE id = ?`;
+                            db.run(updateSql, [
+                                inv.invoice_no, inv.invoice_date, inv.total_value,
+                                inv.payment_received, inv.pending_amount, inv.remarks,
+                                liId
+                            ], function (err) {
+                                if (err) return rollback('Line item update error: ' + err.message);
+                                finalize();
+                            });
+                        } else {
+                            finalize();
+                        }
+                    }
+                });
+            });
+        });
+    });
+});
+
+app.get('/api/purchase-orders/:po_number/invoices', (req, res) => {
+    const { po_number } = req.params;
+    const sql = `SELECT * FROM invoices WHERE po_number = ?`;
+    db.all(sql, [po_number], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ invoices: rows });
     });
 });
 

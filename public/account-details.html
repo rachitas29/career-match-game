@@ -848,8 +848,9 @@
                                     <span style="font-weight: 700; color: #166534; font-size: 0.9rem;">#${po.po_number}</span>
                                     <div style="display: flex; flex-direction: column; align-items: flex-end;">
                                         <span style="font-size: 0.75rem; color: #166534; opacity: 0.8;">${new Date(po.po_date).toLocaleDateString()}</span>
-                                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                        <div style="display: flex; gap: 12px; margin-top: 4px;">
                                             <a href="edit-purchase-order.html?po_number=${po.po_number}" style="font-size: 0.7rem; color: #15803d; text-decoration: underline; font-weight: 600;">Edit</a>
+                                            <a href="#" onclick="deletePurchaseOrder('${po.po_number}'); return false;" style="font-size: 0.7rem; color: #dc2626; text-decoration: underline; font-weight: 600;">Delete</a>
                                         </div>
                                     </div>
                                 </div>

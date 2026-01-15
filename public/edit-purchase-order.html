@@ -414,6 +414,7 @@
             <nav class="sidebar-nav">
                 <a href="dashboard.html" class="nav-item">Dashboard</a>
                 <a href="accounts.html" class="nav-item active">Accounts</a>
+                <a href="purchase-order-report.html" class="nav-item">PO Report</a>
                 <a href="contacts.html" class="nav-item">Contacts</a>
                 <a href="leads.html" class="nav-item">Leads</a>
                 <a href="tasks.html" class="nav-item">Tasks</a>
@@ -477,7 +478,8 @@
                             <div class="form-grid">
                                 <div class="col-span-4">
                                     <label for="po_number">PO Number <span style="color: var(--danger)">*</span></label>
-                                    <input type="text" id="po_number" placeholder="e.g. PO/2024/001" required>
+                                    <input type="text" id="po_number" placeholder="e.g. PO/2024/001" readonly
+                                        style="background: #f1f5f9;" required>
                                 </div>
                                 <div class="col-span-4">
                                     <label for="po_date">PO Date <span style="color: var(--danger)">*</span></label>
@@ -486,7 +488,8 @@
                                 <div class="col-span-4">
                                     <label for="po_value">PO Value (Total Amount) <span
                                             style="color: var(--danger)">*</span></label>
-                                    <input type="number" step="0.01" id="po_value" placeholder="0.00" required>
+                                    <input type="number" step="0.01" id="po_value" placeholder="0.00" readonly
+                                        style="background: #f1f5f9;" required>
                                 </div>
 
                                 <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
@@ -546,6 +549,10 @@
                         <div class="action-bar">
                             <div id="statusMsg" style="font-weight: 500; font-size: 0.9rem;"></div>
                             <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary"
+                                    style="background: #9c27b0; color: white; border: none;"
+                                    onclick="window.open('purchase-order-report.html?po_number=' + encodeURIComponent(document.getElementById('po_number').value), '_blank')">View
+                                    Report</button>
                                 <a id="cancelBtn" href="accounts.html" class="btn btn-secondary">Discard Changes</a>
                                 <button type="submit" class="btn btn-primary"
                                     style="padding-left: 2rem; padding-right: 2rem;">
@@ -911,7 +918,6 @@
                 <div class="li-modal-footer">
                     <button onclick="editLineItemFromGrid()" class="btn-pro btn-blue">Edit Item</button>
                     <button id="mainSaveBtn" onclick="saveLineItemToDB()" class="btn-pro btn-green">Save Line Item</button>
-                    <button onclick="commitPOToDB()" class="btn-pro btn-navy">Save PO to DB</button>
                     <button onclick="openBillingModal();" class="btn-pro btn-orange">Add Billing</button>
                 </div>
             </div>
@@ -947,151 +953,208 @@
             }
         }
 
+
+
+        // Calculations Logic for BG/FD
         window.calculateBgFd = function () {
-            const poValue = parseFloat(document.getElementById('po_value').value) || 0;
-            const ob = parseFloat(document.getElementById('m_opening_balance').value) || 0;
-            const bgPercent = parseFloat(document.getElementById('m_bg_percentage').value) || 0;
-            const fdPercent = parseFloat(document.getElementById('m_fd_percentage').value) || 0;
-            const startDateStr = document.getElementById('m_bg_start_date').value;
+            try {
+                // Safely get values with defaults
+                const poValEl = document.getElementById('po_value');
+                // Use currentPO value if element empty? No, use element value as it might vary
+                const poValue = parseFloat(poValEl ? poValEl.value : 0) || 0;
 
-            // Ensure no negative values in tenure/claim fields and update UI
-            const getPositiveVal = (id) => {
-                const el = document.getElementById(id);
-                let val = parseInt(el.value) || 0;
-                if (val < 0) {
-                    val = 0;
-                    el.value = 0;
-                }
-                return val;
-            };
+                const obEl = document.getElementById('m_opening_balance');
+                const ob = parseFloat(obEl ? obEl.value : 0) || 0;
 
-            const tenureDd = getPositiveVal('m_bg_tenure_dd');
-            const tenureMm = getPositiveVal('m_bg_tenure_mm');
-            const tenureYy = getPositiveVal('m_bg_tenure_yy');
+                const bgPercentEl = document.getElementById('m_bg_percentage');
+                const bgPercent = parseFloat(bgPercentEl ? bgPercentEl.value : 0) || 0;
 
-            const claimDd = getPositiveVal('m_claim_dd');
-            const claimMm = getPositiveVal('m_claim_mm');
-            const claimYy = getPositiveVal('m_claim_yy');
+                const fdPercentEl = document.getElementById('m_fd_percentage');
+                const fdPercent = parseFloat(fdPercentEl ? fdPercentEl.value : 0) || 0;
 
-            const isClaimRequired = document.querySelector('input[name="m_claim_required"]:checked')?.value === 'Yes';
-            const claimInputs = [document.getElementById('m_claim_dd'), document.getElementById('m_claim_mm'), document.getElementById('m_claim_yy')];
-            const claimDateInput = document.getElementById('m_bg_claim_date');
+                const startDateInput = document.getElementById('m_bg_start_date');
+                const startDateStr = startDateInput ? startDateInput.value : '';
 
-            if (!isClaimRequired) {
-                claimInputs.forEach(input => {
-                    input.value = '';
-                    input.disabled = true;
-                    input.style.backgroundColor = '#f1f5f9';
-                });
-                claimDateInput.value = '';
-                claimDateInput.disabled = true;
-                claimDateInput.readOnly = true;
-                claimDateInput.style.backgroundColor = '#f1f5f9';
-            } else {
-                claimInputs.forEach(input => {
-                    input.disabled = false;
-                    input.style.backgroundColor = 'white';
-                    if (input.value === '') input.value = (input.id === 'm_claim_mm') ? 3 : 0;
-                });
-                claimDateInput.disabled = false;
-                claimDateInput.readOnly = false;
-                claimDateInput.style.backgroundColor = 'white';
-            }
-
-            document.getElementById('s_po_value').textContent = '$' + poValue.toLocaleString();
-            document.getElementById('s_ob').textContent = '$' + ob.toLocaleString();
-
-            const bgValue = (poValue * bgPercent) / 100;
-            document.getElementById('m_bg_value').value = bgValue.toFixed(2);
-            document.getElementById('s_bg_calc').textContent = '$' + bgValue.toLocaleString();
-
-            const limitRemaining = ob - bgValue;
-            document.getElementById('m_bg_limit_rem').value = limitRemaining.toFixed(2);
-
-            const fdMargin = (bgValue * fdPercent) / 100;
-            document.getElementById('m_fd_margin').value = fdMargin.toFixed(2);
-
-            // Dates calculation - Using local date parts for reliability
-            if (startDateStr) {
-                const [y, m, d] = startDateStr.split('-').map(Number);
-                const startDate = new Date(y, m - 1, d);
-
-                // End Date
-                const endDate = new Date(startDate);
-                endDate.setFullYear(endDate.getFullYear() + tenureYy);
-                endDate.setMonth(endDate.getMonth() + tenureMm);
-                endDate.setDate(endDate.getDate() + tenureDd);
-
-                const formatYMD = (date) => {
-                    if (!date || isNaN(date.getTime())) return '';
-                    const yy = date.getFullYear();
-                    const mm = String(date.getMonth() + 1).padStart(2, '0');
-                    const dd = String(date.getDate()).padStart(2, '0');
-                    return `${yy}-${mm}-${dd}`;
+                // Ensure no negative values in details and update UI
+                const getPositiveVal = (id) => {
+                    const el = document.getElementById(id);
+                    if (!el) return 0;
+                    let val = parseFloat(el.value) || 0;
+                    if (val < 0) {
+                        val = Math.abs(val);
+                        el.value = val;
+                    }
+                    return val;
                 };
 
-                const formattedEndDate = formatYMD(endDate);
-                document.getElementById('m_bg_end_date').value = formattedEndDate;
-
-                // Claim Date
-                if (isClaimRequired) {
-                    const claimDate = new Date(endDate);
-                    claimDate.setFullYear(claimDate.getFullYear() + claimYy);
-                    claimDate.setMonth(claimDate.getMonth() + claimMm);
-                    claimDate.setDate(claimDate.getDate() + claimDd);
-                    document.getElementById('m_bg_claim_date').value = formatYMD(claimDate);
+                // Sanitize percentage fields immediately
+                const sanitizePercent = (id) => {
+                    const el = document.getElementById(id);
+                    if (el && el.value < 0) el.value = Math.abs(el.value);
                 }
-            }
+                sanitizePercent('m_bg_percentage');
+                sanitizePercent('m_fd_percentage');
+                sanitizePercent('m_roi');
+                sanitizePercent('m_fd_maturity_amount');
+                if (ob < 0 && obEl) obEl.value = Math.abs(ob);
 
-            // Sync with internal state so that latest calculated values are sent to server
-            if (typeof bgFdData !== 'undefined' && bgFdData) {
-                bgFdData.bg_value = document.getElementById('m_bg_value').value;
-                bgFdData.bg_limit_remaining = document.getElementById('m_bg_limit_rem').value;
-                bgFdData.fd_margin_actual = document.getElementById('m_fd_margin').value;
-                bgFdData.bg_end_date = document.getElementById('m_bg_end_date').value;
-                bgFdData.bg_claim_date = document.getElementById('m_bg_claim_date').value;
+                const tenureDd = getPositiveVal('m_bg_tenure_dd');
+                const tenureMm = getPositiveVal('m_bg_tenure_mm');
+                const tenureYy = getPositiveVal('m_bg_tenure_yy');
+
+                const claimDd = getPositiveVal('m_claim_dd');
+                const claimMm = getPositiveVal('m_claim_mm');
+                const claimYy = getPositiveVal('m_claim_yy');
+
+                const r = document.querySelector('input[name="m_claim_required"]:checked');
+                const isClaimRequired = r ? r.value === 'Yes' : false;
+
+                const claimInputs = [document.getElementById('m_claim_dd'), document.getElementById('m_claim_mm'), document.getElementById('m_claim_yy')];
+                const claimDateInput = document.getElementById('m_bg_claim_date');
+
+                if (!isClaimRequired) {
+                    claimInputs.forEach(input => {
+                        if (input) {
+                            input.value = '';
+                            input.disabled = true;
+                            input.style.backgroundColor = '#f1f5f9';
+                        }
+                    });
+                    if (claimDateInput) {
+                        claimDateInput.value = '';
+                        claimDateInput.disabled = true;
+                        claimDateInput.readOnly = true;
+                        claimDateInput.style.backgroundColor = '#f1f5f9';
+                    }
+                } else {
+                    claimInputs.forEach(input => {
+                        if (input) {
+                            input.disabled = false;
+                            input.style.backgroundColor = 'white';
+                            if (input.value === '') input.value = (input.id === 'm_claim_mm') ? 3 : 0;
+                        }
+                    });
+                    if (claimDateInput) {
+                        claimDateInput.disabled = false;
+                        claimDateInput.readOnly = false;
+                        claimDateInput.style.backgroundColor = 'white';
+                    }
+                }
+
+                if (document.getElementById('s_po_value')) document.getElementById('s_po_value').textContent = '$' + poValue.toLocaleString();
+                if (document.getElementById('s_ob')) document.getElementById('s_ob').textContent = '$' + ob.toLocaleString();
+
+                const bgValue = (poValue * bgPercent) / 100;
+                if (document.getElementById('m_bg_value')) document.getElementById('m_bg_value').value = bgValue.toFixed(2);
+                if (document.getElementById('s_bg_calc')) document.getElementById('s_bg_calc').textContent = '$' + bgValue.toLocaleString();
+
+                const limitRemaining = ob - bgValue;
+                if (document.getElementById('m_bg_limit_rem')) document.getElementById('m_bg_limit_rem').value = limitRemaining.toFixed(2);
+
+                const fdMargin = (bgValue * fdPercent) / 100;
+                if (document.getElementById('m_fd_margin')) document.getElementById('m_fd_margin').value = fdMargin.toFixed(2);
+
+                if (startDateStr) {
+                    const [y, m, d] = startDateStr.split('-').map(Number);
+                    const startDate = new Date(y, m - 1, d);
+
+                    const endDate = new Date(startDate);
+                    endDate.setFullYear(endDate.getFullYear() + tenureYy);
+                    endDate.setMonth(endDate.getMonth() + tenureMm);
+                    endDate.setDate(endDate.getDate() + tenureDd);
+
+                    const formatYMD = (date) => {
+                        if (!date || isNaN(date.getTime())) return '';
+                        const yy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        return `${dd}/${mm}/${yy}`;
+                    };
+
+                    const formattedEndDate = formatYMD(endDate);
+                    if (document.getElementById('m_bg_end_date')) document.getElementById('m_bg_end_date').value = formattedEndDate;
+
+                    if (isClaimRequired) {
+                        const claimDate = new Date(endDate);
+                        claimDate.setFullYear(claimDate.getFullYear() + claimYy);
+                        claimDate.setMonth(claimDate.getMonth() + claimMm);
+                        claimDate.setDate(claimDate.getDate() + claimDd);
+                        if (document.getElementById('m_bg_claim_date')) document.getElementById('m_bg_claim_date').value = formatYMD(claimDate);
+                    }
+                }
+
+                // Automated Status Logic
+                const bgNum = document.getElementById('m_bg_number').value.trim();
+                const bgStatusEl = document.getElementById('m_bg_status');
+                if (!bgNum) {
+                    bgStatusEl.value = 'Draft';
+                } else {
+                    const endDateVal = document.getElementById('m_bg_end_date').value; // format DD/MM/YYYY
+                    if (endDateVal) {
+                        const [d, m, y] = endDateVal.split('/').map(Number);
+                        const endDate = new Date(y, m - 1, d);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        bgStatusEl.value = (endDate >= today) ? 'Active' : 'Expired';
+                    }
+                }
+                // BG Status 'Returned' -> FD Status 'Released'
+                if (bgStatusEl.value === 'Returned') {
+                    const fdStatusEl = document.getElementById('m_fd_status');
+                    if (fdStatusEl) fdStatusEl.value = 'Released';
+                }
+            } catch (err) {
+                console.error("Error in calculateBgFd:", err);
             }
         }
 
         function openBgModal() {
             document.getElementById('bgFdModal').classList.add('open');
 
-            // If user hasn't modified details yet in this session, pre-fill from what was loaded from DB
-            // If they have modified, we keep the session variable bgFdData
-            if (!bgFdData) {
-                // Try loading from localStorage as a fallback/session recovery
-                const saved = localStorage.getItem('pending_bg_details');
-                if (saved) bgFdData = JSON.parse(saved);
-            }
+            // Pre-fill logic. In Edit mode, we likely already loaded bgFdData in initPage
+            const loadData = (d) => {
+                if (!d) return;
+                const setVal = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val !== undefined && val !== null ? val : '';
+                };
 
-            if (bgFdData) {
-                document.getElementById('m_opening_balance').value = bgFdData.opening_balance_bg_limit || '';
-                document.getElementById('m_bg_number').value = bgFdData.bg_number || '';
-                document.getElementById('m_bg_start_date').value = bgFdData.bg_start_date || '';
-                document.getElementById('m_bg_tenure_dd').value = bgFdData.bg_tenure_dd || 0;
-                document.getElementById('m_bg_tenure_mm').value = bgFdData.bg_tenure_mm || 0;
-                document.getElementById('m_bg_tenure_yy').value = bgFdData.bg_tenure_yy || 0;
-                document.getElementById('m_bg_percentage').value = bgFdData.bg_percentage || 10;
-                document.getElementById('m_bg_status').value = bgFdData.bg_status || 'Active';
+                setVal('m_opening_balance', d.opening_balance_bg_limit);
+                setVal('m_bg_number', d.bg_number);
+                setVal('m_bg_start_date', d.bg_start_date);
+                setVal('m_bg_tenure_dd', d.bg_tenure_dd || 0);
+                setVal('m_bg_tenure_mm', d.bg_tenure_mm || 0);
+                setVal('m_bg_tenure_yy', d.bg_tenure_yy || 0);
+                setVal('m_bg_percentage', d.bg_percentage || 10);
+                setVal('m_bg_status', d.bg_status || 'Active');
 
-                if (bgFdData.bg_claim_period_required === 'Yes') {
-                    document.querySelector('input[name="m_claim_required"][value="Yes"]').checked = true;
+                if (d.bg_claim_period_required === 'Yes') {
+                    const r = document.querySelector('input[name="m_claim_required"][value="Yes"]');
+                    if (r) r.checked = true;
                 } else {
-                    document.querySelector('input[name="m_claim_required"][value="No"]').checked = true;
+                    const r = document.querySelector('input[name="m_claim_required"][value="No"]');
+                    if (r) r.checked = true;
                 }
 
-                document.getElementById('m_claim_dd').value = bgFdData.bg_claim_period_dd || 0;
-                document.getElementById('m_claim_mm').value = bgFdData.bg_claim_period_mm || 0;
-                document.getElementById('m_claim_yy').value = bgFdData.bg_claim_period_yy || 0;
+                setVal('m_claim_dd', d.bg_claim_period_dd || 0);
+                setVal('m_claim_mm', d.bg_claim_period_mm || 0);
+                setVal('m_claim_yy', d.bg_claim_period_yy || 0);
 
-                document.getElementById('m_fd_percentage').value = bgFdData.fd_percentage_on_bg || 10;
-                document.getElementById('m_fd_number').value = bgFdData.fd_number || '';
-                document.getElementById('m_roi').value = bgFdData.rate_of_interest || 6.5;
-                document.getElementById('m_fd_start_date').value = bgFdData.fd_start_date || '';
-                document.getElementById('m_fd_maturity_date').value = bgFdData.fd_maturity_date || '';
-                document.getElementById('m_fd_maturity_amount').value = bgFdData.fd_maturity_amount || '';
-                document.getElementById('m_fd_status').value = bgFdData.fd_status || 'Active';
-            }
+                setVal('m_fd_percentage', d.fd_percentage_on_bg || 10);
+                setVal('m_fd_number', d.fd_number);
+                setVal('m_roi', d.rate_of_interest || 6.5);
+                setVal('m_fd_start_date', d.fd_start_date || '');
+                setVal('m_fd_maturity_date', d.fd_maturity_date || '');
+                setVal('m_fd_maturity_amount', d.fd_maturity_amount || '');
+                setVal('m_fd_status', d.fd_status || 'Active');
+            };
+
+            // If we have bgFdData already loaded from DB
+            if (bgFdData) loadData(bgFdData);
+
+            // Also check localStorage for any pending unsaved changes from this session?
+            // Prioritize DB for Edit page usually, unless we want to support recovering unsaved edits.
+            // Let's stick to DB data + current in-memory variable.
 
             calculateBgFd();
         }
@@ -1100,16 +1163,38 @@
             document.getElementById('bgFdModal').classList.remove('open');
         }
 
-        function saveBgFdLocal() {
-            const mandatory = ['m_opening_balance', 'm_bg_percentage', 'm_bg_start_date'];
-            for (let id of mandatory) {
-                if (!document.getElementById(id).value) {
-                    alert('All fields are mandatory per the policy!');
+        async function saveBgFdLocal() {
+            // Re-trigger calc to ensure latest status logic (e.g. Returned -> Released) is applied
+            calculateBgFd();
+
+            if (!poNumber) return alert("PO Number not found.");
+
+            const mandatory = [
+                { id: 'm_opening_balance', name: 'Opening BG Limit' },
+                { id: 'm_bg_percentage', name: 'BG Percentage' },
+                { id: 'm_bg_start_date', name: 'BG Start Date' }
+            ];
+
+            for (let item of mandatory) {
+                const el = document.getElementById(item.id);
+                if (!el || !el.value) {
+                    alert(`Field Required: ${item.name}`);
+                    if (el) el.focus();
                     return;
                 }
             }
 
-            // Correctly update the variable that will be sent via API
+            // Helper to convert DD/MM/YYYY back to YYYY-MM-DD for consistency
+            const toISO = (dateStr) => {
+                if (!dateStr) return '';
+                if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD/MM/YYYY -> YYYY-MM-DD
+                }
+                return dateStr;
+            };
+
+            // Update the global bgFdData object
             bgFdData = {
                 opening_balance_bg_limit: document.getElementById('m_opening_balance').value,
                 bg_number: document.getElementById('m_bg_number').value,
@@ -1117,7 +1202,7 @@
                 bg_tenure_dd: document.getElementById('m_bg_tenure_dd').value,
                 bg_tenure_mm: document.getElementById('m_bg_tenure_mm').value,
                 bg_tenure_yy: document.getElementById('m_bg_tenure_yy').value,
-                bg_end_date: document.getElementById('m_bg_end_date').value,
+                bg_end_date: toISO(document.getElementById('m_bg_end_date').value),
                 bg_percentage: document.getElementById('m_bg_percentage').value,
                 bg_value: document.getElementById('m_bg_value').value,
                 bg_claim_period_required: document.querySelector('input[name="m_claim_required"]:checked')?.value || 'No',
@@ -1125,7 +1210,7 @@
                 bg_claim_period_dd: document.getElementById('m_claim_dd').value,
                 bg_claim_period_mm: document.getElementById('m_claim_mm').value,
                 bg_claim_period_yy: document.getElementById('m_claim_yy').value,
-                bg_claim_date: document.getElementById('m_bg_claim_date').value,
+                bg_claim_date: toISO(document.getElementById('m_bg_claim_date').value),
                 bg_limit_remaining: document.getElementById('m_bg_limit_rem').value,
                 fd_percentage_on_bg: document.getElementById('m_fd_percentage').value,
                 fd_number: document.getElementById('m_fd_number').value,
@@ -1137,10 +1222,51 @@
                 fd_status: document.getElementById('m_fd_status').value
             };
 
-            // Also sync to localStorage for consistency if needed, though we use the variable
-            localStorage.setItem('pending_bg_details', JSON.stringify(bgFdData));
-            document.getElementById('bgStatusIndicator').style.display = 'flex';
-            closeBgModal();
+            // In Edit Mode, we might want to save to DB immediately or wait for big SAVE button?
+            // The existing flow seemed to save to API in saveBgFdLocal logic?
+            // "await api.post..." was there.
+            // Let's keep it immediate save for Edit Mode as per previous logic.
+
+            try {
+                const res = await api.post(`/purchase-orders/${poNumber}/bg-fd`, bgFdData);
+                if (res.error) {
+                    alert('Error saving details: ' + res.error);
+                } else {
+                    document.getElementById('bgStatusIndicator').style.display = 'flex';
+                    closeBgModal();
+                    alert('BG & FD Details saved successfully!');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function deleteBgFdLocal() {
+            if (!confirm("Are you sure you want to PERMANENTLY DELETE these BG/FD details from this PO?")) return;
+
+            try {
+                const res = await api.delete(`/purchase-orders/${poNumber}/bg-fd`);
+                if (res.error) {
+                    alert("Error deleting: " + res.error);
+                } else {
+                    bgFdData = null; // Clear local state
+
+                    // Clear inputs visually
+                    const ids = ['m_opening_balance', 'm_bg_number', 'm_bg_start_date', 'm_bg_end_date', 'm_bg_value', 'm_bg_limit_rem', 'm_fd_margin', 'm_fd_number', 'm_html_start_date', 'm_fd_maturity_date', 'm_fd_maturity_amount', 'm_roi'];
+                    ids.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+
+                    document.getElementById('bgStatusIndicator').style.display = 'none';
+                    closeBgModal();
+                    alert("BG/FD Details Deleted.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error deleting: " + e.message);
+            }
         }
 
         async function initPage() {
@@ -1148,7 +1274,7 @@
             localStorage.removeItem('pending_bg_details');
 
             // Load PO data
-            const poRes = await api.get(`/purchase-orders/${poNumber}`);
+            const poRes = await api.get(`/purchase-orders/${encodeURIComponent(poNumber)}`);
             if (poRes.error || !poRes.purchase_order) {
                 alert('Error loading purchase order: ' + (poRes.error || 'Not found'));
                 window.location.href = 'accounts.html';
@@ -1187,7 +1313,7 @@
                 toggleBgBtn();
 
                 // Load BG/FD Details
-                const bgRes = await api.get(`/purchase-orders/${poNumber}/bg-fd`);
+                const bgRes = await api.get(`/purchase-orders/${encodeURIComponent(poNumber)}/bg-fd`);
                 if (bgRes.bg_fd) {
                     bgFdData = bgRes.bg_fd;
                     document.getElementById('bgStatusIndicator').style.display = 'flex';
@@ -1225,6 +1351,12 @@
 
         document.getElementById('poForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Refinement: A PO can only be saved when there is at least one milestone.
+            if (typeof window.validateHasMilestones === 'function' && !window.validateHasMilestones()) {
+                alert('⚠️ A Purchase Order can only be saved when there is at least one line item with at least one milestone.');
+                return;
+            }
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
             btn.innerHTML = 'Updating...';
@@ -1244,7 +1376,7 @@
                 notes: document.getElementById('notes').value
             };
 
-            const response = await api.put(`/purchase-orders/${poNumber}`, data);
+            const response = await api.put(`/purchase-orders/${encodeURIComponent(poNumber)}`, data);
             const statusMsg = document.getElementById('statusMsg');
 
             if (response.error) {
@@ -1253,272 +1385,222 @@
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             } else {
-                // Now save BG/FD details if they exist and BG is selected
-                if (data.bank_guarantee === 'Yes' && bgFdData) {
-                    await api.post(`/purchase-orders/${data.po_number}/bg-fd`, bgFdData);
-                    localStorage.removeItem('pending_bg_details');
-                }
+                // Step 2: Sync Line Items
+                try {
+                    const deletedIds = window.getDeletedLineItemsForSave ? window.getDeletedLineItemsForSave() : [];
+                    const currentItems = window.getLineItemsForSave ? window.getLineItemsForSave() : [];
 
-                statusMsg.textContent = '✅ Purchase Order Updated Successfully!';
-                statusMsg.style.color = 'var(--success)';
-                setTimeout(() => {
-                    window.location.href = `account-details.html?id=${currentPo.account_id}`;
-                }, 1000);
+                    // 2a. Delete removed items
+                    for (const id of deletedIds) {
+                        await api.delete(`/line-items/${id}`);
+                    }
+
+                    // 2b. Update or Insert current items
+                    for (const item of currentItems) {
+                        if (item.id && !item.id.toString().startsWith('temp_')) {
+                            // Update existing
+                            await api.put(`/line-items/${item.id}`, item);
+                        } else {
+                            // Insert new
+                            await api.post(`/purchase-orders/${encodeURIComponent(data.po_number)}/line-items`, item);
+                        }
+                    }
+
+                    // Step 3: Save BG/FD details if they exist and BG is selected
+                    if (data.bank_guarantee === 'Yes' && bgFdData) {
+                        await api.post(`/purchase-orders/${encodeURIComponent(data.po_number)}/bg-fd`, bgFdData);
+                        localStorage.removeItem('pending_bg_details');
+                    }
+
+                    // Step 4: Clear memory and notify
+                    if (window.clearLineItemsAfterSave) window.clearLineItemsAfterSave();
+
+                    statusMsg.textContent = '✅ Purchase Order and Details Updated Successfully!';
+                    statusMsg.style.color = 'var(--success)';
+                    setTimeout(() => {
+                        window.location.href = `account-details.html?id=${currentPo.account_id}`;
+                    }, 1000);
+                } catch (syncErr) {
+                    console.error('Sync Error:', syncErr);
+                    statusMsg.textContent = '⚠️ PO Header saved, but error syncing details: ' + syncErr.message;
+                    statusMsg.style.color = 'var(--warning)';
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             }
         });
 
         initPage();
     </script>
-    <div id="bgFdModal" class="modal-overlay">
-        <div class="modal-card"
-            style="max-width: 1000px; background: #e0f2fe; border-radius: 4px; border: 2px solid #0891b2;">
-            <div class="modal-header"
-                style="background: linear-gradient(to right, #06b6d4, #0891b2); padding: 0.5rem 1rem; border-bottom: none;">
-                <h2 class="modal-title"
-                    style="color: white; font-weight: 800; font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase;">
-                    BANK GUARANTEE AND FIXED DEPOSIT DETAILS</h2>
-                <div style="display: flex; gap: 1rem; align-items: center;">
-                    <button onclick="closeBgModal()"
-                        style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
-                </div>
+    <div id="bgFdModal" class="li-modal-overlay">
+        <div class="li-modal-card" style="max-width: 1000px; height: auto; max-height: 90vh;">
+            <div class="li-modal-header">
+                <h2 class="li-modal-title">🏦 Bank Guarantee & Fixed Deposit Workbench</h2>
+                <button onclick="closeBgModal()" class="li-modal-close" title="Close">&times;</button>
             </div>
 
-            <!-- Top Summary Bubbles floating right logic -->
-            <div
-                style="display: flex; justify-content: flex-end; padding: 0.5rem 1rem; gap: 1rem; margin-top: -10px; position: relative; z-index: 10;">
-                <div
-                    style="background: #ccfbf1; padding: 0.25rem 0.75rem; border-radius: 8px; border: 1px solid #99f6e4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
-                    <div style="font-size: 0.65rem; color: #0f766e; font-weight: 700; margin-bottom: 2px;">PO Value
-                        (display)</div>
-                    <div id="s_po_value" style="font-size: 0.9rem; font-weight: 800; color: #115e59;">$0.00</div>
-                </div>
-                <div
-                    style="background: #ccfbf1; padding: 0.25rem 0.75rem; border-radius: 8px; border: 1px solid #99f6e4; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
-                    <div style="font-size: 0.65rem; color: #0f766e; font-weight: 700; margin-bottom: 2px;">Opening
-                        Balance of BG Limit</div>
-                    <input type="number" id="m_opening_balance" oninput="calculateBgFd()" placeholder="0.00"
-                        style="width: 100px; text-align: center; border: 1px solid #2dd4bf; border-radius: 4px; font-weight: 700; color: #134e4a; background: #f0fdf4;">
-                </div>
-            </div>
-
-            <div class="modal-body" style="padding: 0.5rem 1rem;">
-
-                <!-- BG SECTION -->
-                <div
-                    style="background: #ecfeff; border: 2px solid #a5f3fc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; position: relative;">
-                    <!-- Section Title implied by grouping -->
-
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: end;">
-
-                        <!-- Row 1 -->
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Number (can be blank)</label>
-                            <input type="text" id="m_bg_number" placeholder="BG-XXXX"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Start Date</label>
-                            <input type="date" id="m_bg_start_date" onchange="calculateBgFd()"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Tenure (DD MM YY)</label>
-                            <div class="tenure-group" style="background: #e0f2fe; border: 1px solid #bae6fd;">
-                                <div class="tenure-item">
-                                    <span>DD</span>
-                                    <input type="number" id="m_bg_tenure_dd" value="0" min="0"
-                                        oninput="calculateBgFd()">
-                                </div>
-                                <div class="tenure-item">
-                                    <span>MM</span>
-                                    <input type="number" id="m_bg_tenure_mm" value="0" min="0"
-                                        oninput="calculateBgFd()">
-                                </div>
-                                <div class="tenure-item">
-                                    <span>YY</span>
-                                    <input type="number" id="m_bg_tenure_yy" value="0" min="0"
-                                        oninput="calculateBgFd()">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                End Date(display)</label>
-                            <input type="text" id="m_bg_end_date" readonly
-                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
-                        </div>
-
-                        <!-- Row 2 -->
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">Bank
-                                Guarantee Percentage</label>
-                            <input type="number" id="m_bg_percentage" value="10" oninput="calculateBgFd()"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group span-2" style="grid-column: span 2;">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">Bank
-                                Guarantee Value = PO Value * BG %</label>
-                            <input type="text" id="m_bg_value" readonly
-                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Claim Period Required</label>
-                            <div
-                                style="display: flex; gap: 1rem; align-items: center; background: #cffafe; padding: 0.4rem; border-radius: 4px; border: 1px solid #67e8f9;">
-                                <label
-                                    style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #0e7490; font-weight: 600; cursor: pointer;">
-                                    <input type="radio" name="m_claim_required" value="Yes" checked
-                                        onchange="calculateBgFd()"> Yes
-                                </label>
-                                <label
-                                    style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #0e7490; font-weight: 600; cursor: pointer;">
-                                    <input type="radio" name="m_claim_required" value="No" onchange="calculateBgFd()">
-                                    No
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Row 3 -->
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Status</label>
-                            <select id="m_bg_status" style="background: #cffafe; border: 1px solid #67e8f9;">
-                                <option>Draft</option>
-                                <option>Requested</option>
-                                <option selected>Active</option>
-                                <option>Expired</option>
-                                <option>Returned</option>
-                            </select>
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Claim Period (DD MM YY)</label>
-                            <div class="tenure-group" style="background: #e0f2fe; border: 1px solid #bae6fd;">
-                                <div class="tenure-item">
-                                    <span>DD</span>
-                                    <input type="number" id="m_claim_dd" value="0" min="0" oninput="calculateBgFd()">
-                                </div>
-                                <div class="tenure-item">
-                                    <span>MM</span>
-                                    <input type="number" id="m_claim_mm" value="3" min="0" oninput="calculateBgFd()">
-                                </div>
-                                <div class="tenure-item">
-                                    <span>YY</span>
-                                    <input type="number" id="m_claim_yy" value="0" min="0" oninput="calculateBgFd()">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Claim Date(display)</label>
-                            <input type="text" id="m_bg_claim_date" readonly
-                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
-                        </div>
-
-                        <div class="field-group">
-                            <!-- Spacer or empty -->
-                        </div>
-
-                        <!-- Row 4 -->
-                        <div class="field-group span-4" style="grid-column: span 4;">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">BG
-                                Limit Remaining (when BG number is there, then OB – BGV will show as BGR)</label>
-                            <input type="text" id="m_bg_limit_rem" readonly
-                                style="background: #ccfbf1; color: #047857; border: 1px solid #5eead4; font-weight: 800; font-size: 1.1rem; text-align: center;">
-                        </div>
-
+            <div class="li-modal-body">
+                <!-- Summary/Context Bar -->
+                <div class="li-context-bar">
+                    <div class="li-context-item">
+                        <label>PO Value:</label>
+                        <div id="s_po_value" style="font-weight: 800; color: var(--primary-dark);">$0.00</div>
+                    </div>
+                    <div class="li-context-item">
+                        <label>Opening BG Limit:</label>
+                        <input type="number" id="m_opening_balance" oninput="calculateBgFd()" value="0"
+                            style="width: 100px;">
+                    </div>
+                    <div class="li-context-item">
+                        <label>Limit Remaining:</label>
+                        <input type="text" id="m_bg_limit_rem" readonly
+                            style="width: 100px; color: green; font-weight: bold; background: #f0fdf4;">
+                    </div>
+                    <div class="li-context-item">
+                        <label>BG Value (Calc):</label>
+                        <div id="s_bg_calc" style="font-weight: 800; color: var(--primary-dark);">$0.00</div>
                     </div>
                 </div>
 
-                <!-- FD SECTION -->
-                <div style="background: #ecfeff; border: 2px solid #a5f3fc; border-radius: 8px; padding: 1rem;">
+                <!-- Main Form Grid -->
+                <div class="li-form-container" style="flex: 1; overflow-y: auto;">
+                    <!-- BG Details Block -->
+                    <div class="form-block">
+                        <div class="form-title">Bank Guarantee Specification</div>
+                        <div class="li-compact-grid">
+                            <div class="li-field">
+                                <label>BG Number</label>
+                                <input type="text" id="m_bg_number" placeholder="BG-XXXX">
+                            </div>
+                            <div class="li-field">
+                                <label>Status</label>
+                                <select id="m_bg_status">
+                                    <option>Draft</option>
+                                    <option>Requested</option>
+                                    <option selected>Active</option>
+                                    <option>Expired</option>
+                                    <option>Returned</option>
+                                </select>
+                            </div>
+                            <div class="li-field">
+                                <label>BG Start Date</label>
+                                <input type="date" id="m_bg_start_date" onchange="calculateBgFd()">
+                            </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: end;">
+                            <div class="li-field half" style="grid-column: span 1.5;">
+                                <label>Tenure (DD-MM-YY)</label>
+                                <div class="tenure-group">
+                                    <div class="tenure-item"><span>DD</span><input type="number" id="m_bg_tenure_dd"
+                                            value="0" min="0" oninput="calculateBgFd()"></div>
+                                    <div class="tenure-item"><span>MM</span><input type="number" id="m_bg_tenure_mm"
+                                            value="0" min="0" oninput="calculateBgFd()"></div>
+                                    <div class="tenure-item"><span>YY</span><input type="number" id="m_bg_tenure_yy"
+                                            value="0" min="0" oninput="calculateBgFd()"></div>
+                                </div>
+                            </div>
+                            <div class="li-field half" style="grid-column: span 1.5;">
+                                <label>End Date (Auto)</label>
+                                <input type="text" id="m_bg_end_date" readonly tabindex="-1"
+                                    style="background: #f1f5f9; color: #64748b;">
+                            </div>
 
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">% of
-                                FD on BG Amount</label>
-                            <input type="number" id="m_fd_percentage" value="10" oninput="calculateBgFd()"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                            <div class="li-field">
+                                <label>BG %</label>
+                                <input type="number" id="m_bg_percentage" value="10" oninput="calculateBgFd()">
+                            </div>
+                            <div class="li-field span-2" style="grid-column: span 2;">
+                                <label>BG Value (PO Val * BG%)</label>
+                                <input type="text" id="m_bg_value" readonly
+                                    style="background: #f0fdf4; font-weight: 700;">
+                            </div>
+
+                            <div class="li-field full">
+                                <label>Claim Period Required?</label>
+                                <div style="display: flex; gap: 1rem; align-items: center; padding: 0.2rem;">
+                                    <label
+                                        style="font-weight: normal; color: var(--text-main); font-size: 0.75rem;"><input
+                                            type="radio" name="m_claim_required" value="Yes" checked
+                                            onchange="calculateBgFd()"> Yes</label>
+                                    <label
+                                        style="font-weight: normal; color: var(--text-main); font-size: 0.75rem;"><input
+                                            type="radio" name="m_claim_required" value="No" onchange="calculateBgFd()">
+                                        No</label>
+                                </div>
+                            </div>
+
+                            <div class="li-field half" style="grid-column: span 1.5;">
+                                <label>Claim Period (DD-MM-YY)</label>
+                                <div class="tenure-group">
+                                    <div class="tenure-item"><span>DD</span><input type="number" id="m_claim_dd"
+                                            value="0" min="0" oninput="calculateBgFd()"></div>
+                                    <div class="tenure-item"><span>MM</span><input type="number" id="m_claim_mm"
+                                            value="3" min="0" oninput="calculateBgFd()"></div>
+                                    <div class="tenure-item"><span>YY</span><input type="number" id="m_claim_yy"
+                                            value="0" min="0" oninput="calculateBgFd()"></div>
+                                </div>
+                            </div>
+                            <div class="li-field half" style="grid-column: span 1.5;">
+                                <label>Claim Date (Auto)</label>
+                                <input type="text" id="m_bg_claim_date" readonly tabindex="-1"
+                                    style="background: #f1f5f9; color: #64748b;">
+                            </div>
+
                         </div>
+                    </div>
 
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
-                                Number</label>
-                            <input type="text" id="m_fd_number" placeholder="FD-XXXX"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
+                    <!-- FD Details Block -->
+                    <div class="form-block">
+                        <div class="form-title">Fixed Deposit (FD) Marking</div>
+                        <div class="li-compact-grid">
+                            <div class="li-field">
+                                <label>FD Status</label>
+                                <select id="m_fd_status">
+                                    <option selected>Active</option>
+                                    <option>Liquidated</option>
+                                    <option>Released</option>
+                                </select>
+                            </div>
+                            <div class="li-field">
+                                <label>FD Number</label>
+                                <input type="text" id="m_fd_number" placeholder="FD-XXXX">
+                            </div>
+                            <div class="li-field">
+                                <label>Start Date</label>
+                                <input type="date" id="m_fd_start_date">
+                            </div>
+                            <div class="li-field">
+                                <label>FD % on BG</label>
+                                <input type="number" id="m_fd_percentage" value="10" oninput="calculateBgFd()">
+                            </div>
+                            <div class="li-field">
+                                <label>FD Margin/Amt</label>
+                                <input type="text" id="m_fd_margin" readonly style="background: #f0fdf4;">
+                            </div>
+                            <div class="li-field">
+                                <label>Rate of Interest</label>
+                                <input type="number" step="0.01" id="m_roi" value="6.5" oninput="calculateBgFd()">
+                            </div>
+                            <div class="li-field">
+                                <label>Maturity Date</label>
+                                <input type="date" id="m_fd_maturity_date">
+                            </div>
+                            <div class="li-field">
+                                <label>Maturity Amount</label>
+                                <input type="number" id="m_fd_maturity_amount" oninput="calculateBgFd()">
+                            </div>
                         </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
-                                Start Date</label>
-                            <input type="date" id="m_fd_start_date"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
-                                Margin(Actual) Agst. PBG(display)</label>
-                            <input type="text" id="m_fd_margin" readonly
-                                style="background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; font-weight: 700;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
-                                Maturity Date</label>
-                            <input type="date" id="m_fd_maturity_date"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
-                                Maturity Amount</label>
-                            <input type="number" id="m_fd_maturity_amount"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">Rate
-                                of Interest</label>
-                            <input type="number" step="0.01" id="m_roi" value="6.5"
-                                style="background: #cffafe; border: 1px solid #67e8f9;">
-                        </div>
-
-                        <div class="field-group">
-                            <label style="color: #155e75; font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;">FD
-                                Status</label>
-                            <select id="m_fd_status" style="background: #cffafe; border: 1px solid #67e8f9;">
-                                <option selected>Active</option>
-                                <option>Liquidated</option>
-                                <option>Released</option>
-                            </select>
-                        </div>
-
                     </div>
                 </div>
 
-            </div>
-
-            <div class="modal-footer"
-                style="background: transparent; border-top: none; justify-content: center; padding-bottom: 1.5rem;">
-                <!-- Replaced Cancel button with just the Save button as per image main focus, kept cancel logic in X or separate if needed, but image shows huge blue area -->
-                <div style="background: #0284c7; padding: 2rem; border-radius: 4px; width: 100%; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;"
-                    onclick="saveBgFdLocal()">
-                    <div style="text-align: center;">
-                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700;">SAVE BG and FD DETAILS</h3>
-                        <p style="margin: 0; font-size: 0.8rem; opacity: 0.8;">(All Details are mandatory)</p>
-                    </div>
+                <div class="li-modal-footer" style="justify-content: space-between;">
+                    <button onclick="deleteBgFdLocal()" class="btn-pro"
+                        style="width: 200px; justify-content: center; background-color: #d32f2f; color: white;">
+                        Delete
+                    </button>
+                    <button onclick="saveBgFdLocal()" class="btn-pro btn-green"
+                        style="width: 200px; justify-content: center;">
+                        Save Details
+                    </button>
                 </div>
             </div>
         </div>

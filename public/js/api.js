@@ -72,9 +72,14 @@ const api = {
                 },
                 body: JSON.stringify(data)
             });
-            return await res.json();
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                return { error: `Server error (${res.status}): ${text.substring(0, 100)}` };
+            }
         } catch (err) {
-            return { error: 'Network error' };
+            return { error: 'Network error: ' + err.message };
         }
     },
 

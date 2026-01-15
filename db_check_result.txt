@@ -1,0 +1,15 @@
+Tables: users, sqlite_sequence, customers, contacts, leads, tasks, products, interactions, purchase_orders, bg_fd_details, po_line_items, po_milestones, invoices
+
+Columns for customers: id, user_id, unique_client_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes, created_at
+Columns for tasks: id, user_id, account_id, title, type, description, due_date, status, created_at
+Columns for products: id, user_id, name, sku, price, description, created_at
+Columns for users: id, email, password, name, phone, created_at
+Columns for purchase_orders: po_number, id, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, created_at
+Columns for bg_fd_details: id, po_number, opening_balance_bg_limit, bg_number, bg_start_date, bg_tenure_dd, bg_tenure_mm, bg_tenure_yy, bg_end_date, bg_percentage, bg_value, bg_claim_period_required, bg_status, bg_claim_period_dd, bg_claim_period_mm, bg_claim_period_yy, bg_claim_date, bg_limit_remaining, fd_percentage_on_bg, fd_number, fd_start_date, fd_margin_actual, fd_maturity_date, fd_maturity_amount, rate_of_interest, fd_status, created_at
+Columns for leads: id, user_id, name, company_name, email, status, value, created_at
+Columns for po_milestones: id, line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, cycle_value, documents, payment_terms, delivery_date, created_at, invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks
+Columns for invoices: id, po_number, line_item_id, milestone_id, invoice_no, invoice_date, taxable_value, gst_value, total_value, credit_period, due_date, payment_received, pending_amount, status, remarks, created_at
+Columns for interactions: id, user_id, account_id, type, details, date
+Columns for contacts: id, user_id, account_id, name, email, phone, role, created_at
+Columns for sqlite_sequence: name, seq
+Columns for po_line_items: id, po_number, line_item_no, line_item_type, description, quantity, gst_rate, hsn_sac_code, created_at, invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks

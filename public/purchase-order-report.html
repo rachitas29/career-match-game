@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Order Report - My CRM</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/po-theme.css">
+    <style>
+        /* Shared variables from po-line-items to ensure exact match */
+        :root {
+            --po-bg: #00acc1;
+            --po-light: #e0f7fa;
+            --po-accent: #00838f;
+            --po-dark: #006064;
+            --po-header: #ffffff;
+            --po-card: #f1f8e9;
+            --po-border: #b2dfdb;
+        }
+
+        body {
+            background: linear-gradient(135deg, #00acc1 0%, #007c91 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+        }
+
+        .layout-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        /* Override main content to float nicely over the gradient background */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .report-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .page-title {
+            color: white;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-left: 1rem;
+        }
+
+        /* Filter Section matching the "Billing Form" boxes */
+        .filter-box {
+            background: #e0f2f1;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid #b2dfdb;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-input {
+            flex: 1;
+            background: #ffffff;
+            border: 2px solid #b2dfdb;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-weight: 600;
+            color: #006064;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .filter-input::placeholder {
+            color: #80cbc4;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #00acc1;
+        }
+
+        .btn-search {
+            background: #bf360c;
+            /* Deep orange/red for contrast as seen in user image */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #872305;
+            transition: all 0.1s;
+        }
+
+        .btn-search:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* Green Headers for Grids */
+        .grid-header-row {
+            display: flex;
+            background: #9ccc65;
+            /* Light Green */
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0px;
+        }
+
+        .grid-header-cell {
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 700;
+            color: #1b5e20;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            flex: 1;
+        }
+
+        /* Master Grid Body */
+        .master-grid {
+            background: #00bcd4;
+            /* Cyan solid background as per image */
+            min-height: 100px;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .master-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .master-row {
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .master-row:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .master-cell {
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        /* Detail Grid (Complex Table) */
+        .detail-table-wrapper {
+            background: #00bcd4;
+            border-radius: 10px;
+            padding: 1rem;
+            overflow-x: auto;
+            min-height: 200px;
+            margin-bottom: 2rem;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 2px;
+        }
+
+        .detail-th {
+            background: #9ccc65;
+            color: #1b5e20;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            text-align: center;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+
+        .detail-td {
+            background: white;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        /* Footer Summaries */
+        .footer-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-box {
+            background: #e0f2f1;
+            border: 1px solid #b2dfdb;
+            border-radius: 10px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .summary-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #006064;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .bg-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.5fr 1fr;
+            gap: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">My CRM</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="accounts.html" class="nav-item">Accounts</a>
+                <a href="purchase-order-report.html" class="nav-item active">PO Report</a> <!-- New Link -->
+                <a href="contacts.html" class="nav-item">Contacts</a>
+                <a href="leads.html" class="nav-item">Leads</a>
+                <a href="tasks.html" class="nav-item">Tasks</a>
+                <a href="products.html" class="nav-item">Products</a>
+                <a href="settings.html" class="nav-item">Settings</a>
+            </nav>
+            <button onclick="api.logout()" class="nav-item"
+                style="background: none; border: none; text-align: left; margin-top: auto; color: #f87171; cursor: pointer;">
+                Logout
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-title">PURCHASE ORDER REPORT</div>
+
+            <div class="report-container">
+
+                <!-- Filter Section -->
+                <div class="filter-box">
+                    <input type="text" id="search_po_number" class="filter-input" placeholder="PO Number">
+                    <input type="text" id="search_party_name" class="filter-input" placeholder="Party Name">
+                    <input type="text" id="search_project_name" class="filter-input" placeholder="Project Name">
+                    <button class="btn-search" onclick="searchPOs()">SEARCH PO</button>
+                </div>
+
+                <!-- Master Grid Header -->
+                <div class="grid-header-row">
+                    <div class="grid-header-cell">PO Number</div>
+                    <div class="grid-header-cell" style="flex: 2;">Party Name</div>
+                    <div class="grid-header-cell" style="flex: 2;">Project Name</div>
+                </div>
+
+                <!-- Master Grid Body -->
+                <div class="master-grid">
+                    <div id="masterGridContent">(Grid should display only the searched PO/Party/Project records)</div>
+                </div>
+
+                <!-- Detail Grid -->
+                <div class="detail-table-wrapper">
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th class="detail-th">Line Item No</th>
+                                <th class="detail-th">Description</th>
+                                <th class="detail-th">Quantity</th>
+                                <th class="detail-th">Cycle Value</th>
+                                <th class="detail-th">Milestone</th>
+                                <th class="detail-th">Payment Terms</th>
+                                <th class="detail-th">Document to be submitted</th>
+                                <th class="detail-th">Expected Delivery Time</th>
+                                <th class="detail-th">Invoice No(X)</th>
+                                <th class="detail-th">Invoice Date</th>
+                                <th class="detail-th">Invoice Value</th>
+                                <th class="detail-th">Payment Received</th>
+                                <th class="detail-th">Pending Amount</th>
+                                <th class="detail-th">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailGridBody">
+                            <tr>
+                                <td colspan="14" style="color:white; padding: 2rem;">(Grid should have PO Details for
+                                    the selected PO details)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Summary (Financials) -->
+                <div class="footer-summary">
+                    <div class="summary-box">
+                        <span class="summary-label">Total PO Value (A)</span>
+                        <div id="disp_total_po_value" class="summary-val">$0.00</div>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-label">Billed Value (B)</span>
+                        <div id="disp_billed_value" class="summary-val">$0.00</div>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-label">Pending Value (A-B)</span>
+                        <div id="disp_pending_value" class="summary-val">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- Footer Summary (BG) -->
+                <div class="bg-footer">
+                    <div class="summary-box">
+                        <span class="summary-label">BG Number</span>
+                        <div id="disp_bg_number" class="summary-val">-</div>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-label">Bank Guarantee Percentage</span>
+                        <div id="disp_bg_percent" class="summary-val">0%</div>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-label">Bank Guarantee Value = PO Value * BG %</span>
+                        <div id="disp_bg_value" class="summary-val">$0.00</div>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-label">BG End Date</span>
+                        <div id="disp_bg_date" class="summary-val">-</div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Store for global data
+        let allPOs = [];
+        let selectedPO = null;
+
+        // Initialize
+        async function init() {
+            api.checkAuth();
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // Manually highlight since filtering logic might be strict on exact match
+            const links = document.querySelectorAll('.nav-item');
+            for (let l of links) {
+                if (l.href.includes('purchase-order-report.html')) l.classList.add('active');
+            }
+
+            // Check URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const poParam = urlParams.get('po_number');
+            if (poParam) {
+                document.getElementById('search_po_number').value = poParam;
+                // Give a small delay to ensure API loads or just call immediately
+                setTimeout(searchPOs, 100);
+            }
+        }
+
+        // Search POs
+        async function searchPOs() {
+            const poNumTerm = document.getElementById('search_po_number').value.toLowerCase().trim();
+            const partyTerm = document.getElementById('search_party_name').value.toLowerCase().trim();
+            const projectTerm = document.getElementById('search_project_name').value.toLowerCase().trim();
+
+            const grid = document.getElementById('masterGridContent');
+            grid.innerHTML = '<div style="color:white;">Searching...</div>';
+
+            try {
+                // Fetch all POs (In a real app, use search query params)
+                const res = await api.get('/purchase-orders');
+                if (!res.purchase_orders) {
+                    grid.innerHTML = 'No records found.';
+                    return;
+                }
+
+                allPOs = res.purchase_orders;
+
+                // Client-side filter
+                const filtered = allPOs.filter(po => {
+                    const matchNum = !poNumTerm || (po.po_number && po.po_number.toLowerCase().includes(poNumTerm));
+                    const matchParty = !partyTerm || (po.customer_name && po.customer_name.toLowerCase().includes(partyTerm));
+                    const matchProj = !projectTerm || (po.notes && po.notes.toLowerCase().includes(projectTerm)); // Assuming Project Name might be in notes or custom field? Mapping to Notes for now or generic check
+
+                    return matchNum && matchParty && matchProj;
+                });
+
+                renderMasterGrid(filtered);
+
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = 'Error fetching data';
+            }
+        }
+
+        function renderMasterGrid(pos) {
+            const grid = document.getElementById('masterGridContent');
+            if (pos.length === 0) {
+                grid.innerHTML = 'No matching POs found.';
+                return;
+            }
+
+            let html = '<table class="master-grid-table">';
+            pos.forEach(po => {
+                html += `
+                    <tr class="master-row" onclick="selectPO('${po.po_number}')">
+                        <td class="master-cell">${po.po_number}</td>
+                        <td class="master-cell" style="flex: 2;">${po.customer_name || 'N/A'}</td>
+                        <td class="master-cell" style="flex: 2;">${po.notes || (po.bill_to ? 'Bill To: ' + po.bill_to : '-')}</td> <!-- Project mapping fallback -->
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            grid.innerHTML = html;
+        }
+
+        async function selectPO(poNumber) {
+            try {
+                // 1. Fetch Line Items
+                const liRes = await api.get(`/purchase-orders/${poNumber}/line-items`);
+                const lineItems = liRes.line_items || [];
+
+                // 2. Fetch BG Details
+                let bgDetails = {};
+                try {
+                    const bgRes = await api.get(`/purchase-orders/${poNumber}/bg-fd`);
+                    bgDetails = bgRes.bg_fd || {};
+                } catch (e) { console.log('No BG data'); }
+
+                // 3. Find Customer/PO basic data locally
+                const poData = allPOs.find(p => p.po_number === poNumber);
+
+                renderDetailGrid(lineItems);
+                renderFooter(poData, lineItems, bgDetails);
+
+            } catch (err) {
+                alert('Error loading PO details: ' + err.message);
+            }
+        }
+
+        function renderDetailGrid(lineItems) {
+            const tbody = document.getElementById('detailGridBody');
+            tbody.innerHTML = '';
+
+            if (lineItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="14" style="padding:1rem;">No line items found for this PO.</td></tr>';
+                return;
+            }
+
+            lineItems.forEach((li, idx) => {
+                if (li.milestones && li.milestones.length > 0) {
+                    li.milestones.forEach(ms => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="detail-td">${li.line_item_no || (idx + 1)}</td>
+                            <td class="detail-td">${li.description || ''}</td>
+                            <td class="detail-td">${ms.quantity || ''}</td>
+                            <td class="detail-td">${ms.cycle_value || ''}</td>
+                            <td class="detail-td">${ms.milestone_name || ''}</td>
+                            <td class="detail-td">${ms.payment_terms || ''}</td>
+                            <td class="detail-td">${ms.documents || ''}</td>
+                            <td class="detail-td">${ms.delivery_date || ''}</td>
+                            <td class="detail-td">${ms.invoice_no || ''}</td>
+                            <td class="detail-td">${ms.invoice_date ? new Date(ms.invoice_date).toLocaleDateString() : ''}</td>
+                            <td class="detail-td">${ms.invoice_value || ''}</td>
+                            <td class="detail-td">${ms.payment_received || ''}</td>
+                            <td class="detail-td">${ms.pending_amount || ''}</td>
+                            <td class="detail-td">${ms.remarks || ''}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    // Fallback if no milestones (shouldn't happen in this schema but safety first)
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="detail-td">${li.line_item_no || (idx + 1)}</td>
+                        <td class="detail-td">${li.description || ''}</td>
+                        <td class="detail-td">${li.quantity || ''}</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                        <td class="detail-td">-</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        function renderFooter(poData, lineItems, bgDetails) {
+            // Calculate Totals
+            const totalPOVal = parseFloat(poData.po_value) || 0;
+
+            // Calculate Billed Value (Sum of all invoices)
+            let billedVal = 0;
+            lineItems.forEach(li => {
+                if (li.milestones) {
+                    li.milestones.forEach(ms => {
+                        billedVal += parseFloat(ms.invoice_value) || 0;
+                    });
+                }
+            });
+
+            const pendingVal = totalPOVal - billedVal;
+
+            document.getElementById('disp_total_po_value').textContent = '$' + totalPOVal.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            document.getElementById('disp_billed_value').textContent = '$' + billedVal.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            document.getElementById('disp_pending_value').textContent = '$' + pendingVal.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            // BG Details
+            document.getElementById('disp_bg_number').textContent = bgDetails.bg_number || '-';
+            document.getElementById('disp_bg_percent').textContent = (bgDetails.bg_percentage || 0) + '%';
+
+            // Re-calculate BG Value or use saved
+            const bgVal = parseFloat(bgDetails.bg_value) || (totalPOVal * (parseFloat(bgDetails.bg_percentage) || 0) / 100);
+            document.getElementById('disp_bg_value').textContent = '$' + bgVal.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            document.getElementById('disp_bg_date').textContent = bgDetails.bg_end_date || '-';
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

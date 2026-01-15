@@ -177,9 +177,28 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 quantity REAL,
                 gst_rate REAL,
                 hsn_sac_code TEXT,
+                invoice_no TEXT,
+                invoice_date TEXT,
+                invoice_value REAL,
+                payment_received REAL,
+                pending_amount REAL,
+                remarks TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(po_number) REFERENCES purchase_orders(po_number) ON DELETE CASCADE ON UPDATE CASCADE
             )`);
+
+            // Migration: Add columns to po_line_items if they don't exist
+            const liColumns = [
+                'invoice_no TEXT',
+                'invoice_date TEXT',
+                'invoice_value REAL',
+                'payment_received REAL',
+                'pending_amount REAL',
+                'remarks TEXT'
+            ];
+            liColumns.forEach(column => {
+                db.run(`ALTER TABLE po_line_items ADD COLUMN ${column}`, (err) => { });
+            });
 
             db.run(`CREATE TABLE IF NOT EXISTS po_milestones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,8 +211,56 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 documents TEXT,
                 payment_terms TEXT,
                 delivery_date TEXT, -- Store as YYYY-MM-DD
+                invoice_no TEXT,
+                invoice_date TEXT,
+                invoice_value REAL,
+                payment_received REAL,
+                pending_amount REAL,
+                remarks TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(line_item_id) REFERENCES po_line_items(id) ON DELETE CASCADE
+            )`);
+
+            // Migration: Add columns to po_milestones if they don't exist
+            const columnsToAdd = [
+                'invoice_no TEXT',
+                'invoice_date TEXT',
+                'invoice_value REAL',
+                'payment_received REAL',
+                'pending_amount REAL',
+                'remarks TEXT'
+            ];
+
+            columnsToAdd.forEach(column => {
+                const [colName] = column.split(' ');
+                db.run(`ALTER TABLE po_milestones ADD COLUMN ${column}`, (err) => {
+                    if (err && !err.message.includes('duplicate column name')) {
+                        // Ignore duplicate column errors, but log others if you want
+                    }
+                });
+            });
+
+            // Invoices Table
+            db.run(`CREATE TABLE IF NOT EXISTS invoices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                po_number TEXT,
+                line_item_id INTEGER,
+                milestone_id INTEGER,
+                invoice_no TEXT,
+                invoice_date TEXT,
+                taxable_value REAL,
+                gst_value REAL,
+                total_value REAL,
+                credit_period INTEGER,
+                due_date TEXT,
+                payment_received REAL,
+                pending_amount REAL,
+                status TEXT,
+                remarks TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(po_number) REFERENCES purchase_orders(po_number) ON DELETE CASCADE,
+                FOREIGN KEY(line_item_id) REFERENCES po_line_items(id) ON DELETE CASCADE,
+                FOREIGN KEY(milestone_id) REFERENCES po_milestones(id) ON DELETE CASCADE
             )`);
 
             console.log('Database tables initialized.');
