@@ -235,6 +235,20 @@
         .modal-overlay.open {
             display: flex;
         }
+
+        /* BG/FD Modal Layout */
+        .bg-compact-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 1200px) {
+            .bg-compact-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 
@@ -748,7 +762,7 @@
                     </div>
                 </div>
 
-                <div class="li-compact-grid">
+                <div class="bg-compact-grid">
                     <!-- Column 1: Opening Balance -->
                     <div class="form-block">
                         <h4 class="block-title">Opening Balance</h4>
@@ -800,7 +814,7 @@
                             </div>
                             <div class="li-field">
                                 <label>BG Status</label>
-                                <select id="m_bg_status">
+                                <select id="m_bg_status" onchange="calculateBgFd()">
                                     <option>Draft</option>
                                     <option selected>Active</option>
                                     <option>Expired</option>
@@ -844,7 +858,7 @@
                         <div class="li-field-group">
                             <div class="li-field">
                                 <label>FD Status</label>
-                                <select id="m_fd_status">
+                                <select id="m_fd_status" onchange="calculateBgFd()">
                                     <option selected>Active</option>
                                     <option>Released</option>
                                     <option>Liquidated</option>
@@ -1090,9 +1104,12 @@
             // Automated Status Logic
             const bgNum = document.getElementById('m_bg_number').value.trim();
             const bgStatusEl = document.getElementById('m_bg_status');
+            const fdStatusEl = document.getElementById('m_fd_status');
+
             if (!bgNum) {
                 bgStatusEl.value = 'Draft';
-            } else {
+            } else if (bgStatusEl.value !== 'Returned') {
+                // Only auto-update if not manually set to Returned
                 const endDateVal = document.getElementById('m_bg_end_date').value; // format DD/MM/YYYY
                 if (endDateVal) {
                     const [d, m, y] = endDateVal.split('/').map(Number);
@@ -1103,10 +1120,9 @@
                 }
             }
 
-            // BG Status 'Returned' -> FD Status 'Released'
-            if (bgStatusEl.value === 'Returned') {
-                const fdStatusEl = document.getElementById('m_fd_status');
-                if (fdStatusEl) fdStatusEl.value = 'Released';
+            // Relationship: BG Status 'Returned' -> FD Status 'Released'
+            if (bgStatusEl.value === 'Returned' && fdStatusEl.value !== 'Liquidated') {
+                fdStatusEl.value = 'Released';
             }
         }
 

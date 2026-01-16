@@ -7,6 +7,7 @@
     <title>Edit Purchase Order - My CRM</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/line-items-modal.css">
+    <link rel="stylesheet" href="css/po-theme.css">
     <style>
         /* Local overrides for this specific form polish to match new-customer.html */
         .page-header {
@@ -935,8 +936,35 @@
         let bgFdData = null;
 
         function toggleBgBtn() {
+            const poVal = parseFloat(document.getElementById('po_value').value) || 0;
+            const bgRadios = document.querySelectorAll('input[name="bank_guarantee"]');
+            const bgContainer = document.querySelector('.segmented-control');
             const isBg = document.querySelector('input[name="bank_guarantee"]:checked').value === 'Yes';
             const btn = document.getElementById('fillBgBtn');
+
+            if (poVal <= 0) {
+                // Disable everything if PO Value is 0
+                bgRadios.forEach(r => r.disabled = true);
+                if (bgContainer) {
+                    bgContainer.style.opacity = '0.5';
+                    bgContainer.style.cursor = 'not-allowed';
+                }
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.classList.replace('btn-primary', 'btn-secondary');
+                // Also reset indicator
+                bgFdData = null;
+                document.getElementById('bgStatusIndicator').style.display = 'none';
+                return;
+            }
+
+            // Enable radios if PO Value > 0
+            bgRadios.forEach(r => r.disabled = false);
+            if (bgContainer) {
+                bgContainer.style.opacity = '1';
+                bgContainer.style.cursor = 'default';
+            }
 
             if (isBg) {
                 btn.disabled = false;
@@ -1347,6 +1375,7 @@
                     document.getElementById('m_fd_status').value = bgFdData.fd_status || 'Active';
                 }
             }
+            toggleBgBtn();
         }
 
         document.getElementById('poForm').addEventListener('submit', async (e) => {

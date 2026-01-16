@@ -734,8 +734,32 @@
         }
 
         function toggleBgBtn() {
+            const poVal = parseFloat(document.getElementById('po_value').value) || 0;
+            const bgRadios = document.querySelectorAll('input[name="bank_guarantee"]');
+            const bgContainer = document.querySelector('.segmented-control');
             const isBg = document.querySelector('input[name="bank_guarantee"]:checked').value === 'Yes';
             const btn = document.getElementById('fillBgBtn');
+
+            if (poVal <= 0) {
+                // Disable everything if PO Value is 0
+                bgRadios.forEach(r => r.disabled = true);
+                if (bgContainer) {
+                    bgContainer.style.opacity = '0.5';
+                    bgContainer.style.cursor = 'not-allowed';
+                }
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.classList.replace('btn-primary', 'btn-secondary');
+                return;
+            }
+
+            // Enable radios if PO Value > 0
+            bgRadios.forEach(r => r.disabled = false);
+            if (bgContainer) {
+                bgContainer.style.opacity = '1';
+                bgContainer.style.cursor = 'default';
+            }
 
             if (isBg) {
                 btn.disabled = false;
@@ -1170,11 +1194,11 @@
             }
 
             // We do NOT save yet. We just validate mandatory fields.
+            // PO Value is NOT required to open line items (it is calculated there)
             if (!document.getElementById('account_id').value ||
                 !document.getElementById('po_number').value ||
-                !document.getElementById('po_date').value ||
-                !document.getElementById('po_value').value) {
-                alert('Please fill in all mandatory fields (Customer, PO Number, Date, and Value)');
+                !document.getElementById('po_date').value) {
+                alert('Please fill in Customer, PO Number, and Date to proceed.');
                 return;
             }
 
@@ -1338,6 +1362,7 @@
         }
 
         initForm();
+        toggleBgBtn();
     </script>
     <div id="bgFdModal" class="li-modal-overlay">
         <div class="li-modal-card" style="max-width: 1000px; height: auto; max-height: 90vh;">
