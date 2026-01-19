@@ -1085,8 +1085,8 @@ async function openBillingModal() {
                         // Back-calculate Taxable/GST if not explicitly stored in milestones (which only has invoice_value aka Total)
                         // Assuming 18% GST for now as per form logic
                         const total = parseFloat(ms.invoice_value) || 0;
-                        const taxable = total / 1.18;
-                        const gst = total - taxable;
+                        const taxable = (ms.taxable_value != null) ? parseFloat(ms.taxable_value) : (total / 1.18);
+                        const gst = (ms.gst_value != null) ? parseFloat(ms.gst_value) : (total - taxable);
 
                         currentInvoices.push({
                             id: ms.id, // using milestone id as unique ref often

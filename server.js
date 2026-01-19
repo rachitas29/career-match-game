@@ -539,7 +539,9 @@ app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
                        'pending_amount', m.pending_amount,
                        'remarks', m.remarks,
                        'status', COALESCE(m.status, 'Pending'),
-                       'credit_period', COALESCE(m.credit_period, 0)
+                       'credit_period', COALESCE(m.credit_period, 0),
+                       'taxable_value', m.taxable_value,
+                       'gst_value', m.gst_value
                    )
                ) FROM po_milestones m WHERE m.line_item_id = li.id) as milestones
         FROM po_line_items li
