@@ -129,6 +129,14 @@
     flex-shrink: 0;
 }
 
+/* Vertical Layout Override for Billing Modal */
+.li-vertical-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
 .form-block {
     background: var(--modal-card-bg);
     padding: 0.75rem;
@@ -297,9 +305,4 @@
     color: #92400e;
     border: 1px solid #fef3c7;
     margin: 0.25rem 0;
-}
-
-.btn-mini {
-    padding: 2px 6px;
-    font-size: 0.65rem;
 }

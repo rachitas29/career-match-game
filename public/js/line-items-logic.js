@@ -751,11 +751,11 @@ function editLineItemFromGrid() {
 // ========== BILLING & PAYMENT SYSTEM (ADVANCED) ==========
 
 const billingModalHTML = `
-<div id="billingModal" class="li-modal-overlay" style="z-index: 100000;">
+<div id="billingModal" class="li-modal-overlay">
     <div class="li-modal-card">
         <div class="li-modal-header">
-            <h2 class="li-modal-title">💰 BILLING DETAILS WORKSPACE</h2>
-            <button onclick="closeBillingModal()" class="li-modal-close">&times;</button>
+            <h2 class="li-modal-title">🧾 Generate Invoice & Billing</h2>
+            <button onclick="closeBillingModal()" class="li-modal-close" title="Close Workspace">&times;</button>
         </div>
         
         <div class="li-modal-body">
@@ -763,199 +763,269 @@ const billingModalHTML = `
             <div class="li-context-bar">
                 <div class="li-context-item">
                     <label>PO REF:</label>
-                    <input type="text" id="bill_po_number" readonly style="width: 180px;">
+                    <input type="text" id="bill_po_number" readonly>
                 </div>
                 <div class="li-context-item">
-                    <label>PO TOTAL:</label>
-                    <input type="text" id="bill_po_value" readonly style="width: 150px;">
+                    <label>DATE:</label>
+                    <input type="text" id="bill_po_date" readonly>
                 </div>
-                <div class="li-context-item" style="flex: 1; justify-content: flex-end;">
-                     <span style="font-size: 0.7rem; color: #64748b;">Grid columns after 'Deliv. Time' reflect saved status.</span>
+                <div class="li-context-item">
+                    <label>TOTAL VAL:</label>
+                    <input type="text" id="bill_po_value" readonly>
                 </div>
             </div>
 
-            <!-- Invoice Generation Form (Full Width, Compact) -->
-            <div class="li-form-container" style="flex: 0 0 auto; min-height: auto;">
-                <div class="form-block" style="width: 100%;">
-                    <div class="form-title">Invoice Generation & Status</div>
+            <!-- Main Layout: Top Form -> Middle Grid -> Bottom Actions -->
+            <div class="li-form-container li-vertical-layout">
+                <!-- Section 1: Invoice Generation Form -->
+                <div class="form-block">
+                    <div class="form-title">Invoice Details</div>
                     <div class="li-compact-grid" style="grid-template-columns: repeat(5, 1fr);">
                         <div class="li-field">
-                            <label>Invoice Number</label>
-                            <input type="text" id="bill_invoice_no" placeholder="INV-001" oninput="syncFormToGrid()">
+                            <label>Invoice No</label>
+                            <input type="text" id="bill_invoice_no" placeholder="INV-001">
                         </div>
                         <div class="li-field">
                             <label>Invoice Date</label>
-                            <input type="date" id="bill_invoice_date" oninput="syncFormToGrid(); updateDueDate();">
-                        </div>
-                        <div class="li-field">
-                            <label>Status</label>
-                            <select id="bill_status" onchange="syncFormToGrid()">
-                                <option>Create</option>
-                                <option>Hold</option>
-                                <option>Pending</option>
-                                <option>Received</option>
-                                <option>Cancel</option>
-                            </select>
+                            <input type="date" id="bill_invoice_date">
                         </div>
                         <div class="li-field">
                             <label>Taxable Val (A)</label>
-                            <input type="number" id="bill_taxable_val" step="0.01" oninput="syncFormToGrid()">
-                        </div>
-                        <div class="li-field">
-                            <label>GST @18% (B)</label>
-                            <input type="number" id="bill_gst_val" readonly style="background: #f1f5f9;">
-                        </div>
-
-                        <!-- Row 2 -->
-                        <div class="li-field">
-                            <label>Total Inv Val (C)</label>
-                            <input type="number" id="bill_total_val" readonly style="background: #f8fafc; font-weight: bold;">
+                            <input type="number" id="bill_taxable_val" placeholder="0.00" oninput="syncFormToGrid()">
                         </div>
                          <div class="li-field">
-                            <label>Credit Days</label>
-                            <input type="number" id="bill_credit_period" value="0" oninput="updateDueDate(); syncFormToGrid();">
+                            <label>GST @18% (B)</label>
+                            <input type="number" id="bill_gst_val" placeholder="0.00" oninput="syncFormToGrid()">
                         </div>
                         <div class="li-field">
-                            <label>Due Date (Calc)</label>
-                            <input type="date" id="bill_due_date" readonly style="background: #f1f5f9;">
+                            <label>Total (C=A+B)</label>
+                            <input type="number" id="bill_total_val" readonly style="font-weight: 700; background-color: #f8fafc;">
+                        </div>
+                        
+                        <!-- Row 2 -->
+                        <div class="li-field">
+                             <label>Credit Period (Days)</label>
+                             <input type="number" id="bill_credit_period" value="0" placeholder="e.g. 30">
+                        </div>
+                        <div class="li-field">
+                             <label>Due Date</label>
+                             <input type="text" id="bill_due_date" readonly style="background-color: #f1f5f9;">
+                        </div>
+                        <div class="li-field">
+                            <label>Status</label>
+                            <select id="bill_status">
+                                <option value="Pending">Pending</option>
+                                <option value="Sent">Sent</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Overdue">Overdue</option>
+                                <option value="Hold">Hold</option>
+                                <option value="Create">Create</option>
+                            </select>
                         </div>
                         <div class="li-field">
                             <label>Payment Rec</label>
-                            <input type="number" id="bill_payment_rec" value="0" oninput="syncFormToGrid()">
+                            <input type="number" id="bill_payment_rec" placeholder="0.00">
                         </div>
-                         <div class="li-field">
-                            <label>Additional Remarks</label>
-                            <input type="text" id="bill_remarks" placeholder="Notes..." oninput="syncFormToGrid()">
+                        <div class="li-field full" style="grid-column: span 1;">
+                            <label>Remarks</label>
+                            <input type="text" id="bill_remarks" placeholder="Notes...">
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Table Section (Takes remaining space) -->
-            <div class="li-table-wrapper" style="flex: 1; min-height: 200px; margin-top: 1rem;">
-                <table class="li-pro-table">
-                    <thead>
-                        <tr>
-                            <th style="width:30px;"><input type="checkbox" id="billSelectAll" onclick="toggleAllBillingRows(this)"></th>
-                            <th>Item No</th>
-                            <th>Description</th>
-                            <th>Qty</th>
-                            <th>Cycle Val</th>
-                            <th>Milestone</th>
-                            <th>Terms</th>
-                            <th>Doc</th>
-                            <th>Deliv. Time</th>
-                            <th>Inv No</th>
-                            <th>Inv Date</th>
-                            <th>Inv Val</th>
-                            <th>Paid</th>
-                            <th>Pending</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody id="billingGridBody">
-                        <!-- Rows populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Footer Actions -->
-            <div class="li-modal-footer" style="padding-top: 1rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #fff;">
-                <div style="display: flex; gap: 0.5rem;">
-                     <button onclick="editBillingItem()" class="btn-pro btn-blue btn-mini">EDIT INVOICE</button>
-                     <button onclick="cancelBillingItem()" class="btn-pro btn-orange btn-mini">CANCEL INV</button>
-                </div>
-                
-                 <!-- Email Badge Center -->
-                <div style="font-size: 0.75rem; color: #b45309; background: #fffbeb; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #fcd34d; display: flex; align-items: center; gap: 0.5rem;">
-                         <span>📧</span> 
-                         <span><strong>Auto-Reminder:</strong> Email sent 2 days before due date.</span>
-                </div>
+                <div class="tax-strip">Select rows below to include them in this invoice. Amounts will auto-sum unless overridden.</div>
 
-                <div style="display: flex; gap: 0.5rem;">
-                     <button onclick="handlePaymentButtonClick()" class="btn-pro btn-navy">💸 PAYMENT</button>
-                     <button onclick="saveBillingItem()" class="btn-pro btn-green">SAVE TO DB</button>
+                <!-- Section 2: Billing Grid -->
+                <div class="li-table-wrapper" style="max-height: 250px;">
+                    <table class="li-pro-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;"><input type="checkbox" onchange="toggleAllBillingRows(this)"></th>
+                                <th style="width: 40px;">Line#</th>
+                                <th>Description</th>
+                                <th style="width: 40px;">Qty</th>
+                                <th>Cycle Val</th>
+                                <th>Milestone</th>
+                                <th>Terms</th>
+                                <th>Docs</th>
+                                <th>Date</th>
+                                <th>Inv No</th>
+                                <th>Inv Date</th>
+                                <th>Inv Amt</th>
+                                <th>Paid</th>
+                                <th>Pending</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billingGridBody"></tbody>
+                    </table>
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
-
-<div id="paymentModal" class="li-modal-overlay" style="z-index: 100001;">
-    <div class="li-modal-card po-modal-card" style="width: 90%; max-width: 1200px; height: 95vh; background: linear-gradient(135deg, #e65100 0%, #bf360c 100%); display: flex; flex-direction: column;">
-        <div class="po-modal-header">
-            <h2 class="li-modal-title">💸 RECORD PAYMENT DETAILS</h2>
-            <button onclick="closePaymentModal()" class="li-modal-close">&times;</button>
-        </div>
-        <div class="li-modal-body" style="padding: 1.5rem; overflow-y: auto;">
-            <div class="po-section-container">
-                <div class="po-form-group" style="margin-bottom: 1.5rem;">
-                    <label>Select Invoice Number for Payment</label>
-                    <select id="pay_invoice_no" onchange="searchInvoice()" style="font-size: 1.1rem; height: 40px;"></select>
-                </div>
-
-                <div class="po-grid-4" style="margin-bottom: 1rem;">
-                    <div class="po-form-group"><label>Inv Date</label><input type="text" id="pay_invoice_date" readonly></div>
-                    <div class="po-form-group"><label>PO #</label><input type="text" id="pay_po_number" readonly></div>
-                    <div class="po-form-group"><label>PO Value</label><input type="text" id="pay_po_value" readonly></div>
-                    <div class="po-form-group"><label>Type</label><input type="text" id="pay_hw_sw" readonly></div>
-                </div>
-
-                <div class="po-grid-3" style="margin-bottom: 1.5rem;">
-                    <div class="po-form-group"><label>Taxable (A)</label><input type="text" id="pay_taxable_val" readonly></div>
-                    <div class="po-form-group"><label>GST (B)</label><input type="text" id="pay_gst_val" readonly></div>
-                    <div class="po-form-group"><label>Total (C=A+B)</label><input type="text" id="pay_total_val" readonly style="font-weight: 800;"></div>
-                </div>
-
-                <h3 class="po-section-title">Government Deductions (TDS)</h3>
-                <div style="display: grid; grid-template-columns: 0.5fr 1fr 0.5fr 1fr 1.5fr; gap: 0.75rem; align-items: flex-end; margin-bottom: 1.5rem;">
-                    <div class="po-form-group"><label>TDS % X</label><input type="number" id="pay_tds_x_pct" value="0" oninput="calculatePaymentFields()"></div>
-                    <div class="po-form-group"><label>Inc Tax (D)</label><input type="text" id="pay_tds_income" readonly></div>
-                    <div class="po-form-group"><label>TDS % Y</label><input type="number" id="pay_tds_y_pct" value="0" oninput="calculatePaymentFields()"></div>
-                    <div class="po-form-group"><label>GST TDS (E)</label><input type="text" id="pay_tds_gst" readonly></div>
-                    <div class="po-form-group"><label>Receivable (F=C-D-E)</label><input type="text" id="pay_receivable" readonly style="font-weight: 800; color: #15803d; background: #f0fdf4;"></div>
-                </div>
-
-                <h3 class="po-section-title">Final Adjustments & Settlement</h3>
-                <div style="display: grid; grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr; gap: 0.75rem; align-items: flex-end; margin-bottom: 1.5rem;">
-                    <div class="po-form-group"><label>Hold % Z</label><input type="number" id="pay_tds_z_pct" value="0" oninput="calculatePaymentFields()"></div>
-                    <div class="po-form-group"><label>Hold Amt (G)</label><input type="text" id="pay_gst_hold" readonly></div>
-                    <div class="po-form-group">
-                        <label>Deduction Detail (I)</label>
-                        <select id="pay_deduction_type" onchange="calculatePaymentFields()" style="margin-bottom: 4px;">
-                            <option value="">None</option>
-                            <option value="late_delivery">Late Delivery</option>
-                            <option value="penalty">Penalty</option>
-                            <option value="security">Security</option>
-                        </select>
-                        <input type="number" id="pay_other_deduction" value="0" oninput="calculatePaymentFields()" placeholder="Amt">
-                    </div>
-                    <div class="po-form-group"><label>Act. Rec (H=F-G)</label><input type="text" id="pay_actual_receivable" readonly style="font-weight: 800; color: #15803d; background: #f0fdf4;"></div>
-                    <div class="po-form-group"><label>Received Paid</label><input type="number" id="pay_amount_received" value="0" oninput="calculatePaymentFields()" style="border: 2px solid #e65100; font-weight: 800;"></div>
-                </div>
-
-                <div class="po-grid-2" style="margin-bottom: 1.5rem;">
-                    <div class="po-form-group"><label>Customer Remarks</label><input type="text" id="pay_customer_remarks" placeholder="Notes from customer..."></div>
-                    <div class="po-form-group"><label>Office Remarks</label><input type="text" id="pay_appolo_remarks" placeholder="Internal notes..."></div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                    <button onclick="savePayment()" class="po-btn-save" style="background: #15803d;">CONFIRM & SAVE PAYMENT</button>
-                    <button onclick="editPayment()" class="btn-pro btn-orange" style="border-radius: 12px; font-size: 1rem;">ENABLE EDIT MODE</button>
-                </div>
+             <!-- Footer Actions -->
+             <div class="li-modal-footer">
+                <button onclick="editBillingItem()" class="btn-pro btn-blue">Edit Invoice</button>
+                <button onclick="cancelBillingItem()" class="btn-pro btn-orange" style="background-color: #ef4444;">Cancel Invoice</button>
+                <button onclick="handlePaymentButtonClick()" class="btn-pro btn-blue" style="background-color: #0ea5e9;">Record Payment</button>
+                <div style="width: 1px; height: 24px; background: #cbd5e1; margin: 0 0.5rem;"></div>
+                <button onclick="saveBillingItem()" class="btn-pro btn-green">Save Invoice to DB</button>
             </div>
         </div>
     </div>
 </div>
 `;
 
+const paymentModalHTML = `
+<div id="paymentModal" class="li-modal-overlay" style="z-index: 100001;">
+    <div class="li-modal-card" style="max-width: 900px;">
+        <div class="li-modal-header">
+            <h2 class="li-modal-title">💸 PAYMENT RECORDING WORKSPACE</h2>
+            <button onclick="closePaymentModal()" class="li-modal-close">&times;</button>
+        </div>
+        
+        <div class="li-modal-body">
+            <!-- Context -->
+            <div class="li-context-bar">
+                <div class="li-context-item">
+                    <label>PO REF:</label>
+                    <input type="text" id="pay_po_number" readonly style="width: 180px;">
+                </div>
+                <div class="li-context-item" style="flex:1;">
+                    <span style="font-size: 0.75rem; color: #d97706;">⚠️ Ensure TDS & Deduction percentages are correct before saving.</span>
+                </div>
+            </div>
+
+            <div class="li-form-container">
+                <!-- Section 1: Invoice Selection -->
+                <div class="form-block">
+                    <div class="form-title">Target Invoice</div>
+                    <div class="li-compact-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+                        <div class="li-field">
+                            <label>Select Invoice</label>
+                            <select id="pay_invoice_no" onchange="searchInvoice()"></select>
+                        </div>
+                        <div class="li-field">
+                            <label>Invoice Date</label>
+                            <input type="text" id="pay_invoice_date" readonly style="background: #f1f5f9;">
+                        </div>
+                         <div class="li-field">
+                            <label>Asset Type</label>
+                            <input type="text" id="pay_hw_sw" readonly style="background: #f1f5f9;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Financials & Deductions -->
+                <div class="form-block">
+                    <div class="form-title">Financial Breakdown & Deductions</div>
+                    <div class="li-compact-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <!-- Basic Values -->
+                        <div class="li-field">
+                            <label>Taxable Val (A)</label>
+                            <input type="number" id="pay_taxable_val" readonly style="background: #f8fafc; font-weight: 600;">
+                        </div>
+                        <div class="li-field">
+                            <label>GST Amount (B)</label>
+                            <input type="number" id="pay_gst_val" readonly style="background: #f8fafc;">
+                        </div>
+                        <div class="li-field">
+                            <label>Total Inv Val (C)</label>
+                            <input type="number" id="pay_total_val" readonly style="background: #f8fafc; font-weight: 700; color: #0f172a;">
+                        </div>
+                        <div class="li-field">
+                            <!-- spacer -->
+                        </div>
+
+                        <!-- Deductions -->
+                        <div class="li-field">
+                            <label>TDS Income % (X)</label>
+                            <input type="number" id="pay_tds_x_pct" value="0" step="0.1" oninput="calculatePaymentFields()">
+                        </div>
+                        <div class="li-field">
+                            <label>TDS GST % (Y)</label>
+                            <input type="number" id="pay_tds_y_pct" value="0" step="0.1" oninput="calculatePaymentFields()">
+                        </div>
+                        <div class="li-field">
+                            <label>GST Hold % (Z)</label>
+                            <input type="number" id="pay_tds_z_pct" value="0" step="0.1" oninput="calculatePaymentFields()">
+                        </div>
+                         <div class="li-field">
+                            <label>Other Ded. (Amt)</label>
+                            <input type="number" id="pay_other_deduction" value="0" oninput="calculatePaymentFields()">
+                        </div>
+
+                        <!-- Calculated Results -->
+                         <div class="li-field">
+                            <label>TDS Income Amt</label>
+                            <input type="number" id="pay_tds_income" readonly style="background: #fff1f2; color: #be123c;">
+                        </div>
+                         <div class="li-field">
+                            <label>TDS GST Amt</label>
+                            <input type="number" id="pay_tds_gst" readonly style="background: #fff1f2; color: #be123c;">
+                        </div>
+                         <div class="li-field">
+                            <label>GST Hold Amt</label>
+                            <input type="number" id="pay_gst_hold" readonly style="background: #fff1f2; color: #be123c;">
+                        </div>
+                        <div class="li-field">
+                            <label>Net Receivable</label>
+                            <input type="number" id="pay_receivable" readonly style="background: #f0fdf4; font-weight: 700; color: #15803d;">
+                        </div>
+                    </div>
+                     <div class="li-compact-grid" style="margin-top: 0.5rem;">
+                         <div class="li-field full">
+                             <label style="color: #1e40af; font-weight: 700;">Final Actual Receivable (Total - Deductions - Holds) = </label>
+                             <input type="number" id="pay_actual_receivable" readonly style="background: #eff6ff; border: 1px solid #93c5fd; font-weight: 800; font-size: 1rem; color: #1e3a8a;">
+                         </div>
+                     </div>
+                </div>
+
+                <!-- Section 3: Receipt Recording -->
+                <div class="form-block" style="background: #fdfdfd;">
+                    <div class="form-title">Payment Receipt Details</div>
+                    <div class="li-compact-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="li-field">
+                            <label>Amount Received</label>
+                            <input type="number" id="pay_amount_received" oninput="calculatePaymentFields()">
+                        </div>
+                        <div class="li-field">
+                            <label>Pymt Date</label>
+                            <input type="date" id="pay_payment_date">
+                        </div>
+                         <div class="li-field">
+                            <label>Mode / UTR</label>
+                            <input type="text" id="pay_mode" placeholder="NEFT/RTGS...">
+                        </div>
+                        <div class="li-field full">
+                            <label>Customer Remarks</label>
+                            <input type="text" id="pay_customer_remarks" placeholder="Notes from client...">
+                        </div>
+                         <div class="li-field full">
+                            <label>Internal Remarks</label>
+                            <input type="text" id="pay_appolo_remarks" placeholder="Internal notes...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="li-modal-footer">
+                <div style="font-size: 0.7rem; color: #64748b;">* Saving will update the "Paid" & "Pending" columns in Billing Grid.</div>
+                <button onclick="savePayment()" class="btn-pro btn-green">CONFIRM & SAVE PAYMENT</button>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+
+
+
 // Helper: Format Date to DD/MM/YYYY
 function formatDateToDDMMYYYY(dateString) {
     if (!dateString) return '';
     const parts = dateString.split('-');
     if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return `${parts[2]} /${parts[1]}/${parts[0]} `;
     }
     return dateString;
 }
@@ -965,17 +1035,27 @@ let paymentEditMode = false;
 let currentInvoices = []; // Local cache of invoices for the current PO
 
 function ensureBillingModalExists() {
+    // Prevent destructive recreation if already exists
+    if (document.getElementById('billingModal') && document.getElementById('paymentModal')) {
+        return;
+    }
+
     // FORCE UPDATE: Remove existing modal to ensure latest HTML/Layout is applied
     const existing = document.getElementById('billingModal');
     if (existing) existing.remove();
 
+    // Also remove payment modal if it exists to refresh it too
+    const existingPay = document.getElementById('paymentModal');
+    if (existingPay) existingPay.remove();
+
     document.body.insertAdjacentHTML('beforeend', billingModalHTML);
+    document.body.insertAdjacentHTML('beforeend', paymentModalHTML);
 
     // Add specific listeners
     document.getElementById('bill_invoice_date')?.addEventListener('change', updateDueDate);
     document.getElementById('bill_credit_period')?.addEventListener('input', updateDueDate);
 
-    console.log("Billing Modal (Re)Created");
+    console.log("Billing & Payment Modals (Re)Created");
 }
 
 async function openBillingModal() {
@@ -988,53 +1068,54 @@ async function openBillingModal() {
 
         // Copy PO info
         const poNum = lineItemsState.poNumber || document.getElementById('li_display_po_number')?.value;
+        const poDate = document.getElementById('li_display_po_date')?.value || '';
         const poValRaw = document.getElementById('li_display_po_value')?.value || '0';
         const poVal = poValRaw.replace(/[^0-9.]/g, '');
 
         document.getElementById('bill_po_number').value = poNum || '';
+        document.getElementById('bill_po_date').value = poDate || '';
         document.getElementById('bill_po_value').value = poVal || '';
 
-        // Load latest invoices from backend to ensure grid is up-to-date
-        try {
-            const res = await api.get(`/purchase-orders/${encodeURIComponent(poNum)}/invoices`);
-            currentInvoices = res.invoices || [];
+        // Load latest invoices from local state (synced via line-items fetch)
+        currentInvoices = [];
+        lineItemsState.currentLineItems.forEach(li => {
+            if (li.milestones) {
+                li.milestones.forEach(ms => {
+                    if (ms.invoice_no) {
+                        // Back-calculate Taxable/GST if not explicitly stored in milestones (which only has invoice_value aka Total)
+                        // Assuming 18% GST for now as per form logic
+                        const total = parseFloat(ms.invoice_value) || 0;
+                        const taxable = total / 1.18;
+                        const gst = total - taxable;
 
-            // Sync currentInvoices back to lineItemsState for local display
-            lineItemsState.currentLineItems.forEach(li => {
-                if (li.milestones) {
-                    li.milestones.forEach(ms => {
-                        const inv = currentInvoices.find(i => i.milestone_id == ms.id || (i.line_item_id == li.id && !i.milestone_id));
-                        if (inv) {
-                            ms.invoice_no = inv.invoice_no;
-                            ms.invoice_date = inv.invoice_date;
-                            ms.invoice_value = inv.total_value;
-                            ms.taxable_value = inv.taxable_value;
-                            ms.gst_value = inv.gst_value;
-                            ms.payment_received = inv.payment_received;
-                            ms.pending_amount = inv.pending_amount;
-                            ms.remarks = inv.remarks;
-                            ms.credit_period = inv.credit_period;
-                            ms.status = inv.status;
-                        } else {
-                            // Blank out if no invoice found (User's request: grid details after delivery time should be blank)
-                            ms.invoice_no = null;
-                            ms.invoice_date = null;
-                            ms.invoice_value = 0;
-                            ms.taxable_value = 0;
-                            ms.gst_value = 0;
-                            ms.payment_received = 0;
-                            ms.pending_amount = 0;
-                            ms.remarks = null;
-                        }
-                    });
-                }
-            });
-        } catch (e) {
-            console.error("Failed to load existing invoices", e);
-        }
+                        currentInvoices.push({
+                            id: ms.id, // using milestone id as unique ref often
+                            line_item_id: li.id,
+                            milestone_id: ms.id,
+                            invoice_no: ms.invoice_no,
+                            invoice_date: ms.invoice_date,
+                            total_value: total,
+                            taxable_value: taxable,
+                            gst_value: gst,
+                            payment_received: parseFloat(ms.payment_received) || 0,
+                            pending_amount: parseFloat(ms.pending_amount) || 0,
+                            remarks: ms.remarks,
+                            status: ms.status || 'Pending',
+                            credit_period: ms.credit_period || 0,
+                            due_date: null // Not strictly needed for payment logic display, can compute
+                        });
+                    }
+                });
+            }
+        });
+
+        // No fetch catch needed
 
         populateBillingGrid();
         resetBillingForm();
+        console.log("DEBUG: openBillingModal completed");
+    } else {
+        console.error("DEBUG: billingModal NOT FOUND");
     }
 }
 
@@ -1052,28 +1133,34 @@ function resetBillingForm() {
 }
 
 function populateBillingGrid() {
+    console.log("DEBUG: populateBillingGrid called");
     const tbody = document.getElementById('billingGridBody');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error("DEBUG: billingGridBody NOT FOUND in DOM");
+        return;
+    }
     tbody.innerHTML = '';
+    console.log("DEBUG: lineItemsState.currentLineItems", lineItemsState.currentLineItems);
 
     lineItemsState.currentLineItems.forEach((li, idx) => {
         if (!li.milestones) return;
         li.milestones.forEach((ms, msIdx) => {
             const tr = document.createElement('tr');
 
-            const invVal = (ms.invoice_value) ? parseFloat(ms.invoice_value).toFixed(2) : '';
-            const taxVal = (ms.taxable_value) ? parseFloat(ms.taxable_value).toFixed(2) : '';
-            const gstVal = (ms.gst_value) ? parseFloat(ms.gst_value).toFixed(2) : '';
+            const invVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value).toFixed(2) : '';
+            const taxVal = (ms.taxable_value != null) ? parseFloat(ms.taxable_value).toFixed(2) : '';
+            const gstVal = (ms.gst_value != null) ? parseFloat(ms.gst_value).toFixed(2) : '';
 
-            const payRec = (ms.payment_received) ? parseFloat(ms.payment_received).toFixed(2) : '';
-            const pendAmt = (ms.pending_amount) ? parseFloat(ms.pending_amount).toFixed(2) : '0.00';
+            const payRec = (ms.payment_received != null) ? parseFloat(ms.payment_received).toFixed(2) : '0.00';
+            const pendAmt = (ms.pending_amount != null) ? parseFloat(ms.pending_amount).toFixed(2) : '0.00';
 
+            const displayRemarks = `${ms.credit_period || 0} | ${ms.status || 'Pending'} | ${ms.remarks || ''}`;
             tr.innerHTML = `
                 <td><input type="checkbox" class="bill-row-select" data-li="${li.id}" data-ms="${ms.id}" onchange="handleBillingRowChange(this)" ${ms.invoice_no ? 'disabled' : ''}></td>
                 <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
                 <td>${msIdx === 0 ? (li.description || '') : ''}</td>
                 <td>${ms.quantity || ''}</td>
-                <td>${ms.cycle_value || ''}</td>
+                <td data-cycle-val="${ms.cycle_value || 0}">${ms.cycle_value || ''}</td>
                 <td>${ms.milestone_name || ''}</td>
                 <td>${ms.payment_terms || '-'}</td>
                 <td>${ms.documents || '-'}</td>
@@ -1252,28 +1339,99 @@ window.toggleAllBillingRows = function (selectAll) {
 }
 
 window.handleBillingRowChange = function (checkbox) {
+    const tr = checkbox.closest('tr');
+
+    // Internal Helper for Fallback Parsing
+    const parseRemarksFallback = (remSpan) => {
+        let status = remSpan?.getAttribute('data-status') || 'Pending';
+        let credit = parseInt(remSpan?.getAttribute('data-credit-period')) || 0;
+        let rawRemarks = remSpan?.getAttribute('data-raw-remarks') || '';
+
+        // Try parsing "CP | ST | REM" format
+        if (rawRemarks.includes(' | ')) {
+            const parts = rawRemarks.split(' | ');
+            if (parts.length >= 2) {
+                credit = parseInt(parts[0]) || 0;
+                status = parts[1].trim();
+                rawRemarks = parts.slice(2).join(' | '); // Strip CP and ST for the form
+                return { status, credit, rawRemarks };
+            }
+        }
+
+        // Fallback for old "Status - X" format
+        if ((!status || status === 'Pending') && rawRemarks.includes('Status - ')) {
+            const statusMatch = rawRemarks.match(/Status\s*-\s*([^\s|]+)/i);
+            if (statusMatch) status = statusMatch[1].trim();
+        }
+        if (credit === 0 && rawRemarks.includes('Credit Period - ')) {
+            const creditMatch = rawRemarks.match(/Credit Period\s*-\s*(\d+)/i);
+            if (creditMatch) credit = parseInt(creditMatch[1]);
+        }
+        return { status, credit, rawRemarks };
+    };
+
     if (billingEditMode && checkbox.checked) {
-        // ... (Edit Logic unchanged) ...
         document.querySelectorAll('.bill-row-select').forEach(c => { if (c !== checkbox) c.checked = false; });
 
-        const tr = checkbox.closest('tr');
         const remSpan = tr.querySelector('[data-field="remarks"]');
         const valSpan = tr.querySelector('[data-field="invoice_value"]');
+        const cycleTd = tr.cells[4];
 
-        document.getElementById('bill_invoice_no').value = tr.querySelector('[data-field="invoice_no"]')?.textContent || '';
-        document.getElementById('bill_invoice_date').value = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
-        document.getElementById('bill_taxable_val').value = valSpan?.getAttribute('data-taxable') || '';
-        document.getElementById('bill_gst_val').value = valSpan?.getAttribute('data-gst') || '';
-        document.getElementById('bill_total_val').value = valSpan?.textContent || '';
-        document.getElementById('bill_payment_rec').value = tr.querySelector('[data-field="payment_received"]')?.textContent || 0;
-        document.getElementById('bill_remarks').value = remSpan?.getAttribute('data-raw-remarks') || '';
-        document.getElementById('bill_status').value = remSpan?.getAttribute('data-status') || 'Pending';
-        document.getElementById('bill_credit_period').value = remSpan?.getAttribute('data-credit-period') || 0;
+        const invNo = tr.querySelector('[data-field="invoice_no"]')?.textContent || '';
+        const invDate = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
+        let taxable = valSpan?.getAttribute('data-taxable') || '';
+        const gst = valSpan?.getAttribute('data-gst') || '';
+        const total = valSpan?.textContent || '';
+        const paymentRec = tr.querySelector('[data-field="payment_received"]')?.textContent || '0';
 
+        // Robust Taxable check: if empty and we have a cycle value, use it as hint
+        if (!taxable || taxable === '0.00') {
+            taxable = cycleTd?.getAttribute('data-cycle-val') || '';
+        }
+
+        const { status, credit, rawRemarks } = parseRemarksFallback(remSpan);
+
+        document.getElementById('bill_invoice_no').value = invNo;
+        document.getElementById('bill_invoice_date').value = invDate;
+        document.getElementById('bill_taxable_val').value = taxable;
+        document.getElementById('bill_gst_val').value = gst;
+        document.getElementById('bill_total_val').value = total;
+        document.getElementById('bill_payment_rec').value = paymentRec;
+        document.getElementById('bill_remarks').value = rawRemarks;
+        document.getElementById('bill_status').value = status;
+        document.getElementById('bill_credit_period').value = credit;
+
+        calcBillTotal(); // Sync form state
         updateDueDate();
     } else {
-        // Input: Checkbox Changed -> Run Auto-Sum
-        autoSumAndSync();
+        const checkboxes = document.querySelectorAll('.bill-row-select:checked');
+
+        if (checkboxes.length === 0) {
+            document.getElementById('bill_taxable_val').value = '';
+            document.getElementById('bill_gst_val').value = '';
+            document.getElementById('bill_total_val').value = '';
+            document.getElementById('bill_status').value = 'Pending';
+            document.getElementById('bill_credit_period').value = 0;
+            return;
+        }
+
+        let totalCycleVal = 0;
+        checkboxes.forEach(cb => {
+            const row = cb.closest('tr');
+            const cycleTd = row.cells[4];
+            const cycleVal = parseFloat(cycleTd?.getAttribute('data-cycle-val')) || 0;
+            totalCycleVal += cycleVal;
+        });
+
+        document.getElementById('bill_taxable_val').value = totalCycleVal;
+        calcBillTotal();
+
+        const firstRow = checkboxes[0].closest('tr');
+        const remSpan = firstRow.querySelector('[data-field="remarks"]');
+        const { status, credit } = parseRemarksFallback(remSpan);
+
+        document.getElementById('bill_status').value = status;
+        document.getElementById('bill_credit_period').value = credit;
     }
 }
 
@@ -1297,7 +1455,9 @@ async function saveBillingItem() {
     const invDate = document.getElementById('bill_invoice_date').value;
 
     if (!invNo) return alert("Please enter an Invoice Number.");
-    if (!invDate) return alert("Please select an Invoice Date.");
+
+    // CRITICAL: Sync form values to grid BEFORE collecting data
+    syncFormToGrid();
 
     const poNum = lineItemsState.poNumber;
     const rows = document.querySelectorAll('#billingGridBody tr');
@@ -1334,7 +1494,37 @@ async function saveBillingItem() {
         const res = await api.post(`/purchase-orders/${encodeURIComponent(poNum)}/invoices`, toSave);
         if (!res.error) {
             alert("Invoices saved successfully!");
-            openBillingModal(); // Refresh
+
+            // SYNC LOCAL STATE: Update lineItemsState with the saved data
+            console.log("DEBUG: syncing local state with", toSave);
+            let syncedCount = 0;
+            toSave.forEach(savedItem => {
+                const li = lineItemsState.currentLineItems.find(l => l.id == savedItem.line_item_id);
+                if (li && li.milestones) {
+                    const ms = li.milestones.find(m => m.id == savedItem.milestone_id);
+                    if (ms) {
+                        console.log("DEBUG: Updating MS", ms.id, "with", savedItem);
+                        ms.invoice_no = savedItem.invoice_no;
+                        ms.invoice_date = savedItem.invoice_date;
+                        ms.invoice_value = savedItem.total_value;
+                        ms.taxable_value = savedItem.taxable_value;
+                        ms.gst_value = savedItem.gst_value;
+                        ms.payment_received = savedItem.payment_received;
+                        ms.pending_amount = savedItem.pending_amount;
+                        ms.status = savedItem.status;
+                        ms.remarks = savedItem.remarks;
+                        ms.credit_period = savedItem.credit_period;
+                        syncedCount++;
+                    } else {
+                        console.error("DEBUG: Milestone not found for ID", savedItem.milestone_id);
+                    }
+                } else {
+                    console.error("DEBUG: Line item not found for ID", savedItem.line_item_id);
+                }
+            });
+            console.log("DEBUG: Synced items count:", syncedCount);
+
+            openBillingModal(); // Refresh UI with updated state
         } else alert("Error: " + res.error);
     } catch (e) { alert("Network Error"); }
 }
@@ -1343,8 +1533,13 @@ async function saveBillingItem() {
 
 function openPaymentModal() {
     ensureBillingModalExists(); // Payment modal is part of it
-    document.getElementById('billingModal').classList.remove('open');
-    document.getElementById('paymentModal').classList.add('open');
+
+    // START FIX: Keep Billing Modal open in background (stacked)
+    // document.getElementById('billingModal').classList.remove('open'); 
+
+    const payModal = document.getElementById('paymentModal');
+    payModal.classList.add('open');
+    payModal.style.zIndex = "5001"; // Ensure it is above Billing Modal (5000)
 
     populateInvoiceDropdown();
     resetPaymentForm();
@@ -1355,7 +1550,13 @@ function openPaymentModal() {
 }
 
 function closePaymentModal() {
-    document.getElementById('paymentModal').classList.remove('open');
+    const payModal = document.getElementById('paymentModal');
+    payModal.classList.remove('open');
+    payModal.style.zIndex = ""; // Reset z-index
+
+    // No need to re-open billingModal as it was never closed.
+    // Refresh the grid to show updated Paid/Pending amounts
+    populateBillingGrid();
 }
 
 function resetPaymentForm() {
@@ -1444,7 +1645,106 @@ function handlePaymentButtonClick() {
 async function savePayment() {
     const no = document.getElementById('pay_invoice_no').value;
     if (!no) return alert("Select invoice");
-    alert("Payment saved locally (Demo). Backend hook needed for full persistence.");
+
+    const inv = currentInvoices.find(i => i.invoice_no === no);
+    if (!inv) return alert("Invoice data not found.");
+
+    const amountReceived = parseFloat(document.getElementById('pay_amount_received').value) || 0;
+    const actualReceivable = parseFloat(document.getElementById('pay_actual_receivable').value) || 0;
+
+    // Calculate Pending Amount
+    const pendingAmount = Math.max(0, actualReceivable - amountReceived);
+
+    // Collect all payment form fields
+    const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
+    const tdsGstPct = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
+    const gstHoldPct = parseFloat(document.getElementById('pay_tds_z_pct').value) || 0;
+    const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
+    const tdsIncomeAmt = parseFloat(document.getElementById('pay_tds_income').value) || 0;
+    const tdsGstAmt = parseFloat(document.getElementById('pay_tds_gst').value) || 0;
+    const gstHoldAmt = parseFloat(document.getElementById('pay_gst_hold').value) || 0;
+    const netReceivable = parseFloat(document.getElementById('pay_receivable').value) || 0;
+    const paymentDate = document.getElementById('pay_payment_date').value;
+    const paymentMode = document.getElementById('pay_mode').value;
+    const custRem = document.getElementById('pay_customer_remarks').value;
+    const appoloRem = document.getElementById('pay_appolo_remarks').value;
+    const payDetails = `[Payment] TDS-IT: ${tdsIncomeAmt}, TDS-GST: ${tdsGstAmt}, GST-Hold: ${gstHoldAmt}, Other: ${otherDed}`;
+    const cleanRemarks = `${custRem} | ${appoloRem} | ${payDetails}`;
+
+    const poNum = lineItemsState.poNumber;
+
+    // Payload for invoices endpoint (existing behavior)
+    const toSaveInvoices = [{
+        line_item_id: inv.line_item_id,
+        milestone_id: inv.milestone_id,
+        invoice_no: inv.invoice_no,
+        invoice_date: inv.invoice_date,
+        taxable_value: inv.taxable_value,
+        gst_value: inv.gst_value,
+        total_value: inv.total_value,
+        credit_period: inv.credit_period,
+        due_date: inv.due_date,
+        payment_received: amountReceived,
+        pending_amount: pendingAmount,
+        status: (pendingAmount <= 1) ? 'Paid' : 'Partially Paid',
+        remarks: cleanRemarks
+    }];
+
+    // Payload for payments endpoint (new table)
+    const paymentRecord = {
+        invoice_no: inv.invoice_no,
+        po_number: poNum,
+        invoice_date: inv.invoice_date,
+        taxable_value: inv.taxable_value,
+        gst_value: inv.gst_value,
+        total_value: inv.total_value,
+        tds_income_pct: tdsIncomePct,
+        tds_gst_pct: tdsGstPct,
+        gst_hold_pct: gstHoldPct,
+        other_deduction: otherDed,
+        tds_income_amt: tdsIncomeAmt,
+        tds_gst_amt: tdsGstAmt,
+        gst_hold_amt: gstHoldAmt,
+        net_receivable: netReceivable,
+        actual_receivable: actualReceivable,
+        amount_received: amountReceived,
+        payment_date: paymentDate,
+        payment_mode: paymentMode,
+        customer_remarks: custRem,
+        internal_remarks: appoloRem
+    };
+
+    try {
+        // Save to invoices (update milestone/invoice status)
+        const res = await api.post(`/purchase-orders/${encodeURIComponent(poNum)}/invoices`, toSaveInvoices);
+
+        // Save to payments table (new payment record)
+        const payRes = await api.post('/payments', paymentRecord);
+
+        if (!res.error && !payRes.error) {
+            alert("Payment recorded successfully!");
+
+            // UPDATE LOCAL STATE
+            const li = lineItemsState.currentLineItems.find(l => l.id == inv.line_item_id);
+            if (li) {
+                const ms = li.milestones?.find(m => m.id == inv.milestone_id);
+                if (ms) {
+                    ms.payment_received = amountReceived;
+                    ms.pending_amount = pendingAmount;
+                    ms.status = (pendingAmount <= 1) ? 'Paid' : 'Partially Paid';
+                    ms.remarks = fullRemarks;
+                }
+            }
+
+            closePaymentModal();
+            populateBillingGrid();
+        } else {
+            alert("Error saving payment: " + (res.error || payRes.error));
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Network Error during Payment Save");
+    }
 }
 
 function editPayment() { paymentEditMode = true; alert("Edit mode enabled"); }

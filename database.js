@@ -228,7 +228,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 'invoice_value REAL',
                 'payment_received REAL',
                 'pending_amount REAL',
-                'remarks TEXT'
+                'remarks TEXT',
+                'status TEXT',
+                'credit_period INTEGER'
             ];
 
             columnsToAdd.forEach(column => {
@@ -261,6 +263,33 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 FOREIGN KEY(po_number) REFERENCES purchase_orders(po_number) ON DELETE CASCADE,
                 FOREIGN KEY(line_item_id) REFERENCES po_line_items(id) ON DELETE CASCADE,
                 FOREIGN KEY(milestone_id) REFERENCES po_milestones(id) ON DELETE CASCADE
+            )`);
+
+            // Payments Table - stores individual payment transactions
+            db.run(`CREATE TABLE IF NOT EXISTS payments(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                invoice_no TEXT NOT NULL,
+                po_number TEXT,
+                invoice_date TEXT,
+                taxable_value REAL,
+                gst_value REAL,
+                total_value REAL,
+                tds_income_pct REAL DEFAULT 0,
+                tds_gst_pct REAL DEFAULT 0,
+                gst_hold_pct REAL DEFAULT 0,
+                other_deduction REAL DEFAULT 0,
+                tds_income_amt REAL DEFAULT 0,
+                tds_gst_amt REAL DEFAULT 0,
+                gst_hold_amt REAL DEFAULT 0,
+                net_receivable REAL,
+                actual_receivable REAL,
+                amount_received REAL,
+                payment_date TEXT,
+                payment_mode TEXT,
+                customer_remarks TEXT,
+                internal_remarks TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(po_number) REFERENCES purchase_orders(po_number) ON DELETE CASCADE
             )`);
 
             console.log('Database tables initialized.');

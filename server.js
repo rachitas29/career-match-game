@@ -537,7 +537,9 @@ app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
                        'invoice_value', m.invoice_value,
                        'payment_received', m.payment_received,
                        'pending_amount', m.pending_amount,
-                       'remarks', m.remarks
+                       'remarks', m.remarks,
+                       'status', COALESCE(m.status, 'Pending'),
+                       'credit_period', COALESCE(m.credit_period, 0)
                    )
                ) FROM po_milestones m WHERE m.line_item_id = li.id) as milestones
         FROM po_line_items li
@@ -782,16 +784,15 @@ app.post('/api/purchase-orders/:po_number/invoices', (req, res) => {
                         };
 
                         if (mId) {
-                            // Construct summary for milestones table
-                            const fullRemarks = `Credit Period - ${inv.credit_period || 0} Status - ${inv.status || 'Pending'} Remarks - ${inv.remarks || ''}`;
-
                             const updateSql = `UPDATE po_milestones SET 
                                 invoice_no = ?, invoice_date = ?, invoice_value = ?, 
-                                payment_received = ?, pending_amount = ?, remarks = ?
+                                payment_received = ?, pending_amount = ?, remarks = ?,
+                                status = ?, credit_period = ?
                                 WHERE id = ?`;
                             db.run(updateSql, [
                                 inv.invoice_no, inv.invoice_date, inv.total_value,
-                                inv.payment_received, inv.pending_amount, fullRemarks,
+                                inv.payment_received, inv.pending_amount, inv.remarks || '',
+                                inv.status || 'Pending', inv.credit_period || 0,
                                 mId
                             ], function (err) {
                                 if (err) return rollback('Milestone update error: ' + err.message);
@@ -826,6 +827,58 @@ app.get('/api/purchase-orders/:po_number/invoices', (req, res) => {
     db.all(sql, [po_number], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ invoices: rows });
+    });
+});
+
+// Payments API Endpoints
+app.post('/api/payments', (req, res) => {
+    const body = req.body;
+
+    if (!body.invoice_no) {
+        return res.status(400).json({ error: 'Invoice number is required' });
+    }
+
+    const sql = `INSERT INTO payments (
+        invoice_no, po_number, invoice_date, taxable_value, gst_value, total_value,
+        tds_income_pct, tds_gst_pct, gst_hold_pct, other_deduction,
+        tds_income_amt, tds_gst_amt, gst_hold_amt,
+        net_receivable, actual_receivable, amount_received,
+        payment_date, payment_mode, customer_remarks, internal_remarks
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const params = [
+        body.invoice_no, body.po_number, body.invoice_date,
+        body.taxable_value || 0, body.gst_value || 0, body.total_value || 0,
+        body.tds_income_pct || 0, body.tds_gst_pct || 0, body.gst_hold_pct || 0, body.other_deduction || 0,
+        body.tds_income_amt || 0, body.tds_gst_amt || 0, body.gst_hold_amt || 0,
+        body.net_receivable || 0, body.actual_receivable || 0, body.amount_received || 0,
+        body.payment_date, body.payment_mode, body.customer_remarks, body.internal_remarks
+    ];
+
+    db.run(sql, params, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: 'Payment recorded', id: this.lastID });
+    });
+});
+
+app.get('/api/payments', (req, res) => {
+    const { invoice_no, po_number } = req.query;
+    let sql = 'SELECT * FROM payments WHERE 1=1';
+    const params = [];
+
+    if (invoice_no) {
+        sql += ' AND invoice_no = ?';
+        params.push(invoice_no);
+    }
+    if (po_number) {
+        sql += ' AND po_number = ?';
+        params.push(po_number);
+    }
+    sql += ' ORDER BY created_at DESC';
+
+    db.all(sql, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ payments: rows });
     });
 });
 
