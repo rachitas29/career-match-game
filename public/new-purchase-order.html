@@ -715,7 +715,7 @@
                 <div class="li-modal-footer">
                     <button onclick="editLineItemFromGrid()" class="btn-pro btn-blue">Edit Item</button>
                     <button id="mainSaveBtn" onclick="saveLineItemToDB()" class="btn-pro btn-green">Save Line Item</button>
-                    <button onclick="openBillingModal();" class="btn-pro btn-orange">Add Billing</button>
+                    <button id="addBillingBtn" onclick="openBillingModal();" class="btn-pro btn-orange" disabled title="Save PO to database first">Add Billing</button>
                 </div>
             </div>
         </div>`;
@@ -1172,6 +1172,13 @@
                         // Enable final save button in modal
                         const commitBtn = document.getElementById('commitPoBtn');
                         if (commitBtn) commitBtn.disabled = false;
+
+                        // Enable Add Billing button now that PO exists in DB
+                        const addBillingBtn = document.getElementById('addBillingBtn');
+                        if (addBillingBtn) {
+                            addBillingBtn.disabled = false;
+                            addBillingBtn.removeAttribute('title');
+                        }
 
                         return true;
                     }

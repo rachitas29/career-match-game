@@ -1309,10 +1309,12 @@ window.mapFormToGridRow = function (checkbox) {
         }
         if (paySpan) paySpan.textContent = payRec;
         if (remSpan) {
-            remSpan.textContent = remarks;
+            const truncatedRemarks = remarks.length > 30 ? remarks.substring(0, 30) + '...' : remarks;
+            remSpan.textContent = truncatedRemarks;
             remSpan.setAttribute('data-raw-remarks', remarks);
             remSpan.setAttribute('data-status', status);
             remSpan.setAttribute('data-credit-period', credit);
+            remSpan.closest('td').setAttribute('title', remarks);
         }
         if (pendingSpan) {
             // Pending = Row Total - Paid
@@ -1334,10 +1336,13 @@ window.mapFormToGridRow = function (checkbox) {
         if (valueSpan) valueSpan.textContent = ms.invoice_value ? parseFloat(ms.invoice_value).toFixed(2) : '';
         if (paySpan) paySpan.textContent = ms.payment_received ? parseFloat(ms.payment_received).toFixed(2) : '';
         if (remSpan) {
-            remSpan.textContent = ms.remarks || '';
-            remSpan.setAttribute('data-raw-remarks', ms.remarks || '');
+            const fullRemarks = ms.remarks || '';
+            const truncatedRemarks = fullRemarks.length > 30 ? fullRemarks.substring(0, 30) + '...' : fullRemarks;
+            remSpan.textContent = truncatedRemarks;
+            remSpan.setAttribute('data-raw-remarks', fullRemarks);
             remSpan.setAttribute('data-status', ms.status || 'Pending');
             remSpan.setAttribute('data-credit-period', ms.credit_period || 0);
+            remSpan.closest('td').setAttribute('title', fullRemarks);
         }
         if (pendingSpan) pendingSpan.textContent = ms.pending_amount ? parseFloat(ms.pending_amount).toFixed(2) : '0.00';
     }
