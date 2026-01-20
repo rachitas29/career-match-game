@@ -459,9 +459,9 @@
             try {
                 // Fetch all in parallel for efficiency
                 const [poRes, lineItemsRes, invoicesRes] = await Promise.all([
-                    api.get(`/purchase-orders/${numToLoad}`),
-                    api.get(`/purchase-orders/${numToLoad}/line-items`),
-                    api.get(`/purchase-orders/${numToLoad}/invoices`)
+                    api.get(`/purchase-orders/${encodeURIComponent(numToLoad)}`),
+                    api.get(`/purchase-orders/${encodeURIComponent(numToLoad)}/line-items`),
+                    api.get(`/purchase-orders/${encodeURIComponent(numToLoad)}/invoices`)
                 ]);
 
                 if (poRes.purchase_order) {
@@ -674,7 +674,7 @@
         async function deleteItem(id) {
             if (!confirm('Are you sure you want to delete this line item?')) return;
             try {
-                const res = await api.delete(`/line-items/${id}`);
+                const res = await api.delete(`/line-items/${encodeURIComponent(id)}`);
                 if (!res.error) {
                     loadPODetails();
                 } else {
@@ -725,7 +725,7 @@
                 if (editingItemId) {
                     res = await api.put(`/line-items/${editingItemId}`, lineItem);
                 } else {
-                    res = await api.post(`/purchase-orders/${poNumber}/line-items`, lineItem);
+                    res = await api.post(`/purchase-orders/${encodeURIComponent(poNumber)}/line-items`, lineItem);
                 }
 
                 if (!res.error) {

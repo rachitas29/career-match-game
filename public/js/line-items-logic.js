@@ -877,10 +877,10 @@ const billingModalHTML = `
 
 const paymentModalHTML = `
 <div id="paymentModal" class="li-modal-overlay" style="z-index: 100001;">
-    <div class="li-modal-card" style="max-width: 900px;">
+    <div class="li-modal-card" style="max-width: 1200px;">
         <div class="li-modal-header">
             <h2 class="li-modal-title">💸 PAYMENT RECORDING WORKSPACE</h2>
-            <button onclick="closePaymentModal()" class="li-modal-close">&times;</button>
+            <button onclick="closePaymentModal()" class="li-modal-close" title="Close Workspace">&times;</button>
         </div>
         
         <div class="li-modal-body">
@@ -890,13 +890,17 @@ const paymentModalHTML = `
                     <label>PO REF:</label>
                     <input type="text" id="pay_po_number" readonly style="width: 180px;">
                 </div>
+                <div class="li-context-item">
+                    <label>PO VALUE:</label>
+                    <input type="text" id="pay_po_value" readonly style="width: 140px;">
+                </div>
                 <div class="li-context-item" style="flex:1;">
-                    <span style="font-size: 0.75rem; color: #d97706;">⚠️ Ensure TDS & Deduction percentages are correct before saving.</span>
+                    <span style="font-size: 0.75rem; color: #d97706;">⚠️ Verify TDS & Holds before saving.</span>
                 </div>
             </div>
 
             <div class="li-form-container">
-                <!-- Section 1: Invoice Selection -->
+                <!-- Section 1: Target Invoice -->
                 <div class="form-block">
                     <div class="form-title">Target Invoice</div>
                     <div class="li-compact-grid" style="grid-template-columns: 2fr 1fr 1fr;">
@@ -906,7 +910,7 @@ const paymentModalHTML = `
                         </div>
                         <div class="li-field">
                             <label>Invoice Date</label>
-                            <input type="text" id="pay_invoice_date" readonly style="background: #f1f5f9;">
+                            <input type="text" id="pay_invoice_date" oninput="calculatePaymentFields()">
                         </div>
                          <div class="li-field">
                             <label>Asset Type</label>
@@ -918,27 +922,33 @@ const paymentModalHTML = `
                 <!-- Section 2: Financials & Deductions -->
                 <div class="form-block">
                     <div class="form-title">Financial Breakdown & Deductions</div>
-                    <div class="li-compact-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        <!-- Basic Values -->
+                    <div class="li-compact-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.75rem 1.25rem;">
+                        <!-- Base Values -->
                         <div class="li-field">
                             <label>Taxable Val (A)</label>
-                            <input type="number" id="pay_taxable_val" readonly style="background: #f8fafc; font-weight: 600;">
+                            <input type="number" id="pay_taxable_val" oninput="calculatePaymentFields()" style="font-weight: 600;">
                         </div>
                         <div class="li-field">
                             <label>GST Amount (B)</label>
-                            <input type="number" id="pay_gst_val" readonly style="background: #f8fafc;">
+                            <input type="number" id="pay_gst_val" oninput="calculatePaymentFields()">
                         </div>
                         <div class="li-field">
                             <label>Total Inv Val (C)</label>
-                            <input type="number" id="pay_total_val" readonly style="background: #f8fafc; font-weight: 700; color: #0f172a;">
+                            <input type="number" id="pay_total_val" oninput="calculatePaymentFields()" style="font-weight: 700; color: #0f172a;">
                         </div>
                         <div class="li-field">
-                            <!-- spacer -->
+                             <label>Other Deduction Type</label>
+                             <select id="pay_other_deduction_type">
+                                 <option value="">Select Type</option>
+                                 <option value="Late Delivery">Late Delivery</option>
+                                 <option value="Penalty">Penalty</option>
+                                 <option value="Security">Security</option>
+                             </select>
                         </div>
 
                         <!-- Deductions -->
                         <div class="li-field">
-                            <label>TDS Income % (X)</label>
+                            <label>TDS IT % (X)</label>
                             <input type="number" id="pay_tds_x_pct" value="0" step="0.1" oninput="calculatePaymentFields()">
                         </div>
                         <div class="li-field">
@@ -949,43 +959,49 @@ const paymentModalHTML = `
                             <label>GST Hold % (Z)</label>
                             <input type="number" id="pay_tds_z_pct" value="0" step="0.1" oninput="calculatePaymentFields()">
                         </div>
-                         <div class="li-field">
-                            <label>Other Ded. (Amt)</label>
+                        <div class="li-field">
+                            <label>Other Ded. Amt (I)</label>
                             <input type="number" id="pay_other_deduction" value="0" oninput="calculatePaymentFields()">
                         </div>
 
-                        <!-- Calculated Results -->
-                         <div class="li-field">
-                            <label>TDS Income Amt</label>
+                        <!-- Calcs -->
+                        <div class="li-field">
+                            <label>TDS IT Amt (D)</label>
                             <input type="number" id="pay_tds_income" readonly style="background: #fff1f2; color: #be123c;">
                         </div>
                          <div class="li-field">
-                            <label>TDS GST Amt</label>
+                            <label>TDS GST Amt (E)</label>
                             <input type="number" id="pay_tds_gst" readonly style="background: #fff1f2; color: #be123c;">
                         </div>
                          <div class="li-field">
-                            <label>GST Hold Amt</label>
+                            <label>GST Hold Amt (G)</label>
                             <input type="number" id="pay_gst_hold" readonly style="background: #fff1f2; color: #be123c;">
                         </div>
                         <div class="li-field">
-                            <label>Net Receivable</label>
+                            <label>Net Rec. (F=C-D-E)</label>
                             <input type="number" id="pay_receivable" readonly style="background: #f0fdf4; font-weight: 700; color: #15803d;">
                         </div>
                     </div>
-                     <div class="li-compact-grid" style="margin-top: 0.5rem;">
-                         <div class="li-field full">
-                             <label style="color: #1e40af; font-weight: 700;">Final Actual Receivable (Total - Deductions - Holds) = </label>
+
+                    <!-- Final Results -->
+                    <div class="li-compact-grid" style="margin-top: 0.5rem; grid-template-columns: 1fr 1fr;">
+                         <div class="li-field">
+                             <label style="color: #1e40af; font-weight: 700;">Actual Receivable (H = F - G)</label>
                              <input type="number" id="pay_actual_receivable" readonly style="background: #eff6ff; border: 1px solid #93c5fd; font-weight: 800; font-size: 1rem; color: #1e3a8a;">
                          </div>
-                     </div>
+                         <div class="li-field">
+                             <label style="color: #c2410c; font-weight: 700;">Target Received (H - I)</label>
+                             <input type="number" id="pay_target_received" readonly style="background: #fff7ed; border: 1px solid #fdba74; font-weight: 800; font-size: 1rem; color: #9a3412;">
+                         </div>
+                    </div>
                 </div>
 
-                <!-- Section 3: Receipt Recording -->
+                <!-- Section 3: Receipt -->
                 <div class="form-block" style="background: #fdfdfd;">
                     <div class="form-title">Payment Receipt Details</div>
                     <div class="li-compact-grid" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="li-field">
-                            <label>Amount Received</label>
+                            <label style="font-weight: 700;">Amt Received</label>
                             <input type="number" id="pay_amount_received" oninput="calculatePaymentFields()">
                         </div>
                         <div class="li-field">
@@ -1007,12 +1023,12 @@ const paymentModalHTML = `
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Footer -->
-            <div class="li-modal-footer">
-                <div style="font-size: 0.7rem; color: #64748b;">* Saving will update the "Paid" & "Pending" columns in Billing Grid.</div>
-                <button onclick="savePayment()" class="btn-pro btn-green">CONFIRM & SAVE PAYMENT</button>
-            </div>
+        <div class="li-modal-footer">
+            <div style="flex: 1; font-size: 0.7rem; color: #64748b;">* Saving will update the "Paid" & "Pending" status in Billing Grid.</div>
+            <button onclick="editPayment()" class="btn-pro btn-blue">Edit Payment</button>
+            <button onclick="savePayment()" class="btn-pro btn-green">CONFIRM & SAVE PAYMENT</button>
         </div>
     </div>
 </div>
@@ -1170,7 +1186,7 @@ function populateBillingGrid() {
                 <td><span data-field="invoice_value" data-taxable="${taxVal}" data-gst="${gstVal}">${invVal}</span></td>
                 <td><span data-field="payment_received">${payRec}</span></td>
                 <td><span class="pending-amt" data-li="${li.id}" data-ms="${ms.id}">${pendAmt}</span></td>
-                <td><span data-field="remarks" data-raw-remarks="${ms.remarks || ''}" data-status="${ms.status || 'Pending'}" data-credit-period="${ms.credit_period || 0}">${ms.remarks || ''}</span></td>
+                <td title="${ms.remarks || ''}"><span data-field="remarks" data-raw-remarks="${ms.remarks || ''}" data-status="${ms.status || 'Pending'}" data-credit-period="${ms.credit_period || 0}">${(ms.remarks || '').length > 30 ? (ms.remarks || '').substring(0, 30) + '...' : (ms.remarks || '')}</span></td>
             `;
             tbody.appendChild(tr);
         });
@@ -1547,6 +1563,8 @@ function openPaymentModal() {
 
     // Set PO info
     document.getElementById('pay_po_number').value = lineItemsState.poNumber || '';
+    const poValRaw = document.getElementById('li_display_po_value')?.value || '0';
+    document.getElementById('pay_po_value').value = poValRaw.replace(/[^0-9.]/g, '');
 }
 
 function closePaymentModal() {
@@ -1597,6 +1615,37 @@ async function searchInvoice() {
     const li = lineItemsState.currentLineItems.find(l => l.id == inv.line_item_id);
     document.getElementById('pay_hw_sw').value = li?.line_item_type || '';
 
+    // NEW: Pull existing payment record if any
+    try {
+        const payRes = await api.get(`/payments?invoice_no=${encodeURIComponent(no)}&po_number=${encodeURIComponent(lineItemsState.poNumber)}`);
+        if (payRes && payRes.payments && payRes.payments.length > 0) {
+            const p = payRes.payments[0]; // Get most recent
+            document.getElementById('pay_tds_x_pct').value = p.tds_income_pct || 0;
+            document.getElementById('pay_tds_y_pct').value = p.tds_gst_pct || 0;
+            document.getElementById('pay_tds_z_pct').value = p.gst_hold_pct || 0;
+            document.getElementById('pay_other_deduction').value = p.other_deduction || 0;
+            document.getElementById('pay_other_deduction_type').value = p.other_deduction_type || '';
+            document.getElementById('pay_amount_received').value = p.amount_received || 0;
+            document.getElementById('pay_payment_date').value = p.payment_date || '';
+            document.getElementById('pay_mode').value = p.payment_mode || '';
+            document.getElementById('pay_customer_remarks').value = p.customer_remarks || '';
+            document.getElementById('pay_appolo_remarks').value = p.internal_remarks || '';
+        } else {
+            // Default if not found
+            document.getElementById('pay_tds_x_pct').value = 0;
+            document.getElementById('pay_tds_y_pct').value = 0;
+            document.getElementById('pay_tds_z_pct').value = 0;
+            document.getElementById('pay_other_deduction').value = 0;
+            document.getElementById('pay_amount_received').value = 0;
+            document.getElementById('pay_payment_date').value = '';
+            document.getElementById('pay_mode').value = '';
+            document.getElementById('pay_customer_remarks').value = '';
+            document.getElementById('pay_appolo_remarks').value = '';
+        }
+    } catch (e) {
+        console.error("Error fetching previous payment:", e);
+    }
+
     calculatePaymentFields();
 }
 
@@ -1607,22 +1656,26 @@ window.calculatePaymentFields = function () {
     const X = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
     const Y = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
     const Z = parseFloat(document.getElementById('pay_tds_z_pct').value) || 0;
+    const I = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
 
     const D = A * (X / 100);
     const E = A * (Y / 100);
     const F = C - D - E;
     const G = B * (Z / 100);
-    const H = F - G;
+    const H = F - G; // Actual Receivable Amount
+    const target = H - I; // Target Received Amount
 
     document.getElementById('pay_tds_income').value = D.toFixed(2);
     document.getElementById('pay_tds_gst').value = E.toFixed(2);
     document.getElementById('pay_receivable').value = F.toFixed(2);
     document.getElementById('pay_gst_hold').value = G.toFixed(2);
     document.getElementById('pay_actual_receivable').value = H.toFixed(2);
+    if (document.getElementById('pay_target_received')) {
+        document.getElementById('pay_target_received').value = target.toFixed(2);
+    }
 
-    const I = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
     const received = parseFloat(document.getElementById('pay_amount_received').value) || 0;
-    const diff = Math.abs(received - (H - I));
+    const diff = Math.abs(received - target);
 
     document.getElementById('pay_amount_received').style.background = (diff > 0.1 && received > 0) ? '#ffcdd2' : 'white';
 }
@@ -1651,15 +1704,16 @@ async function savePayment() {
 
     const amountReceived = parseFloat(document.getElementById('pay_amount_received').value) || 0;
     const actualReceivable = parseFloat(document.getElementById('pay_actual_receivable').value) || 0;
+    const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
+    const target = actualReceivable - otherDed;
 
-    // Calculate Pending Amount
-    const pendingAmount = Math.max(0, actualReceivable - amountReceived);
+    // Calculate Pending Amount: What's left to collect from the target
+    const pendingAmount = Math.max(0, target - amountReceived);
 
     // Collect all payment form fields
     const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
     const tdsGstPct = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
     const gstHoldPct = parseFloat(document.getElementById('pay_tds_z_pct').value) || 0;
-    const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
     const tdsIncomeAmt = parseFloat(document.getElementById('pay_tds_income').value) || 0;
     const tdsGstAmt = parseFloat(document.getElementById('pay_tds_gst').value) || 0;
     const gstHoldAmt = parseFloat(document.getElementById('pay_gst_hold').value) || 0;
@@ -1668,36 +1722,50 @@ async function savePayment() {
     const paymentMode = document.getElementById('pay_mode').value;
     const custRem = document.getElementById('pay_customer_remarks').value;
     const appoloRem = document.getElementById('pay_appolo_remarks').value;
-    const payDetails = `[Payment] TDS-IT: ${tdsIncomeAmt}, TDS-GST: ${tdsGstAmt}, GST-Hold: ${gstHoldAmt}, Other: ${otherDed}`;
+    const dedType = document.getElementById('pay_other_deduction_type').value;
+    const payDetails = `[Payment] TDS-IT: ${tdsIncomeAmt}, TDS-GST: ${tdsGstAmt}, GST-Hold: ${gstHoldAmt}, Other(${dedType}): ${otherDed}`;
     const cleanRemarks = `${custRem} | ${appoloRem} | ${payDetails}`;
 
     const poNum = lineItemsState.poNumber;
 
-    // Payload for invoices endpoint (existing behavior)
-    const toSaveInvoices = [{
-        line_item_id: inv.line_item_id,
-        milestone_id: inv.milestone_id,
-        invoice_no: inv.invoice_no,
-        invoice_date: inv.invoice_date,
-        taxable_value: inv.taxable_value,
-        gst_value: inv.gst_value,
-        total_value: inv.total_value,
-        credit_period: inv.credit_period,
-        due_date: inv.due_date,
+    // Helper to ensure YYYY-MM-DD for backend
+    const rawDate = document.getElementById('pay_invoice_date').value;
+    let formattedInvoiceDate = rawDate;
+    if (rawDate.includes('/')) {
+        const parts = rawDate.split('/');
+        if (parts.length === 3) formattedInvoiceDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    // Payload for invoices endpoint: Update ALL milestones sharing THIS invoice_no
+    const invoiceNo = document.getElementById('pay_invoice_no').value;
+    const matchingInvs = currentInvoices.filter(i => i.invoice_no === invoiceNo);
+
+    const toSaveInvoices = matchingInvs.map(mInv => ({
+        ...mInv,
+        invoice_no: invoiceNo,
+        invoice_date: formattedInvoiceDate,
+        taxable_value: parseFloat(document.getElementById('pay_taxable_val').value) || 0,
+        gst_value: parseFloat(document.getElementById('pay_gst_val').value) || 0,
+        total_value: parseFloat(document.getElementById('pay_total_val').value) || 0,
         payment_received: amountReceived,
         pending_amount: pendingAmount,
         status: (pendingAmount <= 1) ? 'Paid' : 'Partially Paid',
         remarks: cleanRemarks
-    }];
+    }));
+
+    if (toSaveInvoices.length === 0) {
+        alert("No invoice data found for this number.");
+        return;
+    }
 
     // Payload for payments endpoint (new table)
     const paymentRecord = {
-        invoice_no: inv.invoice_no,
+        invoice_no: invoiceNo,
         po_number: poNum,
-        invoice_date: inv.invoice_date,
-        taxable_value: inv.taxable_value,
-        gst_value: inv.gst_value,
-        total_value: inv.total_value,
+        invoice_date: formattedInvoiceDate,
+        taxable_value: toSaveInvoices[0].taxable_value,
+        gst_value: toSaveInvoices[0].gst_value,
+        total_value: toSaveInvoices[0].total_value,
         tds_income_pct: tdsIncomePct,
         tds_gst_pct: tdsGstPct,
         gst_hold_pct: gstHoldPct,
@@ -1711,7 +1779,8 @@ async function savePayment() {
         payment_date: paymentDate,
         payment_mode: paymentMode,
         customer_remarks: custRem,
-        internal_remarks: appoloRem
+        internal_remarks: appoloRem,
+        other_deduction_type: dedType
     };
 
     try {
@@ -1724,17 +1793,17 @@ async function savePayment() {
         if (!res.error && !payRes.error) {
             alert("Payment recorded successfully!");
 
-            // UPDATE LOCAL STATE
-            const li = lineItemsState.currentLineItems.find(l => l.id == inv.line_item_id);
-            if (li) {
-                const ms = li.milestones?.find(m => m.id == inv.milestone_id);
-                if (ms) {
-                    ms.payment_received = amountReceived;
-                    ms.pending_amount = pendingAmount;
-                    ms.status = (pendingAmount <= 1) ? 'Paid' : 'Partially Paid';
-                    ms.remarks = fullRemarks;
-                }
-            }
+            // UPDATE LOCAL STATE for all matching milestones
+            lineItemsState.currentLineItems.forEach(li => {
+                li.milestones?.forEach(ms => {
+                    if (ms.invoice_no === invoiceNo) {
+                        ms.payment_received = amountReceived;
+                        ms.pending_amount = pendingAmount;
+                        ms.status = (pendingAmount <= 1) ? 'Paid' : 'Partially Paid';
+                        ms.remarks = cleanRemarks;
+                    }
+                });
+            });
 
             closePaymentModal();
             populateBillingGrid();

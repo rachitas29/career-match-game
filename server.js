@@ -483,8 +483,9 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
                 const milestoneSql = `INSERT INTO po_milestones (
                     line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, 
                     cycle_value, documents, payment_terms, delivery_date, 
-                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks,
+                    status, credit_period
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 let completed = 0;
                 let errorOccurred = false;
@@ -494,7 +495,8 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
                         lineItemId, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
                         m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
                         m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
-                        m.payment_received || 0, m.pending_amount || 0, m.remarks || null
+                        m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
+                        m.status || 'Pending', m.credit_period || 0
                     ];
                     db.run(milestoneSql, mParams, (err) => {
                         if (err && !errorOccurred) {
@@ -539,9 +541,7 @@ app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
                        'pending_amount', m.pending_amount,
                        'remarks', m.remarks,
                        'status', COALESCE(m.status, 'Pending'),
-                       'credit_period', COALESCE(m.credit_period, 0),
-                       'taxable_value', m.taxable_value,
-                       'gst_value', m.gst_value
+                       'credit_period', COALESCE(m.credit_period, 0)
                    )
                ) FROM po_milestones m WHERE m.line_item_id = li.id) as milestones
         FROM po_line_items li
@@ -624,13 +624,15 @@ app.put('/api/line-items/:id', (req, res) => {
                 const milestoneInsertSql = `INSERT INTO po_milestones (
                     line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, 
                     cycle_value, documents, payment_terms, delivery_date,
-                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks,
+                    status, credit_period
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 const milestoneUpdateSql = `UPDATE po_milestones SET 
                     milestone_name = ?, quantity = ?, unit_price = ?, payment_cycle_pct = ?, 
                     cycle_value = ?, documents = ?, payment_terms = ?, delivery_date = ?,
-                    invoice_no = ?, invoice_date = ?, invoice_value = ?, payment_received = ?, pending_amount = ?, remarks = ?
+                    invoice_no = ?, invoice_date = ?, invoice_value = ?, payment_received = ?, pending_amount = ?, remarks = ?,
+                    status = ?, credit_period = ?
                     WHERE id = ?`;
 
                 let completedCount = 0;
@@ -657,20 +659,22 @@ app.put('/api/line-items/:id', (req, res) => {
                     });
                 }
 
+
                 // Update/Insert milestones
                 milestones.forEach(m => {
                     if (errorOccurred) return;
 
-                    const mParams = [
-                        m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
-                        m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
-                        m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
-                        m.payment_received || 0, m.pending_amount || 0, m.remarks || null
-                    ];
-
                     if (m.id && existingIds.includes(m.id)) {
                         // Update
-                        db.run(milestoneUpdateSql, [...mParams, m.id], (err) => {
+                        const mParams = [
+                            m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
+                            m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
+                            m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
+                            m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
+                            m.status || 'Pending', m.credit_period || 0,
+                            m.id
+                        ];
+                        db.run(milestoneUpdateSql, mParams, (err) => {
                             if (err && !errorOccurred) {
                                 errorOccurred = true;
                                 db.run('ROLLBACK');
@@ -680,7 +684,14 @@ app.put('/api/line-items/:id', (req, res) => {
                         });
                     } else {
                         // Insert
-                        db.run(milestoneInsertSql, [id, ...mParams], (err) => {
+                        const mParams = [
+                            id, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
+                            m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
+                            m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
+                            m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
+                            m.status || 'Pending', m.credit_period || 0
+                        ];
+                        db.run(milestoneInsertSql, mParams, (err) => {
                             if (err && !errorOccurred) {
                                 errorOccurred = true;
                                 db.run('ROLLBACK');
@@ -845,8 +856,8 @@ app.post('/api/payments', (req, res) => {
         tds_income_pct, tds_gst_pct, gst_hold_pct, other_deduction,
         tds_income_amt, tds_gst_amt, gst_hold_amt,
         net_receivable, actual_receivable, amount_received,
-        payment_date, payment_mode, customer_remarks, internal_remarks
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        payment_date, payment_mode, customer_remarks, internal_remarks, other_deduction_type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const params = [
         body.invoice_no, body.po_number, body.invoice_date,
@@ -854,7 +865,7 @@ app.post('/api/payments', (req, res) => {
         body.tds_income_pct || 0, body.tds_gst_pct || 0, body.gst_hold_pct || 0, body.other_deduction || 0,
         body.tds_income_amt || 0, body.tds_gst_amt || 0, body.gst_hold_amt || 0,
         body.net_receivable || 0, body.actual_receivable || 0, body.amount_received || 0,
-        body.payment_date, body.payment_mode, body.customer_remarks, body.internal_remarks
+        body.payment_date, body.payment_mode, body.customer_remarks, body.internal_remarks, body.other_deduction_type
     ];
 
     db.run(sql, params, function (err) {

@@ -288,9 +288,17 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 payment_mode TEXT,
                 customer_remarks TEXT,
                 internal_remarks TEXT,
+                other_deduction_type TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(po_number) REFERENCES purchase_orders(po_number) ON DELETE CASCADE
             )`);
+
+            // Migration: Add other_deduction_type to payments
+            db.run(`ALTER TABLE payments ADD COLUMN other_deduction_type TEXT`, (err) => {
+                if (err && !err.message.includes('duplicate column name')) {
+                    // Ignore duplicate column errors
+                }
+            });
 
             console.log('Database tables initialized.');
         });
