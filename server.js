@@ -10,6 +10,10 @@ const PORT = 3000;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes - Auth
@@ -361,14 +365,17 @@ app.get('/api/purchase-orders', (req, res) => {
 
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
-    let sql = "SELECT * FROM purchase_orders WHERE user_id = ?";
+    let sql = `SELECT purchase_orders.*, customers.customer_name 
+               FROM purchase_orders 
+               LEFT JOIN customers ON purchase_orders.account_id = customers.id
+               WHERE purchase_orders.user_id = ?`;
     let params = [userId];
 
     if (account_id) {
-        sql += " AND account_id = ?";
+        sql += " AND purchase_orders.account_id = ?";
         params.push(account_id);
     }
-    sql += " ORDER BY created_at DESC";
+    sql += " ORDER BY purchase_orders.created_at DESC";
 
     db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });

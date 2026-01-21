@@ -795,9 +795,12 @@
                             <div class="li-field">
                                 <label>BG Tenure (DD/MM/YY)</label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-                                    <input type="number" id="m_bg_tenure_dd" placeholder="DD" oninput="calculateBgFd()">
-                                    <input type="number" id="m_bg_tenure_mm" placeholder="MM" oninput="calculateBgFd()">
-                                    <input type="number" id="m_bg_tenure_yy" placeholder="YY" oninput="calculateBgFd()">
+                                    <input type="number" id="m_bg_tenure_dd" value="0" placeholder="DD"
+                                        oninput="calculateBgFd()">
+                                    <input type="number" id="m_bg_tenure_mm" value="0" placeholder="MM"
+                                        oninput="calculateBgFd()">
+                                    <input type="number" id="m_bg_tenure_yy" value="0" placeholder="YY"
+                                        oninput="calculateBgFd()">
                                 </div>
                             </div>
                             <div class="li-field">
@@ -815,8 +818,9 @@
                             <div class="li-field">
                                 <label>BG Status</label>
                                 <select id="m_bg_status" onchange="calculateBgFd()">
-                                    <option>Draft</option>
-                                    <option selected>Active</option>
+                                    <option selected>Draft</option>
+                                    <option>Requested</option>
+                                    <option>Active</option>
                                     <option>Expired</option>
                                     <option>Returned</option>
                                 </select>
@@ -833,7 +837,7 @@
                                 <div style="display: flex; gap: 10px; align-items: center;">
                                     <label><input type="radio" name="m_claim_required" value="Yes"
                                             onchange="calculateBgFd()"> Yes</label>
-                                    <label><input type="radio" name="m_claim_required" value="No"
+                                    <label><input type="radio" name="m_claim_required" value="No" checked
                                             onchange="calculateBgFd()"> No</label>
                                 </div>
                             </div>
@@ -841,7 +845,8 @@
                                 <label>Claim Period (DD/MM/YY)</label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
                                     <input type="number" id="m_claim_dd" placeholder="DD" oninput="calculateBgFd()">
-                                    <input type="number" id="m_claim_mm" placeholder="MM" oninput="calculateBgFd()">
+                                    <input type="number" id="m_claim_mm" value="0" placeholder="MM"
+                                        oninput="calculateBgFd()">
                                     <input type="number" id="m_claim_yy" placeholder="YY" oninput="calculateBgFd()">
                                 </div>
                             </div>
@@ -866,7 +871,7 @@
                             </div>
                             <div class="li-field">
                                 <label>FD Number</label>
-                                <input type="text" id="m_fd_number" placeholder="FD-XXXX">
+                                <input type="text" id="m_fd_number" placeholder="FD-XXXX" oninput="calculateBgFd()">
                             </div>
                             <div class="li-field">
                                 <label>Start Date</label>
@@ -886,7 +891,7 @@
                             </div>
                             <div class="li-field">
                                 <label>Maturity Date</label>
-                                <input type="date" id="m_fd_maturity_date">
+                                <input type="date" id="m_fd_maturity_date" onchange="calculateBgFd()">
                             </div>
                             <div class="li-field">
                                 <label>Maturity Amount</label>
@@ -988,6 +993,7 @@
 
             const bgPercentEl = document.getElementById('m_bg_percentage');
             const bgPercent = parseFloat(bgPercentEl ? bgPercentEl.value : 0) || 0;
+            const bgNum = document.getElementById('m_bg_number')?.value.trim() || '';
             const fdPercentEl = document.getElementById('m_fd_percentage');
             const fdPercent = parseFloat(fdPercentEl ? fdPercentEl.value : 0) || 0;
 
@@ -1051,7 +1057,7 @@
                     if (input) {
                         input.disabled = false;
                         input.style.backgroundColor = 'white';
-                        if (input.value === '') input.value = (input.id === 'm_claim_mm') ? 3 : 0;
+                        if (input.value === '') input.value = 0;
                     }
                 });
                 if (claimDateInput) {
@@ -1101,28 +1107,69 @@
                 }
             }
 
-            // Automated Status Logic
-            const bgNum = document.getElementById('m_bg_number').value.trim();
+            // 1. BG Number & FD Section Enable/Disable Logic
             const bgStatusEl = document.getElementById('m_bg_status');
             const fdStatusEl = document.getElementById('m_fd_status');
+            const fdMaturityDateStr = document.getElementById('m_fd_maturity_date')?.value || '';
+            const fdSection = document.querySelector('.fd-section') || document.querySelectorAll('.form-block')[3]; // Support both structures
+            const fdInputs = fdSection ? fdSection.querySelectorAll('input, select') : [];
 
             if (!bgNum) {
                 bgStatusEl.value = 'Draft';
-            } else if (bgStatusEl.value !== 'Returned') {
-                // Only auto-update if not manually set to Returned
-                const endDateVal = document.getElementById('m_bg_end_date').value; // format DD/MM/YYYY
-                if (endDateVal) {
-                    const [d, m, y] = endDateVal.split('/').map(Number);
-                    const endDate = new Date(y, m - 1, d);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    bgStatusEl.value = (endDate >= today) ? 'Active' : 'Expired';
+                fdInputs.forEach(el => el.disabled = true);
+                if (fdSection) fdSection.style.opacity = '0.5';
+            } else {
+                // If there IS a BG number, enable FD and switch Draft to Active
+                fdInputs.forEach(el => el.disabled = false);
+                if (fdSection) fdSection.style.opacity = '1';
+                if (bgStatusEl.value === 'Draft') bgStatusEl.value = 'Active';
+            }
+
+            // 2. BG Expiry & FD Status Linkage
+            let fdStatusSetByBg = false;
+            const endDateVal = document.getElementById('m_bg_end_date').value; // DD/MM/YYYY
+            if (endDateVal && bgNum) {
+                const [d, m, y] = endDateVal.split('/').map(Number);
+                const endDate = new Date(y, m - 1, d);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (endDate < today) {
+                    bgStatusEl.value = 'Expired';
+                    if (fdStatusEl) {
+                        fdStatusEl.value = 'Released';
+                        fdStatusSetByBg = true;
+                    }
                 }
             }
 
-            // Relationship: BG Status 'Returned' -> FD Status 'Released'
-            if (bgStatusEl.value === 'Returned' && fdStatusEl.value !== 'Liquidated') {
-                fdStatusEl.value = 'Released';
+            // 3. FD Status based on Maturity Date (Only if not already set by BG expiry)
+            // User Rule: Fd end date <= current date ? Active : Liquidated
+            if (!fdStatusSetByBg && fdMaturityDateStr && bgNum) {
+                const maturityDate = new Date(fdMaturityDateStr);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (maturityDate <= today) {
+                    fdStatusEl.value = 'Active';
+                } else {
+                    fdStatusEl.value = 'Liquidated';
+                }
+            }
+
+            // 4. BG Status 'Returned' -> FD Status 'Released'
+            if (bgStatusEl.value === 'Returned') {
+                if (fdStatusEl) fdStatusEl.value = 'Released';
+            }
+
+            // 5. FD Side Fields Disable Logic if Liquidated
+            if (fdStatusEl && fdStatusEl.value === 'Liquidated' && bgNum) {
+                fdInputs.forEach(el => {
+                    if (el.id !== 'm_fd_status') el.disabled = true;
+                });
+            }
+
+            // Update Remaining Logic
+            if (document.getElementById('m_bg_limit_rem')) {
+                document.getElementById('m_bg_limit_rem').value = bgNum ? (ob - bgValue).toFixed(2) : "0.00";
             }
         }
 
@@ -1204,18 +1251,39 @@
             if (!confirm("Are you sure you want to PERMANENTLY DELETE these BG/FD details from this PO?")) return;
 
             try {
-                const res = await api.delete(`/purchase-orders/${poNumber}/bg-fd`);
+                const res = await api.delete(`/purchase-orders/${encodeURIComponent(poNumber)}/bg-fd`);
                 if (res.error) {
                     alert("Error deleting: " + res.error);
                 } else {
-                    // Clear inputs visually
-                    const ids = ['m_opening_balance', 'm_bg_number', 'm_bg_start_date', 'm_bg_end_date', 'm_bg_value', 'm_bg_limit_rem', 'm_fd_margin', 'm_fd_number', 'm_fd_start_date', 'm_fd_maturity_date', 'm_fd_maturity_amount', 'm_roi'];
+                    // Deep Reset fields
+                    const ids = [
+                        'm_opening_balance', 'm_bg_number', 'm_bg_start_date', 'm_bg_end_date', 'm_bg_value', 'm_bg_limit_rem',
+                        'm_bg_tenure_dd', 'm_bg_tenure_mm', 'm_bg_tenure_yy',
+                        'm_claim_dd', 'm_claim_mm', 'm_claim_yy', 'm_bg_claim_date',
+                        'm_fd_margin', 'm_fd_number', 'm_fd_start_date', 'm_fd_maturity_date', 'm_fd_maturity_amount', 'm_roi'
+                    ];
                     ids.forEach(id => {
                         const el = document.getElementById(id);
-                        if (el) el.value = '';
+                        if (el) {
+                            if (id.includes('tenure') || id.includes('claim')) el.value = 0;
+                            else if (id === 'm_opening_balance') el.value = 0;
+                            else el.value = '';
+                        }
                     });
+
+                    // Reset radio
+                    const rNo = document.querySelector('input[name="m_claim_required"][value="No"]');
+                    if (rNo) rNo.checked = true;
+
+                    // Reset Dropdowns
+                    if (document.getElementById('m_bg_status')) document.getElementById('m_bg_status').value = 'Draft';
+                    if (document.getElementById('m_fd_status')) document.getElementById('m_fd_status').value = 'Active';
+
+                    // Force recal to reset UI state
+                    calculateBgFd();
+
+                    alert("BG/FD Details deleted from Database and form reset.");
                     closeBgModal();
-                    alert("BG/FD Details Deleted.");
                 }
             } catch (e) {
                 console.error(e);
