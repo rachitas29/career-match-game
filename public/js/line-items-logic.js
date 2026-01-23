@@ -39,8 +39,14 @@ window.validateHasMilestones = function () {
 };
 
 async function openLineItemsModal(poNum, forceLoadFromDB = false) {
-    const isNewPoNum = lineItemsState.poNumber !== poNum;
-    lineItemsState.poNumber = poNum || document.getElementById('po_number').value;
+    // Robustness: Always trim the input PO number
+    const trimmedInput = (poNum || "").toString().trim();
+    const mainPoNum = (document.getElementById('po_number')?.value || "").toString().trim();
+
+    const targetPoNum = trimmedInput || mainPoNum;
+    const isNewPoNum = lineItemsState.poNumber !== targetPoNum;
+
+    lineItemsState.poNumber = targetPoNum;
 
     if (!lineItemsState.poNumber) {
         alert('Please enter or save the PO Number first.');
@@ -48,12 +54,13 @@ async function openLineItemsModal(poNum, forceLoadFromDB = false) {
     }
 
     const modal = document.getElementById('lineItemsModal');
-    modal.classList.add('open');
+    if (modal) modal.classList.add('open');
 
-    // If it's a completely different PO number (shouldn't happen in single session usually), reset memory
+    // If it's a completely different PO number, reset memory
     if (isNewPoNum) {
         lineItemsState.currentLineItems = [];
         lineItemsState.stagedMilestones = [];
+        lineItemsState.deletedLineItemIds = [];
     }
 
     resetEntireForm(); // Clear the input panels
@@ -62,7 +69,9 @@ async function openLineItemsModal(poNum, forceLoadFromDB = false) {
     const mainDate = document.getElementById('po_date');
     const mainValue = document.getElementById('po_value');
 
-    document.getElementById('li_display_po_number').value = lineItemsState.poNumber;
+    const displayPoField = document.getElementById('li_display_po_number');
+    if (displayPoField) displayPoField.value = lineItemsState.poNumber;
+
     if (mainDate) document.getElementById('li_display_po_date').value = mainDate.value;
     if (mainValue) {
         const val = parseFloat(mainValue.value) || 0;
@@ -72,11 +81,12 @@ async function openLineItemsModal(poNum, forceLoadFromDB = false) {
     // Initialize date dropdowns if not already done
     initLineItemDateDropdowns();
 
-    // Only load from DB if memory is empty AND we are forced OR in edit mode
-    // Edit mode can be detected by presence of po_number in URL or specific flag
-    const isEditPage = window.location.pathname.includes('edit-purchase-order.html');
+    // Robust Edit Page Detection
+    const isEditPage = window.location.pathname.includes('edit-purchase-order.html') ||
+        new URLSearchParams(window.location.search).has('po_number');
 
     if (forceLoadFromDB || (isEditPage && lineItemsState.currentLineItems.length === 0)) {
+        console.log(`[LineItems] Triggering DB Fetch for PO: ${lineItemsState.poNumber}`);
         await loadLineItemData();
     } else {
         renderLineItemsTable();
@@ -169,25 +179,32 @@ function initLineItemDateDropdowns() {
 async function loadLineItemData() {
     if (!lineItemsState.poNumber) return;
     try {
-        const lineItemsRes = await api.get(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber)}/line-items`);
+        console.log(`[LineItems] Fetching items for ${lineItemsState.poNumber}...`);
+        const lineItemsRes = await api.get(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber.trim())}/line-items`);
 
-        if (!lineItemsRes.error) {
-            lineItemsState.currentLineItems = lineItemsRes.line_items || [];
-            renderLineItemsTable();
+        if (lineItemsRes.error) {
+            console.error('[LineItems] API Error:', lineItemsRes.error);
+            alert('Failed to load line items: ' + lineItemsRes.error);
+            return;
         }
 
-        // Optional: Re-sync header from DB if you want to ensure total consistency, 
-        // but local form values are usually the source of truth for unsaved state.
-        const poRes = await api.get(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber)}`);
+        lineItemsState.currentLineItems = lineItemsRes.line_items || [];
+        console.log(`[LineItems] Success: Received ${lineItemsState.currentLineItems.length} items`);
+        renderLineItemsTable();
+
+        // Optional: Re-sync header from DB if you want to ensure total consistency
+        const poRes = await api.get(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber.trim())}`);
         if (poRes.purchase_order) {
             lineItemsState.currentPO = poRes.purchase_order;
-            // Only update if not already set by openLineItemsModal
-            if (!document.getElementById('li_display_po_date').value) {
-                document.getElementById('li_display_po_date').value = lineItemsState.currentPO.po_date;
+            // Update display fields if they are empty
+            const dateField = document.getElementById('li_display_po_date');
+            if (dateField && !dateField.value) {
+                dateField.value = lineItemsState.currentPO.po_date;
             }
         }
     } catch (err) {
-        console.error('Error loading line item data:', err);
+        console.error('[LineItems] Critical Fetch Failure:', err);
+        alert('A critical error occurred while loading line item data.');
     }
 }
 
@@ -1583,13 +1600,22 @@ function closePaymentModal() {
 }
 
 function resetPaymentForm() {
-    const ids = ['pay_invoice_date', 'pay_hw_sw', 'pay_taxable_val', 'pay_gst_val', 'pay_total_val', 'pay_tds_income', 'pay_tds_gst', 'pay_receivable', 'pay_gst_hold', 'pay_actual_receivable', 'pay_customer_remarks', 'pay_appolo_remarks'];
-    ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    document.getElementById('pay_tds_x_pct').value = 0;
-    document.getElementById('pay_tds_y_pct').value = 0;
-    document.getElementById('pay_tds_z_pct').value = 0;
-    document.getElementById('pay_other_deduction').value = 0;
-    document.getElementById('pay_amount_received').value = 0;
+    const ids = [
+        'pay_invoice_date', 'pay_hw_sw', 'pay_taxable_val', 'pay_gst_val', 'pay_total_val',
+        'pay_tds_income', 'pay_tds_gst', 'pay_receivable', 'pay_gst_hold', 'pay_actual_receivable',
+        'pay_target_received', 'pay_amount_received', 'pay_payment_date', 'pay_mode',
+        'pay_customer_remarks', 'pay_appolo_remarks', 'pay_other_deduction_type'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    // Reset percentages and deduction amount to 0
+    ['pay_tds_x_pct', 'pay_tds_y_pct', 'pay_tds_z_pct', 'pay_other_deduction', 'pay_amount_received'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 0;
+    });
 }
 
 function populateInvoiceDropdown() {
@@ -1610,7 +1636,11 @@ function populateInvoiceDropdown() {
 async function searchInvoice() {
     const no = document.getElementById('pay_invoice_no').value;
     const inv = currentInvoices.find(i => i.invoice_no === no);
-    if (!inv) return;
+    if (!inv) {
+        resetPaymentForm();
+        calculatePaymentFields();
+        return;
+    }
 
     document.getElementById('pay_invoice_date').value = formatDateToDDMMYYYY(inv.invoice_date);
     document.getElementById('pay_taxable_val').value = inv.taxable_value.toFixed(2);
@@ -1745,18 +1775,24 @@ async function savePayment() {
     const invoiceNo = document.getElementById('pay_invoice_no').value;
     const matchingInvs = currentInvoices.filter(i => i.invoice_no === invoiceNo);
 
-    const toSaveInvoices = matchingInvs.map(mInv => ({
-        ...mInv,
-        invoice_no: invoiceNo,
-        invoice_date: formattedInvoiceDate,
-        taxable_value: parseFloat(document.getElementById('pay_taxable_val').value) || 0,
-        gst_value: parseFloat(document.getElementById('pay_gst_val').value) || 0,
-        total_value: parseFloat(document.getElementById('pay_total_val').value) || 0,
-        payment_received: amountReceived,
-        pending_amount: pendingAmount,
-        status: (pendingAmount <= 1) ? 'Paid' : 'Partially Paid',
-        remarks: cleanRemarks
-    }));
+    const toSaveInvoices = matchingInvs.map(mInv => {
+        // PRESERVE BILLING REMARKS STRICTLY:
+        // User Requirement: "The billing remarks should only show billing remarks not the payment remarks."
+        // So we keep the existing remarks EXACTLY as they are.
+
+        return {
+            ...mInv,
+            invoice_no: invoiceNo,
+            invoice_date: formattedInvoiceDate,
+            taxable_value: parseFloat(document.getElementById('pay_taxable_val').value) || 0,
+            gst_value: parseFloat(document.getElementById('pay_gst_val').value) || 0,
+            total_value: parseFloat(document.getElementById('pay_total_val').value) || 0,
+            payment_received: amountReceived,
+            pending_amount: pendingAmount,
+            status: (pendingAmount <= 1) ? 'Paid' : 'Partially Paid',
+            remarks: mInv.remarks // Keep original remarks untouched
+        };
+    });
 
     if (toSaveInvoices.length === 0) {
         alert("No invoice data found for this number.");
@@ -1805,7 +1841,7 @@ async function savePayment() {
                         ms.payment_received = amountReceived;
                         ms.pending_amount = pendingAmount;
                         ms.status = (pendingAmount <= 1) ? 'Paid' : 'Partially Paid';
-                        ms.remarks = cleanRemarks;
+                        // ms.remarks = cleanRemarks; // REVERTED: Do not update UI with payment remarks
                     }
                 });
             });

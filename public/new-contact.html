@@ -80,21 +80,68 @@
     <script>
         api.checkAuth();
 
-        // Load accounts for dropdown
-        async function loadAccounts() {
-            const result = await api.get('/customers');
-            if (result.customers) {
-                const select = document.getElementById('account_id');
-                result.customers.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = c.customer_name;
-                    select.appendChild(opt);
-                });
-            }
-        }
-        loadAccounts();
+        // Initialize on Load (Nuclear Debug)
+        window.onload = async () => {
+            // 1. Grab ID immediately
+            const params = new URLSearchParams(window.location.search);
+            const contactId = params.get('id');
+            const debugMode = true; // Set false to disable alerts
 
+            // 2. Set UI Mode
+            if (contactId) {
+                document.querySelector('.page-title-bar h1').textContent = 'Edit Contact';
+                const btn = document.querySelector('button[type="submit"]');
+                if (btn) btn.textContent = 'Update Contact';
+            }
+
+            try {
+                // 3a. Load Accounts first (Linear)
+                // Define loadAccounts locally/inline if needed, but the global one is fine if Hoisted.
+                // We'll call the global one but wrap it safe.
+                try {
+                    const result = await api.get('/customers');
+                    if (result.customers) {
+                        const select = document.getElementById('account_id');
+                        select.innerHTML = '<option value="">Select Account...</option>'; // Clear first
+                        result.customers.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.id;
+                            opt.textContent = c.customer_name;
+                            select.appendChild(opt);
+                        });
+                    }
+                } catch (errA) {
+                    console.error("Acc Error", errA);
+                }
+
+                // 3b. Load Contact
+                if (contactId) {
+                    const res = await api.get(`/contacts/${contactId}`);
+
+                    if (res && res.contact) {
+                        const c = res.contact;
+
+                        // CRITICAL: Force value update with slight delay if DOM is stubborn
+                        setTimeout(() => {
+                            if (c.account_id) document.getElementById('account_id').value = c.account_id;
+                            document.getElementById('name').value = c.name || '';
+                            document.getElementById('role').value = c.role || '';
+                            document.getElementById('email').value = c.email || '';
+                            document.getElementById('phone').value = c.phone || '';
+                        }, 50);
+
+                    } else {
+                        if (debugMode) {
+                            alert("Contact Load Failed:\n" + JSON.stringify(res));
+                        }
+                    }
+                }
+            } catch (e) {
+                alert("Critical Init Error: " + e.message);
+            }
+        };
+
+        // Form Submit Handler
         document.getElementById('contactForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const getVal = (id) => document.getElementById(id).value;
@@ -109,14 +156,23 @@
                 phone: getVal('phone')
             };
 
-            const result = await api.post('/contacts', data);
+            const params = new URLSearchParams(window.location.search);
+            const contactId = params.get('id');
+
+            let result;
+            if (contactId) {
+                result = await api.put(`/contacts/${contactId}`, data);
+            } else {
+                result = await api.post('/contacts', data);
+            }
+
             const statusMsg = document.getElementById('statusMsg');
 
             if (result.error) {
                 statusMsg.textContent = result.error;
                 statusMsg.style.color = 'var(--error)';
             } else {
-                statusMsg.textContent = 'Contact Saved!';
+                statusMsg.textContent = contactId ? 'Contact Updated!' : 'Contact Saved!';
                 statusMsg.style.color = 'var(--success)';
                 setTimeout(() => window.location.href = 'contacts.html', 1000);
             }

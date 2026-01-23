@@ -963,18 +963,7 @@
                     }
                 }
 
-                // 3. FD Status based on Maturity Date (Only if not already set by BG expiry)
-                // User Rule: Fd end date <= current date ? Active : Liquidated
-                if (!fdStatusSetByBg && fdMaturityDateStr && bgNum) {
-                    const maturityDate = new Date(fdMaturityDateStr);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (maturityDate <= today) {
-                        fdStatusEl.value = 'Active';
-                    } else {
-                        fdStatusEl.value = 'Liquidated';
-                    }
-                }
+                // 3. Removed: FD Status based on Maturity Date (Manual selection only)
 
                 // 4. BG Status 'Returned' -> FD Status 'Released'
                 if (bgStatusEl.value === 'Returned') {
@@ -1116,7 +1105,8 @@
         }
 
         async function deleteBgFdLocal() {
-            if (!confirm("Are you sure you want to clear these BG/FD details?")) return;
+            // User Requirement: Prompt only one total msg (the success alert). 
+            // Confirmation prompt removed as requested.
 
             try {
                 if (typeof createdPoNumber !== 'undefined' && createdPoNumber) {
@@ -1129,38 +1119,50 @@
 
             localStorage.removeItem('pending_bg_details');
 
-            // Deep Reset fields
+            // 1. Deep Reset fields (Excludes PO Value)
             const ids = [
                 'm_opening_balance', 'm_bg_number', 'm_bg_start_date', 'm_bg_end_date', 'm_bg_value', 'm_bg_limit_rem',
-                'm_bg_tenure_dd', 'm_bg_tenure_mm', 'm_bg_tenure_yy',
+                'm_bg_tenure_dd', 'm_bg_tenure_mm', 'm_bg_tenure_yy', 'm_bg_percentage',
                 'm_claim_dd', 'm_claim_mm', 'm_claim_yy', 'm_bg_claim_date',
-                'm_fd_margin', 'm_fd_number', 'm_fd_start_date', 'm_fd_maturity_date', 'm_fd_maturity_amount', 'm_roi'
+                'm_fd_percentage', 'm_fd_margin', 'm_fd_number', 'm_fd_start_date', 'm_fd_maturity_date', 'm_fd_maturity_amount', 'm_roi'
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    if (id.includes('tenure') || id.includes('claim')) el.value = 0;
-                    else if (id === 'm_opening_balance') el.value = 0;
-                    else el.value = '';
+                    if (id.includes('tenure') || id.includes('claim') || id.includes('percentage') || id === 'm_roi') {
+                        el.value = 0;
+                    } else if (id === 'm_opening_balance') {
+                        el.value = 0;
+                    } else {
+                        el.value = '';
+                    }
                 }
             });
 
-            // Reset radio
-            const rNo = document.querySelector('input[name="m_claim_required"][value="No"]');
-            if (rNo) rNo.checked = true;
+            // 2. Reset radio inside modal
+            const rNoModal = document.querySelector('input[name="m_claim_required"][value="No"]');
+            if (rNoModal) rNoModal.checked = true;
 
-            // Reset Dropdowns
+            // 3. Reset Dropdowns
             if (document.getElementById('m_bg_status')) document.getElementById('m_bg_status').value = 'Draft';
             if (document.getElementById('m_fd_status')) document.getElementById('m_fd_status').value = 'Active';
 
             const indicator = document.getElementById('bgStatusIndicator');
             if (indicator) indicator.style.display = 'none';
 
-            // Re-trigger calc to apply disabled states
+            // 4. Sync Main PO Form: Auto-select "No" for Bank Guarantee 
+            const bgNoRadio = document.querySelector('input[name="bank_guarantee"][value="No"]');
+            if (bgNoRadio) {
+                bgNoRadio.checked = true;
+                if (typeof toggleBgBtn === 'function') toggleBgBtn();
+            }
+
+            // 5. Re-trigger calc to apply disabled states
             calculateBgFd();
 
+            // 6. Close Modal & Success Message
             closeBgModal();
-            alert("BG/FD Details Cleared.");
+            alert("All BG records have been deleted.");
         }
 
         async function initForm() {
@@ -1314,6 +1316,15 @@
 
             const data = await getPoData();
             if (!data) return;
+
+            // Requirement: Validate BG attachment if selected
+            const pendingBg = localStorage.getItem('pending_bg_details');
+            if (data.bank_guarantee === 'Yes' && !pendingBg) {
+                // Also check if already saved to DB for this session
+                // We'll trust localStorage presence as the primary indicator for New PO flow
+                alert("no bg details attached please check no bg required option to update the Po");
+                return;
+            }
 
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;

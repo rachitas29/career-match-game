@@ -74,6 +74,9 @@
                         <p>${c.role || 'No Role'} ${c.account_name ? 'at <strong>' + c.account_name + '</strong>' : ''}</p>
                         <p style="font-size: 0.85rem; margin: 0;">${c.email || ''} <br> ${c.phone || ''}</p>
                     </div>
+                    <div>
+                        <a href="new-contact.html?id=${c.id}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</a>
+                    </div>
                 </div>
             `).join('');
         }

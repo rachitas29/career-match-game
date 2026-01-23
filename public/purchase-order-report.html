@@ -543,24 +543,80 @@
         let currentLineItems = [];
         let currentDetailPage = 1;
 
-        // Initialize
-        async function init() {
-            api.checkAuth();
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // Manually highlight since filtering logic might be strict on exact match
-            const links = document.querySelectorAll('.nav-item');
-            for (let l of links) {
-                if (l.href.includes('purchase-order-report.html')) l.classList.add('active');
-            }
+        // NUCLEAR DEBUG INIT
+        window.onload = async function () {
+            try {
+                console.log("Window Loaded. Running Init...");
 
-            // Check URL params
-            const urlParams = new URLSearchParams(window.location.search);
-            const poParam = urlParams.get('po_number');
-            if (poParam) {
-                document.getElementById('search_po_number').value = poParam;
-                // Give a small delay to ensure API loads or just call immediately
-                setTimeout(searchPOs, 100);
+                // 1. Grab Params & Inputs immediately
+                const params = new URLSearchParams(window.location.search);
+                const poVal = params.get('po_number');
+                const partyVal = params.get('party_name');
+
+                const poInput = document.getElementById('search_po_number');
+
+                // 1.5 PROOF_OF_LIFE: If we have a PO Value, turn green IMMEDIATELY
+                // Do this BEFORE auth check or anything else that might crash
+                if (poVal && poInput) {
+                    console.log("Found PO in URL: " + poVal);
+                    poInput.value = poVal;
+                    poInput.style.border = '3px solid #10b981'; // Tick Green
+                    poInput.style.backgroundColor = '#d1fae5';
+                } else if (!poVal) {
+                    console.log("No PO in URL found.");
+                } else if (!poInput) {
+                    console.error("CRITICAL: Input #search_po_number NOT FOUND in DOM");
+                    alert("CRITICAL ERROR: Search Input Missing");
+                }
+
+                // 2. Auth Check (Safe)
+                if (window.api && api.checkAuth) {
+                    try { api.checkAuth(); } catch (e) { console.error("Auth Fail", e); }
+                }
+
+                // 3. Highlight Nav
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                const links = document.querySelectorAll('.nav-item');
+                for (let l of links) {
+                    if (l.href && l.href.includes('purchase-order-report.html')) l.classList.add('active');
+                }
+
+                // 4. Other Inputs
+                if (partyVal && document.getElementById('search_party_name')) {
+                    document.getElementById('search_party_name').value = partyVal;
+                }
+
+                // 5. Run Search
+                if ((poVal || partyVal) && typeof searchPOs === 'function') {
+                    console.log("Triggering Search...");
+                    await searchPOs();
+                }
+
+            } catch (err) {
+                console.error("FATAL INIT ERROR:", err);
+                alert("Report Init Error: " + err.message);
             }
+        };
+
+        function clearAllData() {
+            allPOs = [];
+            filteredPOs = [];
+            const grid = document.getElementById('masterGridContent');
+            if (grid) grid.innerHTML = '';
+            const detail = document.getElementById('detailGridBody');
+            if (detail) detail.innerHTML = '<tr><td colspan="14" style="color:white; padding: 2rem;">(Select a PO to view details)</td></tr>';
+
+            if (document.getElementById('masterPagination')) document.getElementById('masterPagination').style.display = 'none';
+            if (document.getElementById('detailPagination')) document.getElementById('detailPagination').style.display = 'none';
+
+            // Clear Footer
+            const ids = ['disp_total_po_value', 'disp_billed_value', 'disp_pending_value', 'disp_bg_value'];
+            ids.forEach(id => { if (document.getElementById(id)) document.getElementById(id).textContent = '$0.00'; });
+
+            const ids2 = ['disp_bg_number', 'disp_bg_date'];
+            ids2.forEach(id => { if (document.getElementById(id)) document.getElementById(id).textContent = '-'; });
+
+            if (document.getElementById('disp_bg_percent')) document.getElementById('disp_bg_percent').textContent = '0%';
         }
 
         // Search POs
@@ -568,9 +624,18 @@
             // Clear existing data first
             clearAllData();
 
-            const poNumTerm = document.getElementById('search_po_number').value.toLowerCase().trim();
+            let poNumTerm = document.getElementById('search_po_number').value.toLowerCase().trim();
             const partyTerm = document.getElementById('search_party_name').value.toLowerCase().trim();
             const projectTerm = document.getElementById('search_project_name').value.toLowerCase().trim();
+
+            // FALLBACK: If input is empty but URL has param, use URL param and populate field
+            if (!poNumTerm) {
+                const urlP = new URLSearchParams(window.location.search).get('po_number');
+                if (urlP) {
+                    poNumTerm = urlP.toLowerCase().trim();
+                    document.getElementById('search_po_number').value = urlP;
+                }
+            }
 
             const grid = document.getElementById('masterGridContent');
             grid.innerHTML = '<div style="color:white;">Searching...</div>';
@@ -586,16 +651,26 @@
                 allPOs = res.purchase_orders;
 
                 // Client-side filter
+                // Client-side filter
                 filteredPOs = allPOs.filter(po => {
-                    const matchNum = !poNumTerm || (po.po_number && po.po_number.toLowerCase().includes(poNumTerm));
-                    const matchParty = !partyTerm || (po.customer_name && po.customer_name.toLowerCase().includes(partyTerm));
-                    const matchProj = !projectTerm || (po.notes && po.notes.toLowerCase().includes(projectTerm)); // Assuming Project Name might be in notes or custom field? Mapping to Notes for now or generic check
+                    // IF PO Number is provided, search STRICTLY by it and ignore others (closest approach to 'ID' search)
+                    if (poNumTerm) {
+                        return po.po_number && po.po_number.toLowerCase().includes(poNumTerm);
+                    }
 
-                    return matchNum && matchParty && matchProj;
+                    // Otherwise use general search
+                    const matchParty = !partyTerm || (po.customer_name && po.customer_name.toLowerCase().includes(partyTerm));
+                    const matchProj = !projectTerm || (po.notes && po.notes.toLowerCase().includes(projectTerm));
+                    return matchParty && matchProj;
                 });
 
                 currentMasterPage = 1;
                 renderMasterGrid();
+
+                // AUTO-SELECT if exactly one result (Enhanced UX)
+                if (filteredPOs.length === 1) {
+                    selectPO(filteredPOs[0].po_number);
+                }
 
             } catch (err) {
                 console.error(err);
@@ -625,7 +700,13 @@
         function renderMasterGrid() {
             const grid = document.getElementById('masterGridContent');
             if (filteredPOs.length === 0) {
-                grid.innerHTML = 'No matching POs found.';
+                grid.innerHTML = `
+                        <div style="padding: 1rem; text-align: center; color: #64748b;">
+                            No matching records found.<br>
+                            <span style="font-size: 0.8rem">
+                                (Fetched: ${allPOs.length} total POs. Searched for: "${poNumTerm || partyTerm}")
+                            </span>
+                        </div>`;
                 document.getElementById('masterPagination').style.display = 'none';
                 return;
             }
@@ -800,7 +881,7 @@
             document.getElementById('disp_bg_date').textContent = bgDetails.bg_end_date || '-';
         }
 
-        init();
+        // init() called via event listener now
     </script>
 </body>
 

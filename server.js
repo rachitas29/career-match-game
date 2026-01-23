@@ -202,6 +202,32 @@ app.get('/api/contacts', (req, res) => {
     });
 });
 
+app.get('/api/contacts/:id', (req, res) => {
+    const { id } = req.params;
+    const userId = req.query.user_id;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    db.get("SELECT * FROM contacts WHERE id = ? AND user_id = ?", [id, userId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'Contact not found' });
+        res.json({ contact: row });
+    });
+});
+
+app.put('/api/contacts/:id', (req, res) => {
+    const { id } = req.params;
+    const { user_id, account_id, name, email, phone, role } = req.body;
+
+    if (!name || !user_id) return res.status(400).json({ error: 'Name and User ID are required' });
+
+    const sql = `UPDATE contacts SET account_id = ?, name = ?, email = ?, phone = ?, role = ? WHERE id = ? AND user_id = ?`;
+    db.run(sql, [account_id, name, email, phone, role, id, user_id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'Contact not found or no changes made' });
+        res.json({ message: 'Contact updated successfully' });
+    });
+});
+
 // Routes - Leads
 app.post('/api/leads', (req, res) => {
     const { user_id, name, company_name, email, status, value } = req.body;
