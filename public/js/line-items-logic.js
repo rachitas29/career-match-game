@@ -109,8 +109,10 @@ function closeLineItemsModal() {
 }
 
 async function commitPOToDB() {
-    // 1. Check if the grid has any items at all
-    if (lineItemsState.currentLineItems.length === 0) {
+    // 1. Check if the grid has any items at all OR if there are pending deletions
+    const hasPendingDeletions = lineItemsState.deletedLineItemIds && lineItemsState.deletedLineItemIds.length > 0;
+
+    if (lineItemsState.currentLineItems.length === 0 && !hasPendingDeletions) {
         alert("The workspace is empty. Please save at least one line item to the grid before committing.");
         return;
     }
@@ -128,21 +130,103 @@ async function commitPOToDB() {
         }
 
         for (const ms of li.milestones) {
-            const hasTerms = ms.payment_terms && ms.payment_terms.trim() !== "" && ms.payment_terms !== "-";
-            const hasDocs = ms.documents && ms.documents.trim() !== "" && ms.documents !== "-";
             const hasName = ms.milestone_name && ms.milestone_name.trim() !== "";
-            const hasValue = ms.cycle_value && parseFloat(ms.cycle_value) > 0;
+            // const hasValue = ms.cycle_value && parseFloat(ms.cycle_value) > 0; // Relaxed?
+            // Keeping value check as it seems critical, but removing terms/docs as requested previously
 
-            if (!hasTerms || !hasDocs || !hasName || !hasValue) {
-                alert(`All columns in the grid must be filled before saving. \n\nPlease check Milestone: "${ms.milestone_name || 'Unnamed'}" in Line Item: ${li.line_item_no}. \n\nMissing: ${!hasName ? 'Milestone Name, ' : ''}${!hasValue ? 'Cycle Value, ' : ''}${!hasTerms ? 'Payment Terms, ' : ''}${!hasDocs ? 'Documents' : ''}`);
+            if (!hasName) {
+                alert(`Missing Milestone Name in Line Item: ${li.line_item_no}.`);
                 return;
             }
         }
     }
 
-    // If validation passes, show success message but STAY on the modal
-    alert("Purchase Order Line Items are successfully validated and confirmed in the database.");
-    // document.getElementById('lineItemsModal').classList.remove('open'); // User requested to stay on form
+    const btn = document.getElementById('btnSaveItemsToDB');
+    if (btn) {
+        btn.innerHTML = 'Saving...';
+        btn.disabled = true;
+    }
+
+    try {
+        let successCount = 0;
+        let failCount = 0;
+
+        // 3. Process each line item
+        for (const li of lineItemsState.currentLineItems) {
+            const isNew = !li.id || li.id.toString().startsWith('temp_');
+
+            const payload = {
+                line_item_no: li.line_item_no,
+                line_item_type: li.line_item_type,
+                description: li.description,
+                quantity: li.quantity,
+                gst_rate: li.gst_rate,
+                hsn_sac_code: li.hsn_sac_code,
+                milestones: li.milestones.map(m => ({
+                    id: (m.id && !m.id.toString().startsWith('temp_')) ? m.id : null,
+                    milestone_name: m.milestone_name,
+                    quantity: m.quantity,
+                    unit_price: m.unit_price,
+                    payment_cycle_pct: m.payment_cycle_pct,
+                    cycle_value: m.cycle_value,
+                    documents: m.documents,
+                    payment_terms: m.payment_terms,
+                    delivery_date: m.delivery_date,
+                    // Preserve billing fields if they exist
+                    invoice_no: m.invoice_no,
+                    invoice_date: m.invoice_date,
+                    invoice_value: m.invoice_value,
+                    payment_received: m.payment_received,
+                    pending_amount: m.pending_amount,
+                    remarks: m.remarks,
+                    status: m.status,
+                    credit_period: m.credit_period
+                }))
+            };
+
+            let res;
+            if (isNew) {
+                res = await api.post(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber)}/line-items`, payload);
+            } else {
+                res = await api.put(`/line-items/${li.id}`, payload);
+            }
+
+            if (res && (res.id || res.message)) {
+                successCount++;
+                // Update local ID if it was new
+                if (isNew && res.id) {
+                    li.id = res.id;
+                    // We might need to reload milestones to get their new IDs, 
+                    // but for now let's just mark it as not-temp.
+                }
+            } else {
+                failCount++;
+                console.error("Failed to save LI:", li, res);
+            }
+        }
+
+        // Handle deletions
+        if (lineItemsState.deletedLineItemIds.length > 0) {
+            for (const id of lineItemsState.deletedLineItemIds) {
+                await api.delete(`/line-items/${id}`);
+            }
+            lineItemsState.deletedLineItemIds = []; // Clear
+        }
+
+        alert(`Sync Complete!\nSaved/Updated: ${successCount}\nFailed: ${failCount}`);
+
+        // Reload to ensure all IDs are synced
+        window.location.reload();
+
+    } catch (error) {
+        console.error("Error committing PO:", error);
+        alert("Error saving to database: " + error.message);
+    } finally {
+        if (btn) {
+            btn.innerHTML = 'SAVE ITEMS TO DB';
+            btn.disabled = false;
+        }
+    }
 }
 
 function initLineItemDateDropdowns() {
@@ -225,6 +309,14 @@ function calculateMsCycleValue() {
 function renderLineItemsTable() {
     const tbody = document.getElementById('li_summaryTableBody');
     tbody.innerHTML = '';
+
+    // Toggle Save Button
+    const saveDbBtn = document.getElementById('btnSaveItemsToDB');
+    if (saveDbBtn) {
+        // Strictly enable only if there are items in the grid
+        saveDbBtn.disabled = (lineItemsState.currentLineItems.length === 0);
+    }
+
     lineItemsState.currentLineItems.forEach((li, idx) => {
         if (!li.milestones || li.milestones.length === 0) {
             // Should not happen but for safety
@@ -245,6 +337,7 @@ function renderLineItemsTable() {
 
         li.milestones.forEach((ms, msIdx) => {
             const tr = document.createElement('tr');
+            tr.setAttribute('data-row-id', `${li.id}_${ms.id}`);
             tr.innerHTML = `
                 <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
                 <td>${msIdx === 0 ? li.description : ''}</td>
@@ -277,6 +370,16 @@ function editLineItem(liId, msId) {
 
     // Stage all OTHER milestones so they aren't lost on save
     lineItemsState.stagedMilestones = li.milestones.filter(m => m.id != msId);
+
+    // Apply Highlighting
+    const allRows = document.querySelectorAll('#li_summaryTableBody tr');
+    allRows.forEach(r => r.classList.remove('editing-highlight'));
+
+    const activeRow = document.querySelector(`tr[data-row-id="${liId}_${msId}"]`);
+    if (activeRow) {
+        activeRow.classList.add('editing-highlight');
+        activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     // Change button text and style for edit mode
     const saveBtn = document.getElementById('mainSaveBtn');
@@ -343,6 +446,10 @@ function resetEntireForm() {
 function resetLineItemIdentificationOnly() {
     lineItemsState.editingItemId = null;
     lineItemsState.editingMilestoneId = null;
+
+    // Remove Highlighting
+    const allRows = document.querySelectorAll('#li_summaryTableBody tr');
+    allRows.forEach(r => r.classList.remove('editing-highlight'));
 
     // Reset buttons
     const saveBtn = document.getElementById('mainSaveBtn');
@@ -415,8 +522,9 @@ function addMilestoneToSelection() {
     if (msQty <= 0) return alert('Milestone Qty must be greater than 0');
     if (msPrice <= 0) return alert('Milestone Unit Price must be greater than 0');
     if (msPct <= 0) return alert('Payment Cycle % must be greater than 0');
-    if (!msTerms) return alert('Field Required: Payment Terms (Milestone)');
-    if (!msDocs) return alert('Field Required: Documents Required (Milestone)');
+    // REMOVED: Mandatory checks for Terms and Docs as per user request
+    // if (!msTerms) return alert('Field Required: Payment Terms (Milestone)');
+    // if (!msDocs) return alert('Field Required: Documents Required (Milestone)');
 
     // Check if adding this milestone would exceed line item qty
     const currentTotalQty = lineItemsState.stagedMilestones.reduce((sum, ms) => sum + (parseFloat(ms.quantity) || 0), 0);
@@ -477,6 +585,12 @@ function deleteLineItem(liId, msId) {
     const li = lineItemsState.currentLineItems[liIndex];
 
     if (!msId || li.milestones.length <= 1) {
+        // Validation: Cannot delete the last line item
+        if (lineItemsState.currentLineItems.length <= 1) {
+            alert('A Purchase Order must have at least one line item. You cannot delete the last item.');
+            return;
+        }
+
         // Delete entire line item
         if (!confirm('This will remove the entire line item. Proceed?')) return;
 
@@ -558,9 +672,9 @@ async function saveLineItemToDB(stayOnIdentification = false) {
             const msTerms = document.getElementById('ms_payment_terms').value.trim();
             const msDocs = document.getElementById('ms_documents').value.trim();
 
-            if (msNameInput && msQtyInput > 0 && msPrice > 0 && msPct > 0 && msTerms && msDocs) {
+            if (msNameInput && msQtyInput > 0 && msPrice > 0 && msPct > 0) {
                 const currentMs = {
-                    id: 'temp_ms_' + Date.now(), // Temporary ID for in-memory
+                    id: lineItemsState.editingMilestoneId || ('temp_ms_' + Date.now()), // Preserve ID if editing
                     milestone_name: msNameInput,
                     quantity: msQtyInput,
                     unit_price: msPrice,
@@ -600,6 +714,19 @@ async function saveLineItemToDB(stayOnIdentification = false) {
         // ========== STEP 4: Store in memory (not database) ==========
         // Enforce: Unit price of all milestones must be same as the first one
         if (finalMilestones.length > 0) {
+            // SORTING FIX: Restore original order if we are editing
+            if (lineItemsState.editingItemId) {
+                const originalLi = lineItemsState.currentLineItems.find(i => i.id == lineItemsState.editingItemId);
+                if (originalLi && originalLi.milestones) {
+                    const orderMap = new Map(originalLi.milestones.map((m, i) => [m.id, i]));
+                    finalMilestones.sort((a, b) => {
+                        const idxA = orderMap.has(a.id) ? orderMap.get(a.id) : 999999;
+                        const idxB = orderMap.has(b.id) ? orderMap.get(b.id) : 999999;
+                        return idxA - idxB;
+                    });
+                }
+            }
+
             const masterPrice = parseFloat(finalMilestones[0].unit_price) || 0;
             finalMilestones.forEach(ms => {
                 ms.unit_price = masterPrice;
@@ -1172,12 +1299,19 @@ function populateBillingGrid() {
         console.error("DEBUG: billingGridBody NOT FOUND in DOM");
         return;
     }
-    tbody.innerHTML = '';
+    // REMOVED: tbody.innerHTML = ''; -> We now append only new rows to preserve state
     console.log("DEBUG: lineItemsState.currentLineItems", lineItemsState.currentLineItems);
 
     lineItemsState.currentLineItems.forEach((li, idx) => {
         if (!li.milestones) return;
         li.milestones.forEach((ms, msIdx) => {
+            // Check if row already exists
+            const existingRow = tbody.querySelector(`tr input.bill-row-select[data-li="${li.id}"][data-ms="${ms.id}"]`);
+            if (existingRow) {
+                // Row exists, skip re-rendering to preserve state (e.g. checked boxes)
+                return;
+            }
+
             const tr = document.createElement('tr');
 
             const invVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value).toFixed(2) : '';

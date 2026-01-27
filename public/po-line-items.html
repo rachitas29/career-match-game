@@ -396,7 +396,8 @@
         <div class="action-btns">
             <button class="btn-po btn-edit">EDIT PO LINE ITEM</button>
             <button class="btn-po btn-save-item" onclick="saveLineItem()">SAVE PO LINE ITEM</button>
-            <button class="btn-po btn-save-db" onclick="saveToDB()">SAVE PO to DB</button>
+            <!-- REPLACED: btn-save-db with specific Save Items button -->
+            <button class="btn-po btn-save-db" id="btnSaveItemsToDB" onclick="commitPOToDB()">SAVE ITEMS TO DB</button>
             <button class="btn-po btn-add-billing" onclick="openBillingModal()">ADD BILLING DETAILS FOR LINE
                 ITEM</button>
             <button class="btn-po" onclick="handlePaymentButtonClick()"
@@ -609,6 +610,13 @@
         function renderTable() {
             const tbody = document.getElementById('summaryTableBody');
             tbody.innerHTML = '';
+
+            // Toggle Save Button
+            const saveDbBtn = document.getElementById('btnSaveItemsToDB');
+            if (saveDbBtn) {
+                saveDbBtn.disabled = (currentLineItems.length === 0);
+            }
+
             currentLineItems.forEach((li, idx) => {
                 li.milestones.forEach(ms => {
                     const tr = document.createElement('tr');

@@ -188,15 +188,24 @@ app.post('/api/contacts', (req, res) => {
 
 app.get('/api/contacts', (req, res) => {
     const userId = req.query.user_id;
+    const accountId = req.query.account_id;
+
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
-    const sql = `
+    let sql = `
         SELECT contacts.*, customers.customer_name as account_name 
         FROM contacts 
         LEFT JOIN customers ON contacts.account_id = customers.id
         WHERE contacts.user_id = ?`;
 
-    db.all(sql, [userId], (err, rows) => {
+    const params = [userId];
+
+    if (accountId) {
+        sql += " AND contacts.account_id = ?";
+        params.push(accountId);
+    }
+
+    db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ contacts: rows });
     });
@@ -354,16 +363,16 @@ app.get('/api/interactions', (req, res) => {
 
 // Purchase Orders Routes
 app.post('/api/purchase-orders', (req, res) => {
-    const { user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount } = req.body;
+    const { user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name } = req.body;
 
     if (!po_number || !user_id) {
         return res.status(400).json({ error: 'PO Number and User ID are required' });
     }
 
-    const sql = `INSERT INTO purchase_orders (po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO purchase_orders (po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    const params = [po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount];
+    const params = [po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name];
 
     db.run(sql, params, function (err) {
         if (err) {
@@ -411,13 +420,13 @@ app.get('/api/purchase-orders', (req, res) => {
 
 app.put('/api/purchase-orders/:po_number', (req, res) => {
     const { po_number } = req.params;
-    const { po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, user_id, po_number: new_po_number } = req.body;
+    const { po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, user_id, po_number: new_po_number, contact_id, project_name } = req.body;
 
     const sql = `UPDATE purchase_orders SET 
-        po_number = ?, po_date = ?, po_value = ?, bank_guarantee = ?, bill_to = ?, ship_to = ?, notes = ?, account_id = ?, client_id = ?
+        po_number = ?, po_date = ?, po_value = ?, bank_guarantee = ?, bill_to = ?, ship_to = ?, notes = ?, account_id = ?, client_id = ?, contact_id = ?, project_name = ?
         WHERE po_number = ? AND user_id = ?`;
 
-    const params = [new_po_number || po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, po_number, user_id];
+    const params = [new_po_number || po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, contact_id, project_name, po_number, user_id];
 
     db.run(sql, params, function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -573,12 +582,12 @@ app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
                        'payment_received', m.payment_received,
                        'pending_amount', m.pending_amount,
                        'remarks', m.remarks,
-                       'status', COALESCE(m.status, 'Pending'),
                        'credit_period', COALESCE(m.credit_period, 0)
                    )
-               ) FROM po_milestones m WHERE m.line_item_id = li.id) as milestones
+               ) FROM po_milestones m WHERE m.line_item_id = li.id ORDER BY m.created_at ASC) as milestones
         FROM po_line_items li
         WHERE li.po_number = ?
+        ORDER BY li.created_at ASC, li.id ASC
     `;
 
     db.all(sql, [po_number], (err, rows) => {

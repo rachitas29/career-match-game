@@ -306,3 +306,9 @@
     border: 1px solid #fef3c7;
     margin: 0.25rem 0;
 }
+
+.editing-highlight {
+    background-color: #fff9c4 !important;
+    /* Light Yellow */
+    transition: background-color 0.3s ease;
+}

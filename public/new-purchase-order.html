@@ -477,7 +477,7 @@
                                 Select Customer
                             </div>
                             <div class="form-grid">
-                                <div class="col-span-8">
+                                <div class="col-span-5">
                                     <label for="account_id">Registered Entity <span
                                             style="color: var(--danger)">*</span></label>
                                     <select id="account_id" required>
@@ -486,6 +486,12 @@
                                     </select>
                                 </div>
                                 <div class="col-span-4">
+                                    <label for="contact_id">Contact Person</label>
+                                    <select id="contact_id">
+                                        <option value="" disabled selected>Select Entity First</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-3">
                                     <label>Client ID Reference</label>
                                     <div id="clientIdRef"
                                         style="background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: var(--primary-dark); font-weight: 600; font-family: monospace;">
@@ -501,6 +507,10 @@
                                 PO Core Details
                             </div>
                             <div class="form-grid">
+                                <div class="col-span-12">
+                                    <label for="project_name">Project Name</label>
+                                    <input type="text" id="project_name" placeholder="e.g. Q1 Marketing Campaign">
+                                </div>
                                 <div class="col-span-4">
                                     <label for="po_number">PO Number <span style="color: var(--danger)">*</span> <span
                                             id="po_validation_msg"
@@ -671,12 +681,19 @@
                                 </div>
                                 <div class="li-field">
                                     <label>Cycle %</label>
-                                    <select id="ms_payment_cycle" onchange="calculateMsCycleValue()">
-                                        <option value="10">10%</option>
-                                        <option value="20">20%</option>
-                                        <option value="30">30%</option>
-                                        <option value="100" selected>100%</option>
-                                    </select>
+                                    <input type="number" id="ms_payment_cycle" list="cycle_percentages" oninput="calculateMsCycleValue()" placeholder="100">
+                                    <datalist id="cycle_percentages">
+                                        <option value="10">
+                                        <option value="20">
+                                        <option value="30">
+                                        <option value="40">
+                                        <option value="50">
+                                        <option value="60">
+                                        <option value="70">
+                                        <option value="80">
+                                        <option value="90">
+                                        <option value="100">
+                                    </datalist>
                                 </div>
                                 <div class="li-field">
                                     <label>Milestone Qty</label>
@@ -703,7 +720,7 @@
                                     <textarea id="ms_documents" placeholder="Proof..."></textarea>
                                 </div>
                                 <div class="li-field half" style="grid-column: span 1.5;">
-                                    <label>Specific Terms</label>
+                                    <label>Payment Terms</label>
                                     <textarea id="ms_payment_terms" placeholder="Riders..."></textarea>
                                 </div>
                             </div>
@@ -736,6 +753,7 @@
                 <div class="li-modal-footer">
                     <button onclick="editLineItemFromGrid()" class="btn-pro btn-blue">Edit Item</button>
                     <button id="mainSaveBtn" onclick="saveLineItemToDB()" class="btn-pro btn-green">Save Line Item</button>
+                    <button id="btnSaveItemsToDB" onclick="commitPOToDB()" class="btn-pro btn-blue" style="background: #0d47a1;">Save Items to DB</button>
                     <button id="addBillingBtn" onclick="openBillingModal();" class="btn-pro btn-orange" disabled title="Save PO to database first">Add Billing</button>
                 </div>
             </div>
@@ -1169,6 +1187,7 @@
             const result = await api.get('/customers');
             const select = document.getElementById('account_id');
             const clientRef = document.getElementById('clientIdRef');
+            const contactSelect = document.getElementById('contact_id');
 
             if (result.customers) {
                 result.customers.forEach(acc => {
@@ -1184,10 +1203,36 @@
                 });
             }
 
+            const fetchContacts = async (accId) => {
+                contactSelect.innerHTML = '<option value="" disabled selected>Select Contact...</option>';
+                if (!accId) return;
+                try {
+                    const res = await api.get(`/contacts?account_id=${accId}`);
+                    if (res.contacts && res.contacts.length > 0) {
+                        res.contacts.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.id;
+                            opt.textContent = `${c.name} (${c.role || 'No Role'})`;
+                            contactSelect.appendChild(opt);
+                        });
+                    } else {
+                        const opt = document.createElement('option');
+                        opt.disabled = true;
+                        opt.textContent = 'No contacts found';
+                        contactSelect.appendChild(opt);
+                    }
+                } catch (err) { console.error(err); }
+            };
+
             select.addEventListener('change', (e) => {
                 const selectedOpt = e.target.selectedOptions[0];
                 clientRef.textContent = selectedOpt.dataset.clientId || 'N/A';
+                fetchContacts(e.target.value);
             });
+
+            if (select.value) {
+                fetchContacts(select.value);
+            }
         }
 
         let createdPoNumber = null;
@@ -1206,6 +1251,8 @@
             return {
                 user_id: user.id,
                 account_id: select.value,
+                contact_id: document.getElementById('contact_id').value || null,
+                project_name: document.getElementById('project_name').value || '',
                 client_id: selectedOpt.dataset.clientId || '',
                 po_number: document.getElementById('po_number').value,
                 po_date: document.getElementById('po_date').value,
