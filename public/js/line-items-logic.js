@@ -9,7 +9,9 @@ let lineItemsState = {
     editingItemId: null,
     editingMilestoneId: null,
     stagedMilestones: [],
-    deletedLineItemIds: [] // Track IDs to delete from DB on final save
+    deletedLineItemIds: [], // Track IDs to delete from DB on final save
+    hasUnsavedChanges: false, // Tracks if anything in the grid has changed since last save
+    saveButtonUnlocked: false // Locked by default, unlocked by Close attempt
 };
 
 // Expose line items for saving via main form
@@ -22,6 +24,8 @@ window.clearLineItemsAfterSave = function () {
     lineItemsState.currentLineItems = [];
     lineItemsState.stagedMilestones = [];
     lineItemsState.deletedLineItemIds = [];
+    lineItemsState.hasUnsavedChanges = false;
+    lineItemsState.saveButtonUnlocked = false;
 };
 
 // Expose deleted line items for final DB sync
@@ -61,6 +65,8 @@ async function openLineItemsModal(poNum, forceLoadFromDB = false) {
         lineItemsState.currentLineItems = [];
         lineItemsState.stagedMilestones = [];
         lineItemsState.deletedLineItemIds = [];
+        lineItemsState.hasUnsavedChanges = false;
+        lineItemsState.saveButtonUnlocked = false;
     }
 
     resetEntireForm(); // Clear the input panels
@@ -98,6 +104,18 @@ function closeLineItemsModal() {
     // A simple close that only checks for unsaved form data, NOT grid validation
     const unsavedDesc = document.getElementById('li_description').value.trim();
     const unsavedMs = document.getElementById('ms_name').value.trim();
+
+    // Check for unsaved changes in grid
+    console.log('[DEBUG] closeLineItemsModal check. hasUnsavedChanges:', lineItemsState.hasUnsavedChanges);
+    if (lineItemsState.hasUnsavedChanges) {
+        // Unlock the save button so user can click it now
+        lineItemsState.saveButtonUnlocked = true;
+        renderLineItemsTable(); // Refresh UI to enable the button
+
+        if (!confirm("You have unsaved changes in the grid.\n\nThe 'Save Items to DB' button is now ENABLED.\n\nPlease save your data to the database either from the line item form (Save Items to DB) or by updating the PO.\n\nClose anyway?")) {
+            return;
+        }
+    }
 
     if (unsavedDesc || unsavedMs) {
         if (!confirm("There is unsaved data in the entry panels. Close and discard current entry?")) {
@@ -215,6 +233,9 @@ async function commitPOToDB() {
 
         alert(`Sync Complete!\nSaved/Updated: ${successCount}\nFailed: ${failCount}`);
 
+        // Reset dirty flag
+        lineItemsState.hasUnsavedChanges = false;
+
         // Reload to ensure all IDs are synced
         window.location.reload();
 
@@ -273,6 +294,10 @@ async function loadLineItemData() {
         }
 
         lineItemsState.currentLineItems = lineItemsRes.line_items || [];
+        // Reset dirty flag after fresh load
+        lineItemsState.hasUnsavedChanges = false;
+        lineItemsState.saveButtonUnlocked = false;
+
         console.log(`[LineItems] Success: Received ${lineItemsState.currentLineItems.length} items`);
         renderLineItemsTable();
 
@@ -313,8 +338,8 @@ function renderLineItemsTable() {
     // Toggle Save Button
     const saveDbBtn = document.getElementById('btnSaveItemsToDB');
     if (saveDbBtn) {
-        // Strictly enable only if there are items in the grid
-        saveDbBtn.disabled = (lineItemsState.currentLineItems.length === 0);
+        // Delayed Logic: Enable ONLY if Dirty AND Unlocked (by close attempt)
+        saveDbBtn.disabled = !(lineItemsState.hasUnsavedChanges && lineItemsState.saveButtonUnlocked);
     }
 
     lineItemsState.currentLineItems.forEach((li, idx) => {
@@ -610,6 +635,10 @@ function deleteLineItem(liId, msId) {
     }
 
     // Re-render the table
+    // Re-render the table
+    console.log('[DEBUG] deleteLineItem called. Setting hasUnsavedChanges = true');
+    lineItemsState.hasUnsavedChanges = true;
+    lineItemsState.saveButtonUnlocked = false; // Re-lock button on new changes
     renderLineItemsTable();
     updateMainPOValueFromMemory();
 }
@@ -792,6 +821,8 @@ async function saveLineItemToDB(stayOnIdentification = false) {
         if (saveBtn) saveBtn.disabled = false;
 
         // Render the updated table
+        lineItemsState.hasUnsavedChanges = true;
+        lineItemsState.saveButtonUnlocked = false; // Re-lock button on new changes
         renderLineItemsTable();
         updateMainPOValueFromMemory();
 
