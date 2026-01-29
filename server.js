@@ -457,9 +457,29 @@ app.get('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
 
 app.delete('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
     const { po_number } = req.params;
+    console.log('[DELETE BG] Starting delete for PO:', po_number);
+
     db.run('DELETE FROM bg_fd_details WHERE po_number = ?', [po_number], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'BG/FD details deleted successfully' });
+        if (err) {
+            console.error('[DELETE BG] Error deleting from bg_fd_details:', err);
+            return res.status(500).json({ error: err.message });
+        }
+
+        console.log('[DELETE BG] Successfully deleted', this.changes, 'rows from bg_fd_details');
+
+        // Also update the purchase_orders table to set bank_guarantee = 'No'
+        console.log('[DELETE BG] Now updating purchase_orders table...');
+        db.run('UPDATE purchase_orders SET bank_guarantee = ? WHERE po_number = ?',
+            ['No', po_number],
+            function (updateErr) {
+                if (updateErr) {
+                    console.error('[DELETE BG] ERROR updating PO bank_guarantee:', updateErr);
+                } else {
+                    console.log('[DELETE BG] Successfully updated purchase_orders, rows affected:', this.changes);
+                }
+                res.json({ message: 'BG/FD details deleted successfully' });
+            }
+        );
     });
 });
 
@@ -492,7 +512,18 @@ app.post('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
 
             db.run(sql, params, function (err) {
                 if (err) return res.status(500).json({ error: err.message });
-                res.json({ message: 'BG/FD details saved', id: this.lastID });
+
+                // Also update the purchase_orders table to set bank_guarantee = 'Yes'
+                db.run('UPDATE purchase_orders SET bank_guarantee = ? WHERE po_number = ?',
+                    ['Yes', po_number],
+                    (updateErr) => {
+                        if (updateErr) {
+                            console.error('Error updating PO bank_guarantee:', updateErr);
+                            // Don't fail the request, just log the error
+                        }
+                        res.json({ message: 'BG/FD details saved', id: this.lastID });
+                    }
+                );
             });
         });
     });

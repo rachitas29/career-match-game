@@ -602,6 +602,10 @@
     <script src="js/api.js"></script>
     <script src="js/line-items-logic.js"></script>
     <script>
+        // VERSION CHECK - Confirms page is not cached
+        console.log('%c✅ PAGE LOADED - Version: 2026-01-29-15:30', 'color: green; font-weight: bold; font-size: 14px');
+        console.log('%cIf timestamp above is old, clear browser cache: Ctrl+Shift+Delete', 'color: orange');
+
         const lineItemModalHTML = `
         <div id="lineItemsModal" class="li-modal-overlay">
             <div class="li-modal-card">
@@ -825,6 +829,51 @@
             }
         }
 
+        let bgFdData = null;
+
+        const parseDate = (str) => {
+            if (!str) return null;
+            str = str.trim();
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 3) {
+                    const [d, m, y] = parts.map(Number);
+                    return new Date(y, m - 1, d);
+                }
+            }
+            if (str.includes('-')) {
+                const parts = str.split('-');
+                if (parts.length === 3) {
+                    if (parts[0].length === 4) { // YYYY-MM-DD
+                        const [y, m, d] = parts.map(Number);
+                        return new Date(y, m - 1, d);
+                    } else { // DD-MM-YYYY
+                        const [d, m, y] = parts.map(Number);
+                        return new Date(y, m - 1, d);
+                    }
+                }
+            }
+            const d = new Date(str);
+            return isNaN(d.getTime()) ? null : d;
+        };
+
+        const formatDate = (date) => {
+            if (!date || isNaN(date.getTime())) return '';
+            const yy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${dd}/${mm}/${yy}`;
+        };
+
+        const toISO = (str) => {
+            const d = parseDate(str);
+            if (!d) return '';
+            const yy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yy}-${mm}-${dd}`;
+        };
+
         // Calculations Logic for BG/FD
         window.calculateBgFd = function (skipDateValidation = false) {
             try {
@@ -848,6 +897,10 @@
                 const fdMaturityDateStr = getEl('m_fd_maturity_date')?.value || '';
                 const fdStatusEl = getEl('m_fd_status');
                 const bgNum = getEl('m_bg_number')?.value.trim() || '';
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                let bgEndDateObj = null;
 
                 const obEl = getEl('m_opening_balance');
                 const ob = parseFloat(obEl ? obEl.value : 0) || 0;
@@ -950,31 +1003,23 @@
                 if (getEl('m_fd_margin')) getEl('m_fd_margin').value = fdMargin.toFixed(2);
 
                 if (startDateStr) {
-                    const [y, m, d] = startDateStr.split('-').map(Number);
-                    const startDate = new Date(y, m - 1, d);
+                    const startDate = parseDate(startDateStr);
+                    if (startDate) {
+                        const endDate = new Date(startDate);
+                        endDate.setFullYear(endDate.getFullYear() + tenureYy);
+                        endDate.setMonth(endDate.getMonth() + tenureMm);
+                        endDate.setDate(endDate.getDate() + tenureDd);
 
-                    const endDate = new Date(startDate);
-                    endDate.setFullYear(endDate.getFullYear() + tenureYy);
-                    endDate.setMonth(endDate.getMonth() + tenureMm);
-                    endDate.setDate(endDate.getDate() + tenureDd);
+                        const formattedEndDate = formatDate(endDate);
+                        if (getEl('m_bg_end_date')) getEl('m_bg_end_date').value = formattedEndDate;
 
-                    const formatYMD = (date) => {
-                        if (!date || isNaN(date.getTime())) return '';
-                        const yy = date.getFullYear();
-                        const mm = String(date.getMonth() + 1).padStart(2, '0');
-                        const dd = String(date.getDate()).padStart(2, '0');
-                        return `${dd}/${mm}/${yy}`;
-                    };
-
-                    const formattedEndDate = formatYMD(endDate);
-                    if (getEl('m_bg_end_date')) getEl('m_bg_end_date').value = formattedEndDate;
-
-                    if (isClaimRequired) {
-                        const claimDate = new Date(endDate);
-                        claimDate.setFullYear(claimDate.getFullYear() + claimYy);
-                        claimDate.setMonth(claimDate.getMonth() + claimMm);
-                        claimDate.setDate(claimDate.getDate() + claimDd);
-                        if (getEl('m_bg_claim_date')) getEl('m_bg_claim_date').value = formatYMD(claimDate);
+                        if (isClaimRequired) {
+                            const claimDate = new Date(endDate);
+                            claimDate.setFullYear(claimDate.getFullYear() + claimYy);
+                            claimDate.setMonth(claimDate.getMonth() + claimMm);
+                            claimDate.setDate(claimDate.getDate() + claimDd);
+                            if (getEl('m_bg_claim_date')) getEl('m_bg_claim_date').value = formatDate(claimDate);
+                        }
                     }
                 }
 
@@ -1006,73 +1051,41 @@
                 // 2. BG Expiry & FD Status Linkage
                 // [RESTORED] with Manual Override Protection
                 if (!skipDateValidation) {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-
                     // BG Expiry Check
                     const endDateVal = getEl('m_bg_end_date')?.value; // DD/MM/YYYY
-                    let bgEndDateObj = null;
+                    bgEndDateObj = parseDate(endDateVal);
 
-                    if (endDateVal && bgNum) {
-                        const parts = endDateVal.split('/');
-                        if (parts.length === 3) {
-                            const [d, m, y] = parts.map(Number);
-                            bgEndDateObj = new Date(y, m - 1, d);
-                            if (bgEndDateObj < today) {
-                                if (bgStatusEl) bgStatusEl.value = 'Expired';
-                                if (fdStatusEl) fdStatusEl.value = 'Released'; // Expired BG -> Released FD
-                            } else if (bgStatusEl && bgStatusEl.value === 'Expired') {
-                                // [NEW] Auto-Recovery: If Date is Future & Status was Expired -> Set Active
-                                bgStatusEl.value = 'Active';
-                            }
+                    if (bgEndDateObj && bgNum) {
+                        if (bgEndDateObj < today) {
+                            if (bgStatusEl) bgStatusEl.value = 'Expired';
+                            if (fdStatusEl) fdStatusEl.value = 'Released'; // Expired BG -> Released FD
+                        } else if (bgStatusEl && bgStatusEl.value === 'Expired') {
+                            // [NEW] Auto-Recovery: If Date is Future & Status was Expired -> Set Active
+                            bgStatusEl.value = 'Active';
                         }
                     }
+                }
 
-                    // FD Maturity Check (Liquidated Logic)
-                    const fdMatVal = getEl('m_fd_maturity_date')?.value; // YYYY-MM-DD
-                    if (fdMatVal && fdStatusEl && bgNum) {
-                        const fdDate = new Date(fdMatVal);
+                // FD Status Logic (Standardized)
+                const fdMatVal = getEl('m_fd_maturity_date')?.value;
+                const fdStartVal = getEl('m_fd_start_date')?.value;
+
+                if (!fdMatVal && !fdStartVal) {
+                    if (fdStatusEl && fdStatusEl.value !== '') fdStatusEl.value = '';
+                } else if (fdMatVal && fdStatusEl) {
+                    const fdDate = parseDate(fdMatVal);
+                    if (fdDate) {
                         if (fdDate <= today) {
                             if (fdStatusEl.value === 'Active') fdStatusEl.value = 'Liquidated';
+                        } else {
+                            if (fdStatusEl.value === 'Liquidated') fdStatusEl.value = 'Active';
                         }
                     }
-
-                    // [NEW] Auto-Restore FD to Active if BG is Active & Valid
-                    // But ONLY if FD Maturity Date is NOT in the past (e.g. Future or Blank)
-                    if (bgEndDateObj && bgEndDateObj > today && bgStatusEl && bgStatusEl.value === 'Active') {
-                        let fdIsPast = false;
-                        if (fdMatVal) {
-                            const fdDate = new Date(fdMatVal);
-                            if (!isNaN(fdDate.getTime()) && fdDate <= today) {
-                                fdIsPast = true;
-                            }
-                        }
-
-                        if (!fdIsPast) {
-                            if (fdStatusEl && fdStatusEl.value !== 'Active') {
-                                fdStatusEl.value = 'Active';
-                            }
-                        }
-                    }
-                }
-
-                // 4. BG Status 'Returned' -> FD Status 'Released'
-                // [RESTORED]
-                if (bgStatusEl && bgStatusEl.value === 'Returned') {
-                    if (fdStatusEl) fdStatusEl.value = 'Released';
-                }
-
-                // 5. FD Side Fields Disable Logic if Liquidated
-                // [RESTORED]
-                if (fdStatusEl && fdStatusEl.value === 'Liquidated' && bgNum) {
-                    fdInputs.forEach(el => {
-                        if (el.id !== 'm_fd_status') el.disabled = true;
-                    });
                 }
             } catch (err) {
                 console.error("Error in calculateBgFd:", err);
             }
-        }
+        };
 
         // Modal State Management
         function openBgModal() {
@@ -1085,12 +1098,12 @@
                     const d = JSON.parse(saved);
                     if (document.getElementById('m_opening_balance')) document.getElementById('m_opening_balance').value = d.opening_balance_bg_limit || '';
                     if (document.getElementById('m_bg_number')) document.getElementById('m_bg_number').value = d.bg_number || '';
-                    if (document.getElementById('m_bg_start_date')) document.getElementById('m_bg_start_date').value = d.bg_start_date || '';
+                    if (document.getElementById('m_bg_start_date')) document.getElementById('m_bg_start_date').value = toISO(d.bg_start_date) || '';
                     if (document.getElementById('m_bg_tenure_dd')) document.getElementById('m_bg_tenure_dd').value = d.bg_tenure_dd || 0;
                     if (document.getElementById('m_bg_tenure_mm')) document.getElementById('m_bg_tenure_mm').value = d.bg_tenure_mm || 0;
                     if (document.getElementById('m_bg_tenure_yy')) document.getElementById('m_bg_tenure_yy').value = d.bg_tenure_yy || 0;
                     if (document.getElementById('m_bg_percentage')) document.getElementById('m_bg_percentage').value = d.bg_percentage || 10;
-                    if (document.getElementById('m_bg_status')) document.getElementById('m_bg_status').value = d.bg_status || 'Active';
+                    if (document.getElementById('m_bg_status')) document.getElementById('m_bg_status').value = d.bg_status || 'Draft';
 
                     if (d.bg_claim_period_required === 'Yes') {
                         const r = document.querySelector('input[name="m_claim_required"][value="Yes"]');
@@ -1106,10 +1119,10 @@
                     if (document.getElementById('m_fd_percentage')) document.getElementById('m_fd_percentage').value = d.fd_percentage_on_bg || 10;
                     if (document.getElementById('m_fd_number')) document.getElementById('m_fd_number').value = d.fd_number || '';
                     if (document.getElementById('m_roi')) document.getElementById('m_roi').value = d.rate_of_interest || 6.5;
-                    if (document.getElementById('m_fd_start_date')) document.getElementById('m_fd_start_date').value = d.fd_start_date || '';
-                    if (document.getElementById('m_fd_maturity_date')) document.getElementById('m_fd_maturity_date').value = d.fd_maturity_date || '';
+                    if (document.getElementById('m_fd_start_date')) document.getElementById('m_fd_start_date').value = toISO(d.fd_start_date) || '';
+                    if (document.getElementById('m_fd_maturity_date')) document.getElementById('m_fd_maturity_date').value = toISO(d.fd_maturity_date) || '';
                     if (document.getElementById('m_fd_maturity_amount')) document.getElementById('m_fd_maturity_amount').value = d.fd_maturity_amount || '';
-                    if (document.getElementById('m_fd_status')) document.getElementById('m_fd_status').value = d.fd_status || 'Active';
+                    if (document.getElementById('m_fd_status')) document.getElementById('m_fd_status').value = d.fd_status || '';
                 }
             } catch (e) { console.error("Error populating BG modal", e); }
 
@@ -1121,7 +1134,8 @@
         }
 
         async function saveBgFdLocal() {
-            // Re-trigger calc to ensure latest status logic (e.g. Returned -> Released) is applied
+            console.log('=== SAVE BG/FD STARTED (v15:10) ===');
+            // 1. Force calculations first
             calculateBgFd(true);
 
             // Check mandatory
@@ -1146,18 +1160,11 @@
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                const getBgDate = (str) => {
-                    if (!str) return null;
-                    if (str.includes('/')) {
-                        const [d, m, y] = str.split('/').map(Number);
-                        return new Date(y, m - 1, d);
-                    }
-                    return new Date(str);
-                };
-
                 const bgStatus = document.getElementById('m_bg_status').value;
                 const bgEndDateStr = document.getElementById('m_bg_end_date').value;
-                const bgEndDate = getBgDate(bgEndDateStr);
+                const bgEndDate = parseDate(bgEndDateStr);
+
+                console.log('2.2. BG Status:', bgStatus, 'BG End Date:', bgEndDateStr, 'Parsed Date:', bgEndDate);
 
                 if (bgStatus === 'Active' && bgEndDate && bgEndDate < today) {
                     if (confirm("BG Status is 'Active' but End Date is in the past.\n\nClick OK to automatically set Status to 'Expired' and save.\nClick Cancel to return and adjust the Date.")) {
@@ -1169,32 +1176,40 @@
                     }
                 }
 
-                const fdStatus = document.getElementById('m_fd_status').value;
-                const fdMatDateStr = document.getElementById('m_fd_maturity_date').value; // YYYY-MM-DD
-                const fdMatDate = fdMatDateStr ? new Date(fdMatDateStr) : null;
+                // Corrected FD Status Logic:
+                const fdMatDateStrRaw = document.getElementById('m_fd_maturity_date').value;
+                const fdMatDateObj = parseDate(fdMatDateStrRaw);
+                const fdStartDateStrRaw = document.getElementById('m_fd_start_date').value;
+                const fdStatusEl = document.getElementById('m_fd_status');
+                const currentFdStatus = fdStatusEl.value;
 
-                if (fdStatus === 'Active' && fdMatDate) {
-                    if (fdMatDate <= today) {
-                        if (!confirm("FD Maturity Date is today or in the past, but Status is 'Active'.\n\nUsually, past maturity implies 'Liquidated' or 'Released'.\n\nClick OK to keep 'Active'. Click Cancel to abort and change status.")) {
-                            return;
+                if (!fdStartDateStrRaw && !fdMatDateStrRaw) {
+                    if (currentFdStatus !== '') {
+                        console.log('2.6. FD dates are empty - resetting status');
+                        fdStatusEl.value = '';
+                    }
+                } else if (fdMatDateObj) {
+                    if (fdMatDateObj <= today) {
+                        if (currentFdStatus === 'Active') {
+                            console.log('2.7. FD Maturity reached - setting to Liquidated');
+                            fdStatusEl.value = 'Liquidated';
+                            alert("FD Maturity Date reached. Status has been updated to 'Liquidated'.");
+                        }
+                    } else {
+                        if (currentFdStatus === 'Liquidated') {
+                            console.log('2.8. FD is in future - setting to Active');
+                            fdStatusEl.value = 'Active';
+                            alert("FD is Active (Future Maturity Date). Status updated to 'Active'.");
                         }
                     }
                 }
 
-                // Helper to convert DD/MM/YYYY back to YYYY-MM-DD for consistency
-                const toISO = (dateStr) => {
-                    if (!dateStr) return '';
-                    if (dateStr.includes('/')) {
-                        const parts = dateStr.split('/');
-                        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD/MM/YYYY -> YYYY-MM-DD
-                    }
-                    return dateStr;
-                };
+                console.log('3. Business validation passed');
 
                 const bgFdData = {
                     opening_balance_bg_limit: document.getElementById('m_opening_balance').value,
                     bg_number: document.getElementById('m_bg_number').value,
-                    bg_start_date: document.getElementById('m_bg_start_date').value,
+                    bg_start_date: toISO(document.getElementById('m_bg_start_date').value),
                     bg_tenure_dd: document.getElementById('m_bg_tenure_dd').value,
                     bg_tenure_mm: document.getElementById('m_bg_tenure_mm').value,
                     bg_tenure_yy: document.getElementById('m_bg_tenure_yy').value,
@@ -1210,9 +1225,9 @@
                     bg_limit_remaining: document.getElementById('m_bg_limit_rem').value,
                     fd_percentage_on_bg: document.getElementById('m_fd_percentage').value,
                     fd_number: document.getElementById('m_fd_number').value,
-                    fd_start_date: document.getElementById('m_fd_start_date').value,
+                    fd_start_date: toISO(document.getElementById('m_fd_start_date').value),
                     fd_margin_actual: document.getElementById('m_fd_margin').value,
-                    fd_maturity_date: document.getElementById('m_fd_maturity_date').value,
+                    fd_maturity_date: toISO(document.getElementById('m_fd_maturity_date').value),
                     fd_maturity_amount: document.getElementById('m_fd_maturity_amount').value,
                     rate_of_interest: document.getElementById('m_roi').value,
                     fd_status: document.getElementById('m_fd_status').value
@@ -1238,21 +1253,19 @@
         }
 
         async function deleteBgFdLocal() {
-            // User Requirement: Prompt only one total msg (the success alert). 
-            // Confirmation prompt removed as requested.
+            console.log('=== DELETE FUNCTION STARTED ===');
 
             try {
                 if (typeof createdPoNumber !== 'undefined' && createdPoNumber) {
-                    // PO already in DB, delete from DB too
                     await api.delete(`/purchase-orders/${encodeURIComponent(createdPoNumber)}/bg-fd`);
                 }
             } catch (e) {
-                console.warn("Could not delete from DB (may not exist):", e);
+                console.warn("Could not delete from DB:", e);
             }
 
             localStorage.removeItem('pending_bg_details');
 
-            // 1. Deep Reset fields (Excludes PO Value)
+            // 1. Reset all fields to initial load state
             const ids = [
                 'm_opening_balance', 'm_bg_number', 'm_bg_start_date', 'm_bg_end_date', 'm_bg_value', 'm_bg_limit_rem',
                 'm_bg_tenure_dd', 'm_bg_tenure_mm', 'm_bg_tenure_yy', 'm_bg_percentage',
@@ -1262,9 +1275,11 @@
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    if (id.includes('tenure') || id.includes('claim') || id.includes('percentage') || id === 'm_roi') {
-                        el.value = 0;
-                    } else if (id === 'm_opening_balance') {
+                    if (id === 'm_bg_percentage' || id === 'm_fd_percentage') {
+                        el.value = 10;
+                    } else if (id === 'm_roi') {
+                        el.value = 6.5;
+                    } else if (id.includes('tenure') || id.includes('claim')) {
                         el.value = 0;
                     } else {
                         el.value = '';
@@ -1272,30 +1287,29 @@
                 }
             });
 
-            // 2. Reset radio inside modal
+            // 2. Reset radios and dropdowns
             const rNoModal = document.querySelector('input[name="m_claim_required"][value="No"]');
             if (rNoModal) rNoModal.checked = true;
-
-            // 3. Reset Dropdowns
             if (document.getElementById('m_bg_status')) document.getElementById('m_bg_status').value = 'Draft';
-            if (document.getElementById('m_fd_status')) document.getElementById('m_fd_status').value = 'Active';
+            if (document.getElementById('m_fd_status')) document.getElementById('m_fd_status').value = '';
 
-            const indicator = document.getElementById('bgStatusIndicator');
-            if (indicator) indicator.style.display = 'none';
-
-            // 4. Sync Main PO Form: Auto-select "No" for Bank Guarantee 
-            const bgNoRadio = document.querySelector('input[name="bank_guarantee"][value="No"]');
-            if (bgNoRadio) {
-                bgNoRadio.checked = true;
+            // 3. Sync Main PO Page Radio to "No"
+            const bgNoRadioMain = document.querySelector('input[name="bank_guarantee"][value="No"]');
+            if (bgNoRadioMain) {
+                bgNoRadioMain.checked = true;
                 if (typeof toggleBgBtn === 'function') toggleBgBtn();
             }
 
-            // 5. Re-trigger calc to apply disabled states
+            // 4. Update Indicator UI
+            const indicator = document.getElementById('bgStatusIndicator');
+            if (indicator) indicator.style.display = 'none';
+
+            // 5. Force recalculation to apply disabled states
             calculateBgFd();
 
-            // 6. Close Modal & Success Message
+            // 6. Close and Notify
             closeBgModal();
-            alert("All BG records have been deleted.");
+            alert("All BG & FD records deleted and reset.");
         }
 
         async function initForm() {
@@ -1707,7 +1721,7 @@
                         </div>
                         <div class="field-group">
                             <label>Start Date</label>
-                            <input type="date" id="m_bg_start_date" onchange="calculateBgFd()">
+                            <input type="date" id="m_bg_start_date" oninput="calculateBgFd()">
                         </div>
                         <div class="field-group">
                             <label>Tenure (DD-MM-YY)</label>
@@ -1770,7 +1784,8 @@
                         <div class="field-group">
                             <label>FD Status</label>
                             <select id="m_fd_status" onchange="calculateBgFd(true)">
-                                <option selected>Active</option>
+                                <option value="" selected>Select</option>
+                                <option>Active</option>
                                 <option>Liquidated</option>
                                 <option>Released</option>
                             </select>
@@ -1798,7 +1813,7 @@
                         </div>
                         <div class="field-group">
                             <label>Maturity Date</label>
-                            <input type="date" id="m_fd_maturity_date" onchange="calculateBgFd()">
+                            <input type="date" id="m_fd_maturity_date" oninput="calculateBgFd()">
                         </div>
                         <div class="field-group">
                             <label>Maturity Amt</label>
