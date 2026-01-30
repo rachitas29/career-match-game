@@ -966,11 +966,11 @@ const billingModalHTML = `
                         </div>
                         <div class="li-field">
                             <label>Taxable Val (A)</label>
-                            <input type="number" id="bill_taxable_val" placeholder="0.00" oninput="syncFormToGrid()">
+                            <input type="number" id="bill_taxable_val" placeholder="0.00">
                         </div>
                          <div class="li-field">
                             <label>GST @18% (B)</label>
-                            <input type="number" id="bill_gst_val" placeholder="0.00" oninput="syncFormToGrid()">
+                            <input type="number" id="bill_gst_val" placeholder="0.00">
                         </div>
                         <div class="li-field">
                             <label>Total (C=A+B)</label>
@@ -995,6 +995,7 @@ const billingModalHTML = `
                                 <option value="Overdue">Overdue</option>
                                 <option value="Hold">Hold</option>
                                 <option value="Create">Create</option>
+                                <option value="Cancel">Cancel</option>
                             </select>
                         </div>
                         <div class="li-field">
@@ -1015,7 +1016,7 @@ const billingModalHTML = `
                     <table class="li-pro-table">
                         <thead>
                             <tr>
-                                <th style="width: 30px;"><input type="checkbox" onchange="toggleAllBillingRows(this)"></th>
+                                <th style="width: 30px;"><input type="checkbox" id="bill_select_all" onchange="toggleAllBillingRows(this)"></th>
                                 <th style="width: 40px;">Line#</th>
                                 <th>Description</th>
                                 <th style="width: 40px;">Qty</th>
@@ -1226,8 +1227,10 @@ let paymentEditMode = false;
 let currentInvoices = []; // Local cache of invoices for the current PO
 
 function ensureBillingModalExists() {
-    // Prevent destructive recreation if already exists
-    if (document.getElementById('billingModal') && document.getElementById('paymentModal')) {
+    // If it exists, we just need to ensure the listener is there or refreshed
+    if (document.getElementById('billingModal')) {
+        // Refresh listener just in case (though it should persist)
+        document.getElementById('bill_invoice_no')?.addEventListener('input', lookupInvoiceDetails);
         return;
     }
 
@@ -1245,8 +1248,81 @@ function ensureBillingModalExists() {
     // Add specific listeners
     document.getElementById('bill_invoice_date')?.addEventListener('change', updateDueDate);
     document.getElementById('bill_credit_period')?.addEventListener('input', updateDueDate);
+    document.getElementById('bill_invoice_no')?.addEventListener('input', lookupInvoiceDetails);
 
     console.log("Billing & Payment Modals (Re)Created");
+}
+
+function lookupInvoiceDetails() {
+    const invNo = document.getElementById('bill_invoice_no').value.trim();
+    if (!invNo) {
+        resetBillingFormFieldsOnly();
+        return;
+    }
+
+    const match = currentInvoices.find(inv => inv.invoice_no === invNo);
+    if (match) {
+        console.log("DEBUG: Auto-populating form for invoice", invNo);
+        // Populate metadata form fields
+        document.getElementById('bill_invoice_date').value = match.invoice_date || '';
+        document.getElementById('bill_credit_period').value = match.credit_period || 0;
+        document.getElementById('bill_status').value = match.status || 'Pending';
+        document.getElementById('bill_remarks').value = match.remarks || '';
+        document.getElementById('bill_payment_rec').value = match.payment_received || 0;
+
+        // Auto-check all rows in the grid that match this invoice number
+        const rows = document.querySelectorAll('#billingGridBody tr');
+        rows.forEach(tr => {
+            const rowInvNo = tr.querySelector('[data-field="invoice_no"]')?.textContent || '';
+            const checkbox = tr.querySelector('.bill-row-select');
+            if (checkbox && rowInvNo === invNo) {
+                checkbox.checked = true;
+            }
+        });
+
+        // Always recalculate sum based on the (newly updated) selection to prioritize Cycle Values
+        recalculateAggregateValues();
+        updateDueDate();
+    } else {
+        // No match found - clear metadata but keep/recalc aggregate sums for the new invoice
+        resetBillingFormFieldsOnly();
+        recalculateAggregateValues();
+    }
+}
+
+// Helper to calculate aggregate taxable values across selected rows
+function recalculateAggregateValues() {
+    const checkboxes = document.querySelectorAll('.bill-row-select:checked');
+    if (checkboxes.length === 0) {
+        resetBillingForm();
+        return;
+    }
+
+    let totalTaxableVal = 0;
+    checkboxes.forEach(cb => {
+        const row = cb.closest('tr');
+        const cycleTd = row.cells[4];
+        // Always prioritize the Milestone Cycle Value as the base for the Taxable Value (A)
+        let rowTaxable = parseFloat(cycleTd?.getAttribute('data-cycle-val')) || 0;
+        totalTaxableVal += rowTaxable;
+    });
+
+    document.getElementById('bill_taxable_val').value = totalTaxableVal.toFixed(2);
+    calcBillTotal();
+    updateDueDate();
+}
+
+// Helper to reset only the user-editable fields without clearing the invoice no itself
+function resetBillingFormFieldsOnly() {
+    document.getElementById('bill_invoice_date').value = '';
+    document.getElementById('bill_taxable_val').value = '';
+    document.getElementById('bill_gst_val').value = '';
+    document.getElementById('bill_total_val').value = '';
+    document.getElementById('bill_credit_period').value = '0';
+    document.getElementById('bill_due_date').value = '';
+    document.getElementById('bill_payment_rec').value = '0';
+    document.getElementById('bill_remarks').value = '';
+    document.getElementById('bill_status').value = 'Pending';
 }
 
 async function openBillingModal() {
@@ -1256,6 +1332,12 @@ async function openBillingModal() {
     if (modal) {
         modal.classList.add('open');
         billingEditMode = false;
+
+        // Reset Selection State
+        const allBoxes = document.querySelectorAll('.bill-row-select');
+        allBoxes.forEach(b => { b.checked = false; });
+        const allSelect = document.getElementById('bill_select_all');
+        if (allSelect) { allSelect.checked = false; allSelect.disabled = false; }
 
         // Copy PO info
         const poNum = lineItemsState.poNumber || document.getElementById('li_display_po_number')?.value;
@@ -1330,31 +1412,31 @@ function populateBillingGrid() {
         console.error("DEBUG: billingGridBody NOT FOUND in DOM");
         return;
     }
-    // REMOVED: tbody.innerHTML = ''; -> We now append only new rows to preserve state
+
+    tbody.innerHTML = ''; // Restore clearing to ensure fresh render with correct states
     console.log("DEBUG: lineItemsState.currentLineItems", lineItemsState.currentLineItems);
 
     lineItemsState.currentLineItems.forEach((li, idx) => {
         if (!li.milestones) return;
         li.milestones.forEach((ms, msIdx) => {
-            // Check if row already exists
-            const existingRow = tbody.querySelector(`tr input.bill-row-select[data-li="${li.id}"][data-ms="${ms.id}"]`);
-            if (existingRow) {
-                // Row exists, skip re-rendering to preserve state (e.g. checked boxes)
-                return;
-            }
-
             const tr = document.createElement('tr');
 
             const invVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value).toFixed(2) : '';
             const taxVal = (ms.taxable_value != null) ? parseFloat(ms.taxable_value).toFixed(2) : '';
             const gstVal = (ms.gst_value != null) ? parseFloat(ms.gst_value).toFixed(2) : '';
 
-            const payRec = (ms.payment_received != null) ? parseFloat(ms.payment_received).toFixed(2) : '0.00';
-            const pendAmt = (ms.pending_amount != null) ? parseFloat(ms.pending_amount).toFixed(2) : '0.00';
+            const payRecVal = (ms.payment_received != null) ? parseFloat(ms.payment_received) : 0;
+            const invTotalVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value) : 0;
+            const pendAmt = (invTotalVal - payRecVal).toFixed(2);
+            const payRec = payRecVal.toFixed(2);
+
+            const isLiTemp = li.id && typeof li.id === 'string' && li.id.startsWith('temp_');
+            const isMsTemp = ms.id && typeof ms.id === 'string' && ms.id.startsWith('temp_');
+            const isTemp = isLiTemp || isMsTemp;
 
             const displayRemarks = `${ms.credit_period || 0} | ${ms.status || 'Pending'} | ${ms.remarks || ''}`;
             tr.innerHTML = `
-                <td><input type="checkbox" class="bill-row-select" data-li="${li.id}" data-ms="${ms.id}" onchange="handleBillingRowChange(this)" ${ms.invoice_no ? 'disabled' : ''}></td>
+                <td><input type="checkbox" class="bill-row-select" data-li="${li.id}" data-ms="${ms.id}" onchange="handleBillingRowChange(this)" ${(ms.invoice_no || isTemp) ? 'disabled' : ''} title="${isTemp ? 'Save items to DB first' : ''}"></td>
                 <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
                 <td>${msIdx === 0 ? (li.description || '') : ''}</td>
                 <td>${ms.quantity || ''}</td>
@@ -1397,22 +1479,8 @@ window.syncFormToGrid = function () {
 
 // DECOUPLED: Updated from Checkbox Selection (Runs Auto-Sum)
 window.autoSumAndSync = function () {
-    const checkboxes = document.querySelectorAll('.bill-row-select:checked');
-
-    if (!billingEditMode) {
-        let totalCycleVal = 0;
-        checkboxes.forEach(cb => {
-            const tr = cb.closest('tr');
-            const cycleValText = tr.cells[4]?.textContent || '0';
-            totalCycleVal += parseFloat(cycleValText) || 0;
-        });
-        const taxField = document.getElementById('bill_taxable_val');
-        if (taxField) taxField.value = totalCycleVal;
-        calcBillTotal(); // Update GST/Total in Form
-    }
-
-    // Then sync form to grid (updates Row Inv Values based on new Form Sum or logic)
-    checkboxes.forEach(cb => mapFormToGridRow(cb));
+    // Use the unified recalculate function to update the form's aggregate totals from selection
+    recalculateAggregateValues();
 }
 
 window.updateDueDate = function () {
@@ -1543,6 +1611,13 @@ window.toggleAllBillingRows = function (selectAll) {
 
 window.handleBillingRowChange = function (checkbox) {
     const tr = checkbox.closest('tr');
+    const checkedBoxes = document.querySelectorAll('.bill-row-select:checked');
+
+    // 0. If no rows are checked, reset the entire form
+    if (checkedBoxes.length === 0) {
+        resetBillingForm();
+        return;
+    }
 
     // Internal Helper for Fallback Parsing
     const parseRemarksFallback = (remSpan) => {
@@ -1550,99 +1625,49 @@ window.handleBillingRowChange = function (checkbox) {
         let credit = parseInt(remSpan?.getAttribute('data-credit-period')) || 0;
         let rawRemarks = remSpan?.getAttribute('data-raw-remarks') || '';
 
-        // Try parsing "CP | ST | REM" format
         if (rawRemarks.includes(' | ')) {
             const parts = rawRemarks.split(' | ');
             if (parts.length >= 2) {
                 credit = parseInt(parts[0]) || 0;
                 status = parts[1].trim();
-                rawRemarks = parts.slice(2).join(' | '); // Strip CP and ST for the form
+                rawRemarks = parts.slice(2).join(' | ');
                 return { status, credit, rawRemarks };
             }
-        }
-
-        // Fallback for old "Status - X" format
-        if ((!status || status === 'Pending') && rawRemarks.includes('Status - ')) {
-            const statusMatch = rawRemarks.match(/Status\s*-\s*([^\s|]+)/i);
-            if (statusMatch) status = statusMatch[1].trim();
-        }
-        if (credit === 0 && rawRemarks.includes('Credit Period - ')) {
-            const creditMatch = rawRemarks.match(/Credit Period\s*-\s*(\d+)/i);
-            if (creditMatch) credit = parseInt(creditMatch[1]);
         }
         return { status, credit, rawRemarks };
     };
 
-    if (billingEditMode && checkbox.checked) {
-        document.querySelectorAll('.bill-row-select').forEach(c => { if (c !== checkbox) c.checked = false; });
-
+    // 1. If checking a row, always populate the form from THAT row's data
+    if (checkbox.checked) {
         const remSpan = tr.querySelector('[data-field="remarks"]');
         const valSpan = tr.querySelector('[data-field="invoice_value"]');
         const cycleTd = tr.cells[4];
 
         const invNo = tr.querySelector('[data-field="invoice_no"]')?.textContent || '';
         const invDate = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
-        let taxable = valSpan?.getAttribute('data-taxable') || '';
-        const gst = valSpan?.getAttribute('data-gst') || '';
-        const total = valSpan?.textContent || '';
         const paymentRec = tr.querySelector('[data-field="payment_received"]')?.textContent || '0';
-
-        // Robust Taxable check: if empty and we have a cycle value, use it as hint
-        if (!taxable || taxable === '0.00') {
-            taxable = cycleTd?.getAttribute('data-cycle-val') || '';
-        }
 
         const { status, credit, rawRemarks } = parseRemarksFallback(remSpan);
 
         document.getElementById('bill_invoice_no').value = invNo;
         document.getElementById('bill_invoice_date').value = invDate;
-        document.getElementById('bill_taxable_val').value = taxable;
-        document.getElementById('bill_gst_val').value = gst;
-        document.getElementById('bill_total_val').value = total;
         document.getElementById('bill_payment_rec').value = paymentRec;
         document.getElementById('bill_remarks').value = rawRemarks;
         document.getElementById('bill_status').value = status;
         document.getElementById('bill_credit_period').value = credit;
-
-        calcBillTotal(); // Sync form state
-        updateDueDate();
-    } else {
-        const checkboxes = document.querySelectorAll('.bill-row-select:checked');
-
-        if (checkboxes.length === 0) {
-            document.getElementById('bill_taxable_val').value = '';
-            document.getElementById('bill_gst_val').value = '';
-            document.getElementById('bill_total_val').value = '';
-            document.getElementById('bill_status').value = 'Pending';
-            document.getElementById('bill_credit_period').value = 0;
-            return;
-        }
-
-        let totalCycleVal = 0;
-        checkboxes.forEach(cb => {
-            const row = cb.closest('tr');
-            const cycleTd = row.cells[4];
-            const cycleVal = parseFloat(cycleTd?.getAttribute('data-cycle-val')) || 0;
-            totalCycleVal += cycleVal;
-        });
-
-        document.getElementById('bill_taxable_val').value = totalCycleVal;
-        calcBillTotal();
-
-        const firstRow = checkboxes[0].closest('tr');
-        const remSpan = firstRow.querySelector('[data-field="remarks"]');
-        const { status, credit } = parseRemarksFallback(remSpan);
-
-        document.getElementById('bill_status').value = status;
-        document.getElementById('bill_credit_period').value = credit;
     }
+
+    // 2. Aggregate Taxable Value across ALL checked rows
+    recalculateAggregateValues();
 }
 
 window.editBillingItem = function () {
     billingEditMode = true;
     const boxes = document.querySelectorAll('.bill-row-select');
-    boxes.forEach(cb => { if (cb.disabled) cb.disabled = false; });
-    alert("Edit Mode: Select a row to update its invoice details.");
+    boxes.forEach(cb => { cb.disabled = false; });
+    const selectAll = document.getElementById('bill_select_all');
+    if (selectAll) selectAll.disabled = false;
+    alert("Edit Mode: Select rows to update their invoice details.");
 }
 
 window.cancelBillingItem = function () {
@@ -1653,11 +1678,38 @@ window.cancelBillingItem = function () {
 }
 
 async function saveBillingItem() {
-    // Validation
+    // Collect selected rows first to check if invoicing is needed
+    const checkboxes = document.querySelectorAll('.bill-row-select:checked');
+    if (checkboxes.length === 0) return alert("Select rows to save.");
+
+    // NEW: Check for unsaved items (temporary IDs)
+    for (let cb of checkboxes) {
+        const liIdStr = cb.getAttribute('data-li') || "";
+        const msIdStr = cb.getAttribute('data-ms') || "";
+        if (liIdStr.startsWith('temp_') || msIdStr.startsWith('temp_')) {
+            alert("Error: One or more selected items are not yet saved to the database.\n\nPlease click 'Save Items to DB' in the line items list behind this modal first.");
+            return;
+        }
+    }
+
+    // Validation (No individual prompts as per user request)
     const invNo = document.getElementById('bill_invoice_no').value.trim();
     const invDate = document.getElementById('bill_invoice_date').value;
+    const remarks = document.getElementById('bill_remarks').value.trim();
 
-    if (!invNo) return alert("Please enter an Invoice Number.");
+    if (!invNo) {
+        alert("Invoicing can't be done without an invoice number. Please enter Invoice No in the form.");
+        document.getElementById('bill_invoice_no').focus();
+        return;
+    }
+    if (!invDate) {
+        alert("Please enter Invoice Date in the form.");
+        document.getElementById('bill_invoice_date').focus();
+        return;
+    }
+
+    // Ensure Due Date is updated
+    updateDueDate();
 
     // CRITICAL: Sync form values to grid BEFORE collecting data
     syncFormToGrid();
