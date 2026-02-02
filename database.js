@@ -124,9 +124,9 @@ if (isPostgres) {
     db.isPostgres = false;
 }
 
-function initializeTables() {
-    // ... (rest of the schema logic remains the same)
+async function initializeTables() {
     const schemas = [
+        // ... (schema definitions same as before)
         `CREATE TABLE IF NOT EXISTS users (
             id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
             email TEXT UNIQUE,
@@ -255,17 +255,23 @@ function initializeTables() {
         )`
     ];
 
-    db.serialize(() => {
-        for (const sql of schemas) {
-            db.run(sql, (err) => {
-                if (err && !err.message.includes('already exists')) {
-                    // Postgres might throw "relation already exists"
-                }
+    for (const sql of schemas) {
+        try {
+            await new Promise((resolve, reject) => {
+                db.run(sql, (err) => {
+                    if (err && !err.message.includes('already exists') && !err.message.includes('DuplicateTable')) {
+                        console.error('Error initializing table:', err.message);
+                    }
+                    resolve();
+                });
             });
+        } catch (e) {
+            console.error('Table initialization error:', e);
         }
-    });
+    }
+    console.log('Database initialization complete.');
 }
 
-initializeTables();
+initializeTables().catch(err => console.error('Bootstrap failed:', err));
 
 module.exports = db;

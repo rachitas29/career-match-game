@@ -25,7 +25,7 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('bcryptjs');
     const saltRounds = 10;
 
     bcrypt.hash(password, saltRounds, function (err, hash) {
@@ -34,7 +34,7 @@ app.post('/api/register', (req, res) => {
         const stmt = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)");
         stmt.run([email, hash], function (err) {
             if (err) {
-                if (err.message.includes('UNIQUE constraint failed') || err.message.includes('duplicate key value')) {
+                if (err.message.includes('UNIQUE constraint failed') || err.message.toLowerCase().includes('duplicate key') || err.message.toLowerCase().includes('unique constraint')) {
                     return res.status(400).json({ error: 'Email already exists' });
                 }
                 return res.status(500).json({ error: err.message });
@@ -64,7 +64,7 @@ app.post('/api/login', (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const bcrypt = require('bcrypt');
+        const bcrypt = require('bcryptjs');
         bcrypt.compare(password, user.password, function (err, result) {
             if (result) {
                 console.log('Password Match. Login Success.');
@@ -93,7 +93,7 @@ app.put('/api/change-password', (req, res) => {
     const { id, new_password } = req.body;
     if (!id || !new_password) return res.status(400).json({ error: 'User ID and New Password required' });
 
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('bcryptjs');
     const saltRounds = 10;
 
     bcrypt.hash(new_password, saltRounds, function (err, hash) {
