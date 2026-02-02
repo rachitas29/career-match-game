@@ -5,6 +5,28 @@ const isPostgres = !!process.env.DATABASE_URL;
 
 let db;
 
+function processArgs(args) {
+    let sqlParams = [];
+    let callback = null;
+
+    if (args.length > 0) {
+        const lastArg = args[args.length - 1];
+        if (typeof lastArg === 'function') {
+            callback = lastArg;
+            sqlParams = Array.prototype.slice.call(args, 0, args.length - 1);
+        } else {
+            sqlParams = Array.prototype.slice.call(args);
+        }
+    }
+
+    // Handle case where params are passed as a single array as the first non-sql arg
+    if (sqlParams.length === 1 && Array.isArray(sqlParams[0])) {
+        sqlParams = sqlParams[0];
+    }
+
+    return { params: sqlParams, callback };
+}
+
 if (isPostgres) {
     console.log('Connecting to PostgreSQL database...');
     const pool = new Pool({
@@ -16,32 +38,34 @@ if (isPostgres) {
 
     db = {
         pool: pool,
-        run: function (sql, params, callback) {
-            if (typeof params === 'function') {
-                callback = params;
-                params = [];
-            }
+        isPostgres: true,
+        run: function (sql) {
+            const { params, callback } = processArgs(Array.prototype.slice.call(arguments, 1));
             let counter = 1;
             const pgSql = sql.replace(/\?/g, () => `$${counter++}`);
 
             let finalSql = pgSql;
             if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
-                finalSql += ' RETURNING id';
+                // Only add RETURNING id if it doesn't already have a RETURNING clause
+                if (!pgSql.toUpperCase().includes('RETURNING')) {
+                    finalSql += ' RETURNING id';
+                }
             }
 
             pool.query(finalSql, params, (err, res) => {
                 if (err) {
                     if (callback) callback(err);
                 } else {
-                    if (callback) callback.call({ lastID: res.rows[0]?.id || null, changes: res.rowCount }, null);
+                    const result = {
+                        lastID: res.rows && res.rows[0] ? (res.rows[0].id || res.rows[0].id_user || null) : null,
+                        changes: res.rowCount
+                    };
+                    if (callback) callback.call(result, null);
                 }
             });
         },
-        get: function (sql, params, callback) {
-            if (typeof params === 'function') {
-                callback = params;
-                params = [];
-            }
+        get: function (sql) {
+            const { params, callback } = processArgs(Array.prototype.slice.call(arguments, 1));
             let counter = 1;
             const pgSql = sql.replace(/\?/g, () => `$${counter++}`);
             pool.query(pgSql, params, (err, res) => {
@@ -52,11 +76,8 @@ if (isPostgres) {
                 }
             });
         },
-        all: function (sql, params, callback) {
-            if (typeof params === 'function') {
-                callback = params;
-                params = [];
-            }
+        all: function (sql) {
+            const { params, callback } = processArgs(Array.prototype.slice.call(arguments, 1));
             let counter = 1;
             const pgSql = sql.replace(/\?/g, () => `$${counter++}`);
             pool.query(pgSql, params, (err, res) => {
@@ -69,8 +90,17 @@ if (isPostgres) {
         },
         prepare: function (sql) {
             return {
-                run: (params, callback) => {
-                    db.run(sql, params, callback);
+                run: function () {
+                    const args = Array.prototype.slice.call(arguments);
+                    db.run(sql, ...args);
+                },
+                get: function () {
+                    const args = Array.prototype.slice.call(arguments);
+                    db.get(sql, ...args);
+                },
+                all: function () {
+                    const args = Array.prototype.slice.call(arguments);
+                    db.all(sql, ...args);
                 },
                 finalize: () => { }
             };
@@ -88,9 +118,11 @@ if (isPostgres) {
             db.run("PRAGMA foreign_keys = ON");
         }
     });
+    db.isPostgres = false;
 }
 
 function initializeTables() {
+    // ... (rest of the schema logic remains the same)
     const schemas = [
         `CREATE TABLE IF NOT EXISTS users (
             id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
@@ -133,6 +165,8 @@ function initializeTables() {
             bg_expiry_date TEXT,
             bg_bank_name TEXT,
             bg_amount NUMERIC,
+            contact_id INTEGER,
+            project_name TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
         `CREATE TABLE IF NOT EXISTS po_line_items (
@@ -222,7 +256,7 @@ function initializeTables() {
         for (const sql of schemas) {
             db.run(sql, (err) => {
                 if (err && !err.message.includes('already exists')) {
-                    console.error('Error initializing table:', err.message);
+                    // Postgres might throw "relation already exists"
                 }
             });
         }

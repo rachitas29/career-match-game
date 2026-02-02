@@ -32,9 +32,9 @@ app.post('/api/register', (req, res) => {
         if (err) return res.status(500).json({ error: 'Error hashing password' });
 
         const stmt = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)");
-        stmt.run(email, hash, function (err) {
+        stmt.run([email, hash], function (err) {
             if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
+                if (err.message.includes('UNIQUE constraint failed') || err.message.includes('duplicate key value')) {
                     return res.status(400).json({ error: 'Email already exists' });
                 }
                 return res.status(500).json({ error: err.message });
@@ -595,7 +595,31 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
 
 app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
     const { po_number } = req.params;
-    const sql = `
+    const sql = db.isPostgres ? `
+        SELECT li.*, 
+               (SELECT json_agg(
+                   json_build_object(
+                       'id', m.id,
+                       'milestone_name', m.milestone_name,
+                       'quantity', m.quantity,
+                       'unit_price', m.unit_price,
+                       'payment_cycle_pct', m.payment_cycle_pct,
+                       'cycle_value', m.cycle_value,
+                       'documents', m.documents,
+                       'payment_terms', m.payment_terms,
+                       'delivery_date', m.delivery_date,
+                       'invoice_no', m.invoice_no,
+                       'invoice_date', m.invoice_date,
+                       'invoice_value', m.invoice_value,
+                       'payment_received', m.payment_received,
+                       'pending_amount', m.pending_amount,
+                       'remarks', m.remarks,
+                       'credit_period', COALESCE(m.credit_period, 0)
+                   )
+               ) FROM po_milestones m WHERE m.line_item_id = li.id) as milestones
+        FROM po_line_items li
+        WHERE li.po_number = ?
+    ` : `
         SELECT li.*, 
                (SELECT json_group_array(
                    json_object(
@@ -625,10 +649,10 @@ app.get('/api/purchase-orders/:po_number/line-items', (req, res) => {
     db.all(sql, [po_number], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
-        // Parse the milestones JSON column
+        // Parse the milestones JSON column (SQLite returns string, Postgres returns object)
         const processedRows = rows.map(row => ({
             ...row,
-            milestones: JSON.parse(row.milestones)
+            milestones: typeof row.milestones === 'string' ? JSON.parse(row.milestones) : (row.milestones || [])
         }));
 
         res.json({ line_items: processedRows });
