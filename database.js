@@ -1,5 +1,4 @@
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const isPostgres = !!process.env.DATABASE_URL;
@@ -80,6 +79,7 @@ if (isPostgres) {
         close: (callback) => pool.end(callback)
     };
 } else {
+    const sqlite3 = require('sqlite3').verbose();
     const dbPath = path.resolve(__dirname, 'database_v5.sqlite');
     console.log('Connecting to SQLite database at:', dbPath);
     db = new sqlite3.Database(dbPath, (err) => {
