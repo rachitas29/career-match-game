@@ -54,6 +54,7 @@ if (isPostgres) {
 
             pool.query(finalSql, params, (err, res) => {
                 if (err) {
+                    console.error('DATABASE RUN ERROR:', err.message, 'SQL:', finalSql);
                     if (callback) callback(err);
                 } else {
                     const result = {
@@ -70,6 +71,7 @@ if (isPostgres) {
             const pgSql = sql.replace(/\?/g, () => `$${counter++}`);
             pool.query(pgSql, params, (err, res) => {
                 if (err) {
+                    console.error('DATABASE GET ERROR:', err.message, 'SQL:', pgSql);
                     if (callback) callback(err);
                 } else {
                     if (callback) callback(null, res.rows[0]);
@@ -82,6 +84,7 @@ if (isPostgres) {
             const pgSql = sql.replace(/\?/g, () => `$${counter++}`);
             pool.query(pgSql, params, (err, res) => {
                 if (err) {
+                    console.error('DATABASE ALL ERROR:', err.message, 'SQL:', pgSql);
                     if (callback) callback(err);
                 } else {
                     if (callback) callback(null, res.rows);
