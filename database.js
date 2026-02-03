@@ -107,7 +107,66 @@ if (isPostgres) {
             };
         },
         serialize: (cb) => cb(),
-        close: (callback) => pool.end(callback)
+        close: (callback) => pool.end(callback),
+        transaction: function (callback) {
+            pool.connect((err, client, release) => {
+                if (err) return callback(err);
+                const txDb = {
+                    isPostgres: true,
+                    run: function (sql) {
+                        const { params: p, callback: c } = processArgs(Array.prototype.slice.call(arguments, 1));
+                        let counter = 1;
+                        let pgSql = sql.replace(/\?/g, () => `$${counter++}`);
+                        if (pgSql.trim().toUpperCase().startsWith('INSERT') && !pgSql.toUpperCase().includes('RETURNING')) {
+                            pgSql += ' RETURNING id';
+                        }
+                        client.query(pgSql, p, (err, res) => {
+                            if (err) {
+                                if (c) c(err);
+                            } else {
+                                const result = {
+                                    lastID: res.rows && res.rows[0] ? (res.rows[0].id || res.rows[0].id_user || null) : null,
+                                    changes: res.rowCount
+                                };
+                                if (c) c.call(result, null);
+                            }
+                        });
+                    },
+                    get: function (sql) {
+                        const { params: p, callback: c } = processArgs(Array.prototype.slice.call(arguments, 1));
+                        let counter = 1;
+                        let pgSql = sql.replace(/\?/g, () => `$${counter++}`);
+                        client.query(pgSql, p, (err, res) => {
+                            if (err) { if (c) c(err); }
+                            else if (c) c(null, res.rows[0]);
+                        });
+                    },
+                    all: function (sql) {
+                        const { params: p, callback: c } = processArgs(Array.prototype.slice.call(arguments, 1));
+                        let counter = 1;
+                        let pgSql = sql.replace(/\?/g, () => `$${counter++}`);
+                        client.query(pgSql, p, (err, res) => {
+                            if (err) { if (c) c(err); }
+                            else if (c) c(null, res.rows);
+                        });
+                    }
+                };
+                client.query('BEGIN', (err) => {
+                    if (err) { release(); return callback(err); }
+                    callback(null, txDb, (done) => {
+                        client.query('COMMIT', (err) => {
+                            release();
+                            if (done) done(err);
+                        });
+                    }, (err, done) => {
+                        client.query('ROLLBACK', () => {
+                            release();
+                            if (done) done(err);
+                        });
+                    });
+                });
+            });
+        }
     };
 } else {
     const sqlite3 = require('sqlite3').verbose();
@@ -120,6 +179,15 @@ if (isPostgres) {
         }
     });
     db.isPostgres = false;
+    db.transaction = function (callback) {
+        db.serialize(() => {
+            callback(null, db, (done) => {
+                db.run('COMMIT', (err) => { if (done) done(err); });
+            }, (err, done) => {
+                db.run('ROLLBACK', () => { if (done) done(err); });
+            });
+        });
+    };
 }
 
 async function initializeTables() {

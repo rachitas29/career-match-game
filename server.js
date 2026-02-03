@@ -567,14 +567,13 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
         return res.status(400).json({ error: 'Qty cannot be empty. Please ensure quantity is greater than 0.' });
     }
 
-    db.serialize(() => {
-        db.run('BEGIN TRANSACTION');
+    db.transaction((err, tx, commit, rollback) => {
+        if (err) return res.status(500).json({ error: 'Failed to start transaction' });
 
         const poSql = `INSERT INTO po_line_items (po_number, line_item_no, line_item_type, description, quantity, gst_rate, hsn_sac_code) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-        db.run(poSql, [po_number, line_item_no, line_item_type, description, qty, gst_rate, hsn_sac_code], function (err) {
+        tx.run(poSql, [po_number, line_item_no, line_item_type, description, qty, gst_rate, hsn_sac_code], function (err) {
             if (err) {
-                db.run('ROLLBACK');
-                return res.status(500).json({ error: err.message });
+                return rollback(err, () => res.status(500).json({ error: err.message }));
             }
 
             const lineItemId = this.lastID;
@@ -597,22 +596,19 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
                         m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
                         m.status || 'Pending', m.credit_period || 0
                     ];
-                    db.run(milestoneSql, mParams, (err) => {
+                    tx.run(milestoneSql, mParams, (err) => {
                         if (err && !errorOccurred) {
                             errorOccurred = true;
-                            db.run('ROLLBACK');
-                            return res.status(500).json({ error: err.message });
+                            return rollback(err, () => res.status(500).json({ error: err.message }));
                         }
                         completed++;
                         if (completed === milestones.length && !errorOccurred) {
-                            db.run('COMMIT');
-                            res.json({ message: 'Line item and milestones saved', id: lineItemId });
+                            commit(() => res.json({ message: 'Line item and milestones saved', id: lineItemId }));
                         }
                     });
                 });
             } else {
-                db.run('COMMIT');
-                res.json({ message: 'Line item saved', id: lineItemId });
+                commit(() => res.json({ message: 'Line item saved', id: lineItemId }));
             }
         });
     });
@@ -837,121 +833,114 @@ app.post('/api/purchase-orders/:po_number/invoices', (req, res) => {
         return res.status(400).json({ error: 'Invoices must be a non-empty array' });
     }
 
-    db.serialize(() => {
-        db.run('BEGIN TRANSACTION', (err) => {
-            if (err) return res.status(500).json({ error: 'Failed to start transaction: ' + err.message });
 
-            let processed = 0;
-            let errorOccurred = false;
+    db.transaction((err, tx, commit, rollback) => {
+        if (err) return res.status(500).json({ error: 'Failed to start transaction: ' + err.message });
 
-            const rollback = (errMsg) => {
+        let processed = 0;
+        let errorOccurred = false;
+
+        const handleRollback = (errOrMsg) => {
+            if (errorOccurred) return;
+            errorOccurred = true;
+            const err = typeof errOrMsg === 'string' ? new Error(errOrMsg) : errOrMsg;
+            rollback(err, () => {
+                if (!res.headersSent) res.status(500).json({ error: err.message });
+            });
+        };
+
+        invoices.forEach(inv => {
+            if (errorOccurred) return;
+
+            const mId = (inv.milestone_id && inv.milestone_id !== 'undefined' && inv.milestone_id !== 'null') ? inv.milestone_id : null;
+            const liId = (inv.line_item_id && inv.line_item_id !== 'undefined' && inv.line_item_id !== 'null') ? inv.line_item_id : null;
+
+            const checkSql = `SELECT id FROM invoices WHERE (milestone_id = ? AND milestone_id IS NOT NULL) OR (line_item_id = ? AND milestone_id IS NULL)`;
+            tx.get(checkSql, [mId, liId], (err, existingRow) => {
+                if (err) return handleRollback(err);
                 if (errorOccurred) return;
-                errorOccurred = true;
-                db.run('ROLLBACK', () => {
-                    if (!res.headersSent) res.status(500).json({ error: errMsg });
-                });
-            };
 
-            invoices.forEach(inv => {
-                if (errorOccurred) return;
+                if (existingRow) {
+                    const updateInvoicesSql = `UPDATE invoices SET 
+                        invoice_no = ?, invoice_date = ?, 
+                        taxable_value = ?, gst_value = ?, total_value = ?, credit_period = ?, 
+                        due_date = ?, payment_received = ?, pending_amount = ?, status = ?, remarks = ?
+                        WHERE id = ?`;
 
-                const mId = (inv.milestone_id && inv.milestone_id !== 'undefined' && inv.milestone_id !== 'null') ? inv.milestone_id : null;
-                const liId = (inv.line_item_id && inv.line_item_id !== 'undefined' && inv.line_item_id !== 'null') ? inv.line_item_id : null;
+                    const updateParams = [
+                        inv.invoice_no, inv.invoice_date,
+                        inv.taxable_value || 0, inv.gst_value || 0, inv.total_value || 0, inv.credit_period || 0,
+                        inv.due_date, inv.payment_received || 0, inv.pending_amount || 0, inv.status, inv.remarks,
+                        existingRow.id
+                    ];
 
-                const checkSql = `SELECT id FROM invoices WHERE (milestone_id = ? AND milestone_id IS NOT NULL) OR (line_item_id = ? AND milestone_id IS NULL)`;
-                const checkParams = [mId, liId];
+                    tx.run(updateInvoicesSql, updateParams, (err) => {
+                        if (err) return handleRollback(err);
+                        handleMilestoneUpdate();
+                    });
+                } else {
+                    const insertInvoicesSql = `INSERT INTO invoices (
+                        po_number, line_item_id, milestone_id, 
+                        invoice_no, invoice_date, taxable_value, gst_value, total_value, 
+                        credit_period, due_date, payment_received, pending_amount, status, remarks
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-                db.get(checkSql, checkParams, (err, existingRow) => {
-                    if (err) return rollback('Check error: ' + err.message);
+                    const insertParams = [
+                        po_number, liId, mId,
+                        inv.invoice_no, inv.invoice_date,
+                        inv.taxable_value || 0, inv.gst_value || 0, inv.total_value || 0,
+                        inv.credit_period || 0, inv.due_date, inv.payment_received || 0,
+                        inv.pending_amount || 0, inv.status, inv.remarks
+                    ];
+
+                    tx.run(insertInvoicesSql, insertParams, (err) => {
+                        if (err) return handleRollback(err);
+                        handleMilestoneUpdate();
+                    });
+                }
+
+                function handleMilestoneUpdate() {
                     if (errorOccurred) return;
 
-                    if (existingRow) {
-                        const updateInvoicesSql = `UPDATE invoices SET 
-                            invoice_no = ?, invoice_date = ?, 
-                            taxable_value = ?, gst_value = ?, total_value = ?, credit_period = ?, 
-                            due_date = ?, payment_received = ?, pending_amount = ?, status = ?, remarks = ?
+                    const finalize = () => {
+                        processed++;
+                        if (processed === invoices.length && !errorOccurred) {
+                            commit(() => res.json({ message: 'Invoices and milestones updated', count: processed }));
+                        }
+                    };
+
+                    if (mId) {
+                        const updateSql = `UPDATE po_milestones SET 
+                            invoice_no = ?, invoice_date = ?, invoice_value = ?, 
+                            payment_received = ?, pending_amount = ?, remarks = ?,
+                            status = ?, credit_period = ?
                             WHERE id = ?`;
-
-                        const updateParams = [
-                            inv.invoice_no, inv.invoice_date,
-                            inv.taxable_value || 0, inv.gst_value || 0, inv.total_value || 0, inv.credit_period || 0,
-                            inv.due_date, inv.payment_received || 0, inv.pending_amount || 0, inv.status, inv.remarks,
-                            existingRow.id
-                        ];
-
-                        db.run(updateInvoicesSql, updateParams, function (err) {
-                            if (err) return rollback('Invoices update error: ' + err.message);
-                            if (this.changes === 0) {
-                                console.warn(`No invoice record updated for ID ${existingRow.id}. This may be an error.`);
-                            }
-                            handleMilestoneUpdate();
+                        tx.run(updateSql, [
+                            inv.invoice_no, inv.invoice_date, inv.total_value,
+                            inv.payment_received, inv.pending_amount, inv.remarks || '',
+                            inv.status || 'Pending', inv.credit_period || 0,
+                            mId
+                        ], (err) => {
+                            if (err) return handleRollback(err);
+                            finalize();
+                        });
+                    } else if (liId) {
+                        const updateSql = `UPDATE po_line_items SET 
+                            invoice_no = ?, invoice_date = ?, invoice_value = ?, 
+                            payment_received = ?, pending_amount = ?, remarks = ?
+                            WHERE id = ?`;
+                        tx.run(updateSql, [
+                            inv.invoice_no, inv.invoice_date, inv.total_value,
+                            inv.payment_received, inv.pending_amount, inv.remarks,
+                            liId
+                        ], (err) => {
+                            if (err) return handleRollback(err);
+                            finalize();
                         });
                     } else {
-                        const params = [
-                            po_number, liId, mId,
-                            inv.invoice_no, inv.invoice_date,
-                            inv.taxable_value || 0, inv.gst_value || 0, inv.total_value || 0, inv.credit_period || 0,
-                            inv.due_date, inv.payment_received || 0, inv.pending_amount || 0, inv.status, inv.remarks
-                        ];
-
-                        const insertSql = `INSERT INTO invoices (
-                            po_number, line_item_id, milestone_id, invoice_no, invoice_date, 
-                            taxable_value, gst_value, total_value, credit_period, 
-                            due_date, payment_received, pending_amount, status, remarks
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-                        db.run(insertSql, params, function (err) {
-                            if (err) return rollback('Invoices insert error: ' + err.message);
-                            handleMilestoneUpdate();
-                        });
+                        finalize();
                     }
-
-                    function handleMilestoneUpdate() {
-                        if (errorOccurred) return;
-
-                        const finalize = () => {
-                            processed++;
-                            if (processed === invoices.length && !errorOccurred) {
-                                db.run('COMMIT', (err) => {
-                                    if (err) return rollback('Commit error: ' + err.message);
-                                    res.json({ message: 'Invoices and milestones updated', count: processed });
-                                });
-                            }
-                        };
-
-                        if (mId) {
-                            const updateSql = `UPDATE po_milestones SET 
-                                invoice_no = ?, invoice_date = ?, invoice_value = ?, 
-                                payment_received = ?, pending_amount = ?, remarks = ?,
-                                status = ?, credit_period = ?
-                                WHERE id = ?`;
-                            db.run(updateSql, [
-                                inv.invoice_no, inv.invoice_date, inv.total_value,
-                                inv.payment_received, inv.pending_amount, inv.remarks || '',
-                                inv.status || 'Pending', inv.credit_period || 0,
-                                mId
-                            ], function (err) {
-                                if (err) return rollback('Milestone update error: ' + err.message);
-                                finalize();
-                            });
-                        } else if (liId) {
-                            const updateSql = `UPDATE po_line_items SET 
-                                invoice_no = ?, invoice_date = ?, invoice_value = ?, 
-                                payment_received = ?, pending_amount = ?, remarks = ?
-                                WHERE id = ?`;
-                            db.run(updateSql, [
-                                inv.invoice_no, inv.invoice_date, inv.total_value,
-                                inv.payment_received, inv.pending_amount, inv.remarks,
-                                liId
-                            ], function (err) {
-                                if (err) return rollback('Line item update error: ' + err.message);
-                                finalize();
-                            });
-                        } else {
-                            finalize();
-                        }
-                    }
-                });
+                }
             });
         });
     });
