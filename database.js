@@ -19,7 +19,6 @@ function processArgs(args) {
         }
     }
 
-    // Handle case where params are passed as a single array as the first non-sql arg
     if (sqlParams.length === 1 && Array.isArray(sqlParams[0])) {
         sqlParams = sqlParams[0];
     }
@@ -46,7 +45,6 @@ if (isPostgres) {
 
             let finalSql = pgSql;
             if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
-                // Only add RETURNING id if it doesn't already have a RETURNING clause
                 if (!pgSql.toUpperCase().includes('RETURNING')) {
                     finalSql += ' RETURNING id';
                 }
@@ -126,7 +124,6 @@ if (isPostgres) {
 
 async function initializeTables() {
     const schemas = [
-        // ... (schema definitions same as before)
         `CREATE TABLE IF NOT EXISTS users (
             id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
             email TEXT UNIQUE,
@@ -150,6 +147,16 @@ async function initializeTables() {
             contact_number TEXT,
             email_id TEXT,
             notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS contacts (
+            id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            account_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+            name TEXT,
+            email TEXT,
+            phone TEXT,
+            role TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
         `CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -252,14 +259,82 @@ async function initializeTables() {
             internal_remarks TEXT,
             other_deduction_type TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS leads (
+            id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            name TEXT,
+            company_name TEXT,
+            email TEXT,
+            status TEXT,
+            value NUMERIC,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS tasks (
+            id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            account_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+            title TEXT,
+            type TEXT,
+            description TEXT,
+            due_date TEXT,
+            status TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS products (
+            id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            name TEXT,
+            sku TEXT,
+            price NUMERIC,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS interactions (
+            id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            account_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+            type TEXT,
+            details TEXT,
+            date TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS bg_fd_details (
+            id ${isPostgres ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isPostgres ? '' : 'AUTOINCREMENT'},
+            po_number TEXT REFERENCES purchase_orders(po_number) ON DELETE CASCADE ON UPDATE CASCADE,
+            opening_balance_bg_limit NUMERIC,
+            bg_number TEXT,
+            bg_start_date TEXT,
+            bg_tenure_dd INTEGER,
+            bg_tenure_mm INTEGER,
+            bg_tenure_yy INTEGER,
+            bg_end_date TEXT,
+            bg_percentage NUMERIC,
+            bg_value NUMERIC,
+            bg_claim_period_required TEXT,
+            bg_status TEXT,
+            bg_claim_period_dd INTEGER,
+            bg_claim_period_mm INTEGER,
+            bg_claim_period_yy INTEGER,
+            bg_claim_date TEXT,
+            bg_limit_remaining NUMERIC,
+            fd_percentage_on_bg NUMERIC,
+            fd_number TEXT,
+            fd_start_date TEXT,
+            fd_margin_actual NUMERIC,
+            fd_maturity_date TEXT,
+            fd_maturity_amount NUMERIC,
+            rate_of_interest NUMERIC,
+            fd_status TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
     ];
 
     for (const sql of schemas) {
         try {
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 db.run(sql, (err) => {
-                    if (err && !err.message.includes('already exists') && !err.message.includes('DuplicateTable')) {
+                    if (err && !err.message.includes('already exists') && !err.message.toLowerCase().includes('duplicate')) {
                         console.error('Error initializing table:', err.message);
                     }
                     resolve();

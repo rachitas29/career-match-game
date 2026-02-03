@@ -207,7 +207,12 @@ app.get('/api/contacts', (req, res) => {
     }
 
     db.all(sql, params, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            if (err.message.includes('relation "contacts" does not exist')) {
+                return res.status(500).json({ error: 'Contacts does not exist' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ contacts: rows });
     });
 });
@@ -255,7 +260,12 @@ app.get('/api/leads', (req, res) => {
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     db.all("SELECT * FROM leads WHERE user_id = ?", [userId], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            if (err.message.includes('relation "leads" does not exist')) {
+                return res.status(500).json({ error: 'Leads does not exist' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ leads: rows });
     });
 });
@@ -290,7 +300,12 @@ app.get('/api/tasks', (req, res) => {
     }
 
     db.all(sql, params, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            if (err.message.includes('relation "tasks" does not exist')) {
+                return res.status(500).json({ error: 'Tasks does not exist' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ tasks: rows });
     });
 });
@@ -321,7 +336,12 @@ app.get('/api/products', (req, res) => {
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     db.all("SELECT * FROM products WHERE user_id = ?", [userId], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            if (err.message.includes('relation "products" does not exist')) {
+                return res.status(500).json({ error: 'Products does not exist' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ products: rows });
     });
 });
@@ -357,7 +377,12 @@ app.get('/api/interactions', (req, res) => {
     sql += " ORDER BY date DESC";
 
     db.all(sql, params, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            if (err.message.includes('relation "interactions" does not exist')) {
+                return res.status(500).json({ error: 'Interactions does not exist' });
+            }
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ interactions: rows });
     });
 });
