@@ -621,24 +621,20 @@
 
         // Search POs
         async function searchPOs() {
+            let poNumTerm = document.getElementById('search_po_number').value.trim();
+            const partyTerm = document.getElementById('search_party_name').value.trim();
+            const projectTerm = document.getElementById('search_project_name').value.trim();
+
+            if (!poNumTerm && !partyTerm && !projectTerm) {
+                alert("Enter the data to search");
+                return;
+            }
+
             // Clear existing data first
             clearAllData();
 
-            let poNumTerm = document.getElementById('search_po_number').value.toLowerCase().trim();
-            const partyTerm = document.getElementById('search_party_name').value.toLowerCase().trim();
-            const projectTerm = document.getElementById('search_project_name').value.toLowerCase().trim();
-
-            // FALLBACK: If input is empty but URL has param, use URL param and populate field
-            if (!poNumTerm) {
-                const urlP = new URLSearchParams(window.location.search).get('po_number');
-                if (urlP) {
-                    poNumTerm = urlP.toLowerCase().trim();
-                    document.getElementById('search_po_number').value = urlP;
-                }
-            }
-
             const grid = document.getElementById('masterGridContent');
-            grid.innerHTML = '<div style="color:white;">Searching...</div>';
+            grid.innerHTML = '<div style="color:white; padding: 1rem;">Searching...</div>';
 
             try {
                 // Fetch all POs (In a real app, use search query params)
@@ -650,22 +646,19 @@
 
                 allPOs = res.purchase_orders;
 
-                // Client-side filter
-                // Client-side filter
-                filteredPOs = allPOs.filter(po => {
-                    // IF PO Number is provided, search STRICTLY by it and ignore others (closest approach to 'ID' search)
-                    if (poNumTerm) {
-                        return po.po_number && po.po_number.toLowerCase().includes(poNumTerm);
-                    }
+                const lowPo = poNumTerm.toLowerCase();
+                const lowParty = partyTerm.toLowerCase();
+                const lowProj = projectTerm.toLowerCase();
 
-                    // Otherwise use general search
-                    const matchParty = !partyTerm || (po.customer_name && po.customer_name.toLowerCase().includes(partyTerm));
-                    const matchProj = !projectTerm || (po.notes && po.notes.toLowerCase().includes(projectTerm));
-                    return matchParty && matchProj;
+                filteredPOs = allPOs.filter(po => {
+                    const matchPo = !poNumTerm || (po.po_number && po.po_number.toLowerCase().includes(lowPo));
+                    const matchParty = !partyTerm || (po.customer_name && po.customer_name.toLowerCase().includes(lowParty));
+                    const matchProj = !projectTerm || (po.notes && po.notes.toLowerCase().includes(lowProj));
+                    return matchPo && matchParty && matchProj;
                 });
 
                 currentMasterPage = 1;
-                renderMasterGrid();
+                renderMasterGrid(poNumTerm, partyTerm, projectTerm);
 
                 // AUTO-SELECT if exactly one result (Enhanced UX)
                 if (filteredPOs.length === 1) {
@@ -697,15 +690,17 @@
             document.getElementById('disp_bg_date').textContent = '-';
         }
 
-        function renderMasterGrid() {
+        function renderMasterGrid(poTerm = '', partyTerm = '', projTerm = '') {
             const grid = document.getElementById('masterGridContent');
             if (filteredPOs.length === 0) {
+                let msg = 'No matching records found.';
+                if (poTerm) msg = 'Invalid PO number';
+                else if (partyTerm) msg = 'Invalid Party Name';
+                else if (projTerm) msg = 'Invalid Project Name';
+
                 grid.innerHTML = `
                         <div style="padding: 1rem; text-align: center; color: #64748b;">
-                            No matching records found.<br>
-                            <span style="font-size: 0.8rem">
-                                (Fetched: ${allPOs.length} total POs. Searched for: "${poNumTerm || partyTerm}")
-                            </span>
+                            ${msg}
                         </div>`;
                 document.getElementById('masterPagination').style.display = 'none';
                 return;
