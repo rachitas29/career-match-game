@@ -182,10 +182,13 @@ if (isPostgres) {
     db.isPostgres = false;
     db.transaction = function (callback) {
         db.serialize(() => {
-            callback(null, db, (done) => {
-                db.run('COMMIT', (err) => { if (done) done(err); });
-            }, (err, done) => {
-                db.run('ROLLBACK', () => { if (done) done(err); });
+            db.run('BEGIN TRANSACTION', (err) => {
+                if (err) return callback(err);
+                callback(null, db, (done) => {
+                    db.run('COMMIT', (err) => { if (done) done(err); });
+                }, (err, done) => {
+                    db.run('ROLLBACK', () => { if (done) done(err); });
+                });
             });
         });
     };

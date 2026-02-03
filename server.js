@@ -514,9 +514,11 @@ app.post('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
     const body = req.body;
 
     // First delete existing (simple upsert strategy)
-    db.serialize(() => {
-        db.run('DELETE FROM bg_fd_details WHERE po_number = ?', [po_number], (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+    db.transaction((err, tx, commit, rollback) => {
+        if (err) return res.status(500).json({ error: 'Failed to start transaction: ' + err.message });
+
+        tx.run('DELETE FROM bg_fd_details WHERE po_number = ?', [po_number], (err) => {
+            if (err) return rollback(err, () => res.status(500).json({ error: err.message }));
 
             const sql = `INSERT INTO bg_fd_details (
                 po_number, opening_balance_bg_limit, bg_number, bg_start_date, 
@@ -536,18 +538,16 @@ app.post('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
                 body.fd_margin_actual, body.fd_maturity_date, body.fd_maturity_amount, body.rate_of_interest, body.fd_status
             ];
 
-            db.run(sql, params, function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+            tx.run(sql, params, function (err) {
+                if (err) return rollback(err, () => res.status(500).json({ error: err.message }));
 
-                // Also update the purchase_orders table to set bank_guarantee = 'Yes'
-                db.run('UPDATE purchase_orders SET bank_guarantee = ? WHERE po_number = ?',
+                tx.run('UPDATE purchase_orders SET bank_guarantee = ? WHERE po_number = ?',
                     ['Yes', po_number],
                     (updateErr) => {
                         if (updateErr) {
                             console.error('Error updating PO bank_guarantee:', updateErr);
-                            // Don't fail the request, just log the error
                         }
-                        res.json({ message: 'BG/FD details saved', id: this.lastID });
+                        commit(() => res.json({ message: 'BG/FD details saved', id: this.lastID }));
                     }
                 );
             });
@@ -732,8 +732,8 @@ app.put('/api/line-items/:id', (req, res) => {
                     return rollback(err, () => res.status(500).json({ error: err.message }));
                 }
 
-                const existingIds = existingMilestones.map(m => m.id);
-                const incomingIds = milestones.map(m => m.id).filter(id => id);
+                const existingIds = existingMilestones.map(m => Number(m.id));
+                const incomingIds = milestones.map(m => Number(m.id)).filter(id => !isNaN(id));
                 const toDelete = existingIds.filter(eid => !incomingIds.includes(eid));
 
                 const milestoneInsertSql = `INSERT INTO po_milestones (
@@ -777,7 +777,8 @@ app.put('/api/line-items/:id', (req, res) => {
                 milestones.forEach(m => {
                     if (errorOccurred) return;
 
-                    if (m.id && existingIds.includes(m.id)) {
+                    const numericMid = m.id ? Number(m.id) : null;
+                    if (numericMid && existingIds.includes(numericMid)) {
                         // Update
                         const mParams = [
                             m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
@@ -785,7 +786,7 @@ app.put('/api/line-items/:id', (req, res) => {
                             m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
                             m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
                             m.status || 'Pending', m.credit_period || 0,
-                            m.id
+                            numericMid
                         ];
                         tx.run(milestoneUpdateSql, mParams, (err) => {
                             if (err && !errorOccurred) {
