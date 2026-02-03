@@ -52,7 +52,7 @@ if (isPostgres) {
 
             pool.query(finalSql, params, (err, res) => {
                 if (err) {
-                    console.error('DATABASE RUN ERROR:', err.message, 'SQL:', finalSql);
+                    console.error('DATABASE RUN ERROR:', err.message, 'SQL:', finalSql, 'Params:', params);
                     if (callback) callback(err);
                 } else {
                     const result = {
@@ -122,6 +122,7 @@ if (isPostgres) {
                         }
                         client.query(pgSql, p, (err, res) => {
                             if (err) {
+                                console.error('TX RUN ERROR:', err.message, 'SQL:', pgSql, 'Params:', p);
                                 if (c) c(err);
                             } else {
                                 const result = {

@@ -706,34 +706,30 @@ app.put('/api/line-items/:id', (req, res) => {
         return res.status(400).json({ error: 'Qty cannot be empty. Please ensure quantity is greater than 0.' });
     }
 
-    db.serialize(() => {
-        db.run('BEGIN TRANSACTION');
+    db.transaction((err, tx, commit, rollback) => {
+        if (err) return res.status(500).json({ error: 'Failed to start transaction' });
 
         const sql = `UPDATE po_line_items SET line_item_no = ?, line_item_type = ?, description = ?, quantity = ?, gst_rate = ?, hsn_sac_code = ? WHERE id = ?`;
-        db.run(sql, [line_item_no, line_item_type, description, qty, gst_rate, hsn_sac_code, id], function (err) {
+        tx.run(sql, [line_item_no, line_item_type, description, qty, gst_rate, hsn_sac_code, id], function (err) {
             if (err) {
-                db.run('ROLLBACK');
-                return res.status(500).json({ error: err.message });
+                return rollback(err, () => res.status(500).json({ error: err.message }));
             }
 
             if (!milestones || milestones.length === 0) {
                 // If no milestones, delete existing ones for this line item
-                db.run('DELETE FROM po_milestones WHERE line_item_id = ?', [id], (err) => {
+                tx.run('DELETE FROM po_milestones WHERE line_item_id = ?', [id], (err) => {
                     if (err) {
-                        db.run('ROLLBACK');
-                        return res.status(500).json({ error: err.message });
+                        return rollback(err, () => res.status(500).json({ error: err.message }));
                     }
-                    db.run('COMMIT');
-                    res.json({ message: 'Line item updated' });
+                    commit(() => res.json({ message: 'Line item updated' }));
                 });
                 return;
             }
 
             // Get existing milestones to differentiate between update and insert
-            db.all('SELECT id FROM po_milestones WHERE line_item_id = ?', [id], (err, existingMilestones) => {
+            tx.all('SELECT id FROM po_milestones WHERE line_item_id = ?', [id], (err, existingMilestones) => {
                 if (err) {
-                    db.run('ROLLBACK');
-                    return res.status(500).json({ error: err.message });
+                    return rollback(err, () => res.status(500).json({ error: err.message }));
                 }
 
                 const existingIds = existingMilestones.map(m => m.id);
@@ -760,19 +756,17 @@ app.put('/api/line-items/:id', (req, res) => {
                 const finalizeUpdate = () => {
                     completedCount++;
                     if (completedCount === (milestones.length + (toDelete.length > 0 ? 1 : 0)) && !errorOccurred) {
-                        db.run('COMMIT');
-                        res.json({ message: 'Line item and milestones updated' });
+                        commit(() => res.json({ message: 'Line item and milestones updated' }));
                     }
                 };
 
                 // Delete removed milestones
                 if (toDelete.length > 0) {
                     const deleteSql = `DELETE FROM po_milestones WHERE id IN (${toDelete.join(',')})`;
-                    db.run(deleteSql, (err) => {
+                    tx.run(deleteSql, (err) => {
                         if (err && !errorOccurred) {
                             errorOccurred = true;
-                            db.run('ROLLBACK');
-                            return res.status(500).json({ error: err.message });
+                            return rollback(err, () => res.status(500).json({ error: err.message }));
                         }
                         finalizeUpdate();
                     });
@@ -793,11 +787,10 @@ app.put('/api/line-items/:id', (req, res) => {
                             m.status || 'Pending', m.credit_period || 0,
                             m.id
                         ];
-                        db.run(milestoneUpdateSql, mParams, (err) => {
+                        tx.run(milestoneUpdateSql, mParams, (err) => {
                             if (err && !errorOccurred) {
                                 errorOccurred = true;
-                                db.run('ROLLBACK');
-                                return res.status(500).json({ error: err.message });
+                                return rollback(err, () => res.status(500).json({ error: err.message }));
                             }
                             finalizeUpdate();
                         });
@@ -810,11 +803,10 @@ app.put('/api/line-items/:id', (req, res) => {
                             m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
                             m.status || 'Pending', m.credit_period || 0
                         ];
-                        db.run(milestoneInsertSql, mParams, (err) => {
+                        tx.run(milestoneInsertSql, mParams, (err) => {
                             if (err && !errorOccurred) {
                                 errorOccurred = true;
-                                db.run('ROLLBACK');
-                                return res.status(500).json({ error: err.message });
+                                return rollback(err, () => res.status(500).json({ error: err.message }));
                             }
                             finalizeUpdate();
                         });
