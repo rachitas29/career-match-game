@@ -338,8 +338,8 @@ function renderLineItemsTable() {
     // Toggle Save Button
     const saveDbBtn = document.getElementById('btnSaveItemsToDB');
     if (saveDbBtn) {
-        // Delayed Logic: Enable ONLY if Dirty AND Unlocked (by close attempt)
-        saveDbBtn.disabled = !(lineItemsState.hasUnsavedChanges && lineItemsState.saveButtonUnlocked);
+        // Enable if Dirty
+        saveDbBtn.disabled = !lineItemsState.hasUnsavedChanges;
     }
 
     lineItemsState.currentLineItems.forEach((li, idx) => {
@@ -822,7 +822,6 @@ async function saveLineItemToDB(stayOnIdentification = false) {
 
         // Render the updated table
         lineItemsState.hasUnsavedChanges = true;
-        lineItemsState.saveButtonUnlocked = false; // Re-lock button on new changes
         renderLineItemsTable();
         updateMainPOValueFromMemory();
 

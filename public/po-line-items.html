@@ -260,11 +260,11 @@
         <div class="po-info-box">
             <div class="form-group">
                 <label>PO Line Item No</label>
-                <input type="text" id="line_item_no" placeholder="(Editable and non mandatory)">
+                <input type="text" id="li_line_item_no" placeholder="(Editable and non mandatory)">
             </div>
             <div class="form-group">
                 <label>PO Line Item Type ▼</label>
-                <select id="line_item_type">
+                <select id="li_line_item_type">
                     <option value="Software">Software</option>
                     <option value="Hardware">Hardware</option>
                     <option value="Services">Services</option>
@@ -274,45 +274,47 @@
             <div class="form-group">
                 <label>PO Number (Type & Enter to Search)</label>
                 <div style="display: flex; gap: 4px;">
-                    <input type="text" id="display_po_number" style="flex: 1;" placeholder="Enter PO #">
+                    <input type="text" id="li_display_po_number" style="flex: 1;" placeholder="Enter PO #">
                 </div>
             </div>
             <div class="form-group">
                 <label>PO Date (display)</label>
-                <input type="text" id="display_po_date" readonly>
+                <input type="text" id="li_display_po_date" readonly>
             </div>
             <div class="form-group">
                 <label>PO Value (display)</label>
-                <input type="text" id="display_po_value" readonly>
+                <input type="text" id="li_display_po_value" readonly>
             </div>
         </div>
 
         <!-- Line Item Entry -->
-        <div class="form-row">
+        <div class="form-row li-form-wrapper">
             <div class="form-group large">
                 <label>PO Line Item Description</label>
-                <textarea id="description" rows="2"></textarea>
+                <textarea id="li_description" rows="2"></textarea>
             </div>
             <div class="form-group">
                 <label>PO Line Item Quantity</label>
-                <input type="number" id="li_quantity" value="1">
+                <input type="number" id="li_li_quantity" value="1">
             </div>
             <div class="form-group">
                 <label>GST Rate</label>
-                <input type="number" id="gst_rate" value="18">
+                <input type="number" id="li_gst_rate" value="18">
             </div>
             <div class="form-group">
                 <label>HSN/SAC Code (8 digit)</label>
-                <input type="text" id="hsn_sac_code" maxlength="8">
+                <input type="text" id="li_hsn_sac_code" maxlength="8">
             </div>
-            <button class="btn-po btn-add-milestone" style="min-width: auto;" id="addMorePOItems">ADD MORE PO LINE ITEMS
+            <button class="btn-po btn-add-milestone" style="min-width: auto;" onclick="resetLineItemForm()">ADD MORE PO
+                LINE ITEMS
                 (Once billing done)</button>
         </div>
 
         <!-- Milestone Entry -->
         <div class="milestone-section">
             <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                <button class="btn-po btn-add-milestone" style="min-width: 250px;">ADD MORE MILE STONES TO SAME LINE
+                <button class="btn-po btn-add-milestone" style="min-width: 250px;"
+                    onclick="addMilestoneToSelection()">ADD MORE MILE STONES TO SAME LINE
                     ITEM</button>
                 <div class="form-group">
                     <label>Mile Stone</label>
@@ -387,15 +389,16 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="summaryTableBody">
+            <tbody id="li_summaryTableBody">
                 <!-- Rows will be added here -->
             </tbody>
         </table>
 
         <!-- Action Buttons -->
         <div class="action-btns">
-            <button class="btn-po btn-edit">EDIT PO LINE ITEM</button>
-            <button class="btn-po btn-save-item" onclick="saveLineItem()">SAVE PO LINE ITEM</button>
+            <button class="btn-po btn-edit" id="mainEditBtn">EDIT PO LINE ITEM</button>
+            <button class="btn-po btn-save-item" id="mainSaveBtn" onclick="saveLineItemToDB()">SAVE PO LINE
+                ITEM</button>
             <!-- REPLACED: btn-save-db with specific Save Items button -->
             <button class="btn-po btn-save-db" id="btnSaveItemsToDB" onclick="commitPOToDB()">SAVE ITEMS TO DB</button>
             <button class="btn-po btn-add-billing" onclick="openBillingModal()">ADD BILLING DETAILS FOR LINE
@@ -415,344 +418,48 @@
         api.checkAuth();
 
         const poNumber = new URLSearchParams(window.location.search).get('po_number');
-        let currentLineItems = [];
-        let currentInvoices = [];
-        let currentPO = null;
 
-        // Initialize lineItemsState for shared logic
+        // Initialize shared state
         if (typeof lineItemsState !== 'undefined') {
             lineItemsState.poNumber = poNumber;
         }
 
-        // Initialize date dropdowns
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const daySelect = document.getElementById('ms_day');
-        const monthSelect = document.getElementById('ms_month');
-        const yearSelect = document.getElementById('ms_year');
-
-        for (let i = 1; i <= 31; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = i;
-            daySelect.appendChild(opt);
-        }
-
-        months.forEach((m, i) => {
-            const opt = document.createElement('option');
-            opt.value = i + 1;
-            opt.textContent = m;
-            monthSelect.appendChild(opt);
-        });
-
-        const currentYear = new Date().getFullYear();
-        for (let i = currentYear; i <= currentYear + 10; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = i;
-            yearSelect.appendChild(opt);
-        }
-
-        // Fetch PO Details
-        async function loadPODetails(targetNum) {
-            const numToLoad = targetNum || poNumber;
-            if (!numToLoad) return;
-
-            try {
-                // Fetch all in parallel for efficiency
-                const [poRes, lineItemsRes, invoicesRes] = await Promise.all([
-                    api.get(`/purchase-orders/${encodeURIComponent(numToLoad)}`),
-                    api.get(`/purchase-orders/${encodeURIComponent(numToLoad)}/line-items`),
-                    api.get(`/purchase-orders/${encodeURIComponent(numToLoad)}/invoices`)
-                ]);
-
-                if (poRes.purchase_order) {
-                    currentPO = poRes.purchase_order;
-                    document.getElementById('display_po_number').value = currentPO.po_number;
-                    document.getElementById('display_po_date').value = currentPO.po_date;
-                    document.getElementById('display_po_value').value = parseFloat(currentPO.po_value).toLocaleString('en-US', { minimumFractionDigits: 2 });
-
-                    // If a new PO number was searched and found, redirect to update URL
-                    if (targetNum && targetNum !== poNumber) {
-                        window.location.href = `po-line-items.html?po_number=${encodeURIComponent(targetNum)}`;
-                        return; // Stop further execution to allow redirection
-                    }
-
-                    currentLineItems = lineItemsRes.line_items || [];
-                    currentInvoices = invoicesRes.invoices || [];
-                    console.log("Loaded Line Items:", currentLineItems);
-                    console.log("Loaded Invoices:", currentInvoices);
-
-                    // Sync to shared state
-                    if (typeof lineItemsState !== 'undefined') {
-                        lineItemsState.currentLineItems = currentLineItems;
-                        lineItemsState.poNumber = currentPO.po_number;
-                    }
-
-                    // Merge invoice data into milestones for easier display
-                    currentLineItems.forEach(li => {
-                        if (li.milestones) {
-                            li.milestones.forEach(ms => {
-                                // Find the latest invoice for this milestone
-                                const inv = [...currentInvoices].reverse().find(i => i.milestone_id == ms.id);
-                                if (inv) {
-                                    console.log(`Merging invoice ${inv.invoice_no} into milestone ${ms.id}`);
-                                    ms.invoice_no = inv.invoice_no;
-                                    ms.invoice_date = inv.invoice_date;
-                                    ms.invoice_value = (inv.total_value !== undefined && inv.total_value !== null) ? inv.total_value : ms.invoice_value;
-                                    ms.payment_received = (inv.payment_received !== undefined && inv.payment_received !== null) ? inv.payment_received : ms.payment_received;
-                                    ms.pending_amount = (inv.pending_amount !== undefined && inv.pending_amount !== null) ? inv.pending_amount : ms.pending_amount;
-                                    ms.raw_remarks = inv.remarks; // Store raw remarks for form population
-                                    ms.remarks = `Credit Period - ${inv.credit_period || 0} Status - ${inv.status || 'Pending'} Remarks - ${inv.remarks || ''}`;
-                                    ms.status = inv.status || 'Pending';
-                                    ms.credit_period = inv.credit_period || 0;
-                                }
-                            });
-                        }
-                    });
-
-                    // Update Status Badge if it exists
-                    const indicator = document.getElementById('bgStatusIndicator');
-                    if (indicator && indicator.style.display === 'flex') {
-                        // It's already showing as filled, we don't need to change display here
-                    }
-
-                    // Automated Status Logic
-                    const bgNum = document.getElementById('m_bg_number').value.trim();
-                    const bgStatusEl = document.getElementById('m_bg_status');
-                    if (!bgNum) {
-                        bgStatusEl.value = 'Draft';
-                    } else {
-                        const endDateVal = document.getElementById('m_bg_end_date').value; // format DD/MM/YYYY
-                        if (endDateVal) {
-                            const [d, m, y] = endDateVal.split('/').map(Number);
-                            const endDate = new Date(y, m - 1, d);
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            bgStatusEl.value = (endDate >= today) ? 'Active' : 'Expired';
-                        }
-                    }
-                    renderTable();
-                } else if (targetNum) {
-                    alert('Purchase Order "' + targetNum + '" not found.');
-                }
-            } catch (err) {
-                console.error('Error loading PO details:', err);
-            }
-        }
-
         // Add Enter-to-search functionality
-        document.getElementById('display_po_number').addEventListener('keypress', (e) => {
+        document.getElementById('li_display_po_number').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const newNum = e.target.value.trim();
-                if (newNum) loadPODetails(newNum);
+                if (newNum) {
+                    window.location.href = `po-line-items.html?po_number=${encodeURIComponent(newNum)}`;
+                }
             }
         });
 
-        if (poNumber) loadPODetails();
-
-        function calculateCycleValue() {
-            const qty = parseFloat(document.getElementById('ms_quantity').value) || 0;
-            const price = parseFloat(document.getElementById('ms_unit_price').value) || 0;
-            const cyclePct = parseFloat(document.getElementById('ms_payment_cycle').value) || 100;
-            const value = (qty * price * cyclePct) / 100;
-            document.getElementById('ms_cycle_value').value = value.toFixed(2);
+        // Add input listeners for cycle value calculation (proxied to shared logic)
+        if (typeof calculateMsCycleValue !== 'undefined') {
+            document.getElementById('ms_quantity').addEventListener('input', calculateMsCycleValue);
+            document.getElementById('ms_unit_price').addEventListener('input', calculateMsCycleValue);
+            document.getElementById('ms_payment_cycle').addEventListener('change', calculateMsCycleValue);
         }
 
-        document.getElementById('ms_quantity').addEventListener('input', calculateCycleValue);
-        document.getElementById('ms_unit_price').addEventListener('input', calculateCycleValue);
-        document.getElementById('ms_payment_cycle').addEventListener('change', calculateCycleValue);
+        // Initial Load
+        if (poNumber && typeof loadLineItemData !== 'undefined') {
+            loadLineItemData();
+        }
 
-        function saveLineItem() {
-            const li = editingItemId ? currentLineItems.find(item => item.id == editingItemId) : null;
-            const existingMs = (li && li.milestones && li.milestones.length > 0) ? li.milestones[0] : {};
-
-            const lineItem = {
-                id: editingItemId,
-                line_item_no: document.getElementById('line_item_no').value,
-                line_item_type: document.getElementById('line_item_type').value,
-                description: document.getElementById('description').value,
-                quantity: document.getElementById('li_quantity').value,
-                gst_rate: document.getElementById('gst_rate').value,
-                hsn_sac_code: document.getElementById('hsn_sac_code').value,
-                milestones: [
-                    {
-                        id: existingMs.id || null,
-                        milestone_name: document.getElementById('ms_name').value,
-                        quantity: document.getElementById('ms_quantity').value,
-                        unit_price: document.getElementById('ms_unit_price').value,
-                        payment_cycle_pct: document.getElementById('ms_payment_cycle').value,
-                        cycle_value: document.getElementById('ms_cycle_value').value,
-                        documents: document.getElementById('ms_documents').value,
-                        payment_terms: document.getElementById('ms_payment_terms').value,
-                        delivery_date: `${document.getElementById('ms_year').value}-${document.getElementById('ms_month').value.padStart(2, '0')}-${document.getElementById('ms_day').value.padStart(2, '0')}`,
-                        // PRESERVE EXISTING BILLING DATA
-                        invoice_no: existingMs.invoice_no || null,
-                        invoice_date: existingMs.invoice_date || null,
-                        invoice_value: existingMs.invoice_value || 0,
-                        payment_received: existingMs.payment_received || 0,
-                        pending_amount: existingMs.pending_amount || 0,
-                        remarks: existingMs.remarks || null
-                    }
-                ]
-            };
-
-            if (editingItemId) {
-                const idx = currentLineItems.findIndex(item => item.id == editingItemId);
-                if (idx !== -1) currentLineItems[idx] = lineItem;
-            } else {
-                currentLineItems.push(lineItem);
+        // Global function for payment details
+        function handlePaymentButtonClick() {
+            const currentPoNum = document.getElementById('li_display_po_number').value || poNumber;
+            if (!currentPoNum) {
+                alert('Please search for a PO first.');
+                return;
             }
-            renderTable();
+            window.location.href = `payments.html?po_number=${encodeURIComponent(currentPoNum)}`;
         }
 
-        let editingItemId = null;
-
-        function renderTable() {
-            const tbody = document.getElementById('summaryTableBody');
-            tbody.innerHTML = '';
-
-            // Toggle Save Button
-            const saveDbBtn = document.getElementById('btnSaveItemsToDB');
-            if (saveDbBtn) {
-                saveDbBtn.disabled = (currentLineItems.length === 0);
-            }
-
-            currentLineItems.forEach((li, idx) => {
-                li.milestones.forEach(ms => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${li.line_item_no || (idx + 1)}</td>
-                        <td>${li.description}</td>
-                        <td>${li.quantity}</td>
-                        <td>${ms.cycle_value}</td>
-                        <td>${ms.milestone_name}</td>
-                        <td>${li.payment_terms || ms.payment_terms || '-'}</td>
-                        <td>${li.documents || ms.documents || '-'}</td>
-                        <td>${ms.delivery_date}</td>
-                        <td>${ms.invoice_no || '-'}</td>
-                        <td>${ms.invoice_date || '-'}</td>
-                        <td>${(ms.invoice_value !== null && ms.invoice_value !== undefined) ? parseFloat(ms.invoice_value).toFixed(2) : '-'}</td>
-                        <td>${(ms.payment_received !== null && ms.payment_received !== undefined) ? parseFloat(ms.payment_received).toFixed(2) : '-'}</td>
-                        <td>${(ms.pending_amount !== null && ms.pending_amount !== undefined) ? parseFloat(ms.pending_amount).toFixed(2) : '-'}</td>
-                        <td>${ms.remarks || '-'}</td>
-                        <td>
-                            <button onclick="editItem(${li.id})" class="btn-po" style="min-width:auto; padding:0.25rem 0.5rem; background:#0288d1; font-size:0.7rem; margin-bottom: 2px;">Edit</button>
-                            <button onclick="deleteItem(${li.id})" class="btn-po" style="min-width:auto; padding:0.25rem 0.5rem; background:#d32f2f; font-size:0.7rem;">Del</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            });
+        function openBillingModal() {
+            const currentPoNum = document.getElementById('li_display_po_number').value || poNumber;
+            window.location.href = 'billing.html?po_number=' + encodeURIComponent(currentPoNum);
         }
-
-        function editItem(id) {
-            const li = currentLineItems.find(item => item.id == id);
-            if (!li) return;
-
-            editingItemId = id;
-            document.getElementById('line_item_no').value = li.line_item_no || '';
-            document.getElementById('line_item_type').value = li.line_item_type || 'Software';
-            document.getElementById('description').value = li.description || '';
-            document.getElementById('li_quantity').value = li.quantity || 1;
-            document.getElementById('gst_rate').value = li.gst_rate || 18;
-            document.getElementById('hsn_sac_code').value = li.hsn_sac_code || '';
-
-            if (li.milestones && li.milestones.length > 0) {
-                const ms = li.milestones[0];
-                document.getElementById('ms_name').value = ms.milestone_name || '';
-                document.getElementById('ms_quantity').value = ms.quantity || 1;
-                document.getElementById('ms_unit_price').value = ms.unit_price || 0;
-                document.getElementById('ms_payment_cycle').value = ms.payment_cycle_pct || 100;
-                document.getElementById('ms_cycle_value').value = ms.cycle_value || 0;
-                document.getElementById('ms_documents').value = ms.documents || '';
-                document.getElementById('ms_payment_terms').value = ms.payment_terms || '';
-
-                if (ms.delivery_date) {
-                    const parts = ms.delivery_date.split('-');
-                    if (parts.length === 3) {
-                        document.getElementById('ms_year').value = parseInt(parts[0]);
-                        document.getElementById('ms_month').value = parseInt(parts[1]);
-                        document.getElementById('ms_day').value = parseInt(parts[2]);
-                    }
-                }
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        async function deleteItem(id) {
-            if (!confirm('Are you sure you want to delete this line item?')) return;
-            try {
-                const res = await api.delete(`/line-items/${encodeURIComponent(id)}`);
-                if (!res.error) {
-                    loadPODetails();
-                } else {
-                    alert('Error: ' + res.error);
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        async function saveToDB() {
-            if (!poNumber) return alert('No PO Number');
-
-            const existingLi = currentLineItems.find(item => item.id == editingItemId);
-            const existingMs = (existingLi && existingLi.milestones && existingLi.milestones.length > 0) ? existingLi.milestones[0] : {};
-
-            const lineItem = {
-                line_item_no: document.getElementById('line_item_no').value,
-                line_item_type: document.getElementById('line_item_type').value,
-                description: document.getElementById('description').value,
-                quantity: document.getElementById('li_quantity').value,
-                gst_rate: document.getElementById('gst_rate').value,
-                hsn_sac_code: document.getElementById('hsn_sac_code').value,
-                milestones: [
-                    {
-                        id: existingMs.id || null,
-                        milestone_name: document.getElementById('ms_name').value,
-                        quantity: document.getElementById('ms_quantity').value,
-                        unit_price: document.getElementById('ms_unit_price').value,
-                        payment_cycle_pct: document.getElementById('ms_payment_cycle').value,
-                        cycle_value: document.getElementById('ms_cycle_value').value,
-                        documents: document.getElementById('ms_documents').value,
-                        payment_terms: document.getElementById('ms_payment_terms').value,
-                        delivery_date: `${document.getElementById('ms_year').value}-${document.getElementById('ms_month').value.padStart(2, '0')}-${document.getElementById('ms_day').value.padStart(2, '0')}`,
-                        // PRESERVE EXISTING BILLING DATA
-                        invoice_no: existingMs.invoice_no || null,
-                        invoice_date: existingMs.invoice_date || null,
-                        invoice_value: existingMs.invoice_value || 0,
-                        payment_received: existingMs.payment_received || 0,
-                        pending_amount: existingMs.pending_amount || 0,
-                        remarks: existingMs.remarks || null
-                    }
-                ]
-            };
-
-            try {
-                let res;
-                if (editingItemId) {
-                    res = await api.put(`/line-items/${editingItemId}`, lineItem);
-                } else {
-                    res = await api.post(`/purchase-orders/${encodeURIComponent(poNumber)}/line-items`, lineItem);
-                }
-
-                if (!res.error) {
-                    alert('Saved successfully!');
-                    editingItemId = null;
-                    // Reset form fields
-                    document.getElementById('description').value = '';
-                    document.getElementById('ms_name').value = '';
-                    loadPODetails();
-                } else {
-                    alert('Error: ' + res.error);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Failed to save to database');
-            }
-        }
-
-        loadPODetails();
     </script>
     <div id="bgFdModal" class="li-modal-overlay">
         <div class="li-modal-card" style="width: 100%; max-width: 1100px; max-height: 90vh;">
