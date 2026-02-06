@@ -344,16 +344,15 @@ function renderLineItemsTable() {
 
     lineItemsState.currentLineItems.forEach((li, idx) => {
         if (!li.milestones || li.milestones.length === 0) {
-            // Should not happen but for safety
             const tr = document.createElement('tr');
             tr.innerHTML = `
                   <td>${li.line_item_no || (idx + 1)}</td>
                   <td>${li.description}</td>
                   <td>${li.quantity}</td>
-                  <td colspan="5">No milestones</td>
+                  <td colspan="11">No milestones defined for this item</td>
                   <td>
-                      <button onclick="editLineItem('${li.id}')" class="btn-po-mini">Edit line item in the grid</button>
-                      <button onclick="deleteLineItem('${li.id}')" class="btn-po-mini btn-danger">Del</button>
+                      <button onclick="editLineItem('${li.id}')" class="btn-utility btn-mini">Edit</button>
+                      <button onclick="deleteLineItem('${li.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>
                   </td>
               `;
             tbody.appendChild(tr);
@@ -363,18 +362,32 @@ function renderLineItemsTable() {
         li.milestones.forEach((ms, msIdx) => {
             const tr = document.createElement('tr');
             tr.setAttribute('data-row-id', `${li.id}_${ms.id}`);
+
+            // Highlight if editing
+            if (lineItemsState.editingItemId == li.id && lineItemsState.editingMilestoneId == ms.id) {
+                tr.classList.add('editing-highlight');
+            }
+
             tr.innerHTML = `
                 <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
-                <td>${msIdx === 0 ? li.description : ''}</td>
-                <td>${ms.quantity}</td>
-                <td>${ms.milestone_name}</td>
+                <td style="text-align: left;">${msIdx === 0 ? li.description : ''}</td>
+                <td>${msIdx === 0 ? li.quantity : ''}</td>
                 <td>${ms.cycle_value}</td>
+                <td>${ms.milestone_name}</td>
                 <td>${ms.payment_terms || '-'}</td>
                 <td>${ms.documents || '-'}</td>
                 <td>${ms.delivery_date}</td>
+                <td>${ms.invoice_no || '-'}</td>
+                <td>${ms.invoice_date || '-'}</td>
+                <td>${ms.invoice_value ? parseFloat(ms.invoice_value).toFixed(2) : '-'}</td>
+                <td>${ms.payment_received ? parseFloat(ms.payment_received).toFixed(2) : '-'}</td>
+                <td>${ms.pending_amount ? parseFloat(ms.pending_amount).toFixed(2) : '-'}</td>
+                <td>${ms.remarks || '-'}</td>
                 <td style="text-align: right;">
-                    <button onclick="editLineItem('${li.id}', '${ms.id}')" class="btn-utility btn-mini">Edit</button>
-                    <button onclick="deleteLineItem('${li.id}', '${ms.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>
+                    <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                        <button onclick="editLineItem('${li.id}', '${ms.id}')" class="btn-utility btn-mini">Edit</button>
+                        <button onclick="deleteLineItem('${li.id}', '${ms.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -659,7 +672,12 @@ async function saveLineItemToDB(stayOnIdentification = false) {
     }
 
     try {
-        if (!lineItemsState.poNumber) throw new Error('No PO Number');
+        console.log("[saveLineItemToDB] Starting save process...", {
+            poNumber: lineItemsState.poNumber,
+            isEditing: lineItemsState.editingItemId
+        });
+
+        if (!lineItemsState.poNumber) throw new Error('No PO Number found in state.');
 
         // ========== STEP 1: Validate Line Item Identification & Specs fields FIRST ==========
         const liNo = document.getElementById('li_line_item_no').value.trim();
