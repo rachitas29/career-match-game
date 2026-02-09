@@ -12,7 +12,8 @@ let lineItemsState = {
     deletedLineItemIds: [], // Track IDs to delete from DB on final save
     hasUnsavedChanges: false, // Tracks if anything in the grid has changed since last save
     saveButtonUnlocked: false, // Locked by default, unlocked by Close attempt
-    poExistsInDB: false // Tracks if the PO exists in the database
+    poExistsInDB: false, // Tracks if the PO exists in the database
+    hasDbLineItems: false // Tracks if at least one line item exists in the database for this PO
 };
 
 // Expose line items for saving via main form
@@ -330,8 +331,13 @@ async function loadLineItemData() {
             // For new POs, this may return an error - just continue with empty list
             console.log('[LineItems] No line items found or error:', lineItemsRes.error);
             lineItemsState.currentLineItems = [];
+            lineItemsState.hasDbLineItems = false;
         } else {
             lineItemsState.currentLineItems = lineItemsRes.line_items || [];
+            // Check if any line items have real DB IDs (not temp IDs)
+            const dbItems = lineItemsState.currentLineItems.filter(li => li.id && !li.id.toString().startsWith('temp_'));
+            lineItemsState.hasDbLineItems = dbItems.length > 0;
+            console.log('[LineItems] Has DB line items:', lineItemsState.hasDbLineItems, 'Count:', dbItems.length);
         }
 
         // Reset dirty flag after fresh load
@@ -364,15 +370,15 @@ function renderLineItemsTable() {
     const tbody = document.getElementById('li_summaryTableBody');
     tbody.innerHTML = '';
 
-    // Toggle Save Button - enable only when at least one line item exists in the grid
+    // Toggle Save Button - enable only when at least one line item exists in the DATABASE for this PO
     const saveDbBtn = document.getElementById('btnSaveItemsToDB');
     if (saveDbBtn) {
-        const hasLineItems = lineItemsState.currentLineItems.length > 0;
-        saveDbBtn.disabled = !hasLineItems;
+        // Only enable if there are line items already saved to the database
+        saveDbBtn.disabled = !lineItemsState.hasDbLineItems;
 
         // Update button tooltip
-        if (!hasLineItems) {
-            saveDbBtn.title = 'Add at least one line item first';
+        if (!lineItemsState.hasDbLineItems) {
+            saveDbBtn.title = 'Save the PO first to enable saving line items to database';
         } else {
             saveDbBtn.title = 'Save all line items to database';
         }
