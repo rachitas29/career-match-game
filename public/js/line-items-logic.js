@@ -133,15 +133,8 @@ async function commitPOToDB() {
         poNumber: lineItemsState.poNumber,
         itemCount: lineItemsState.currentLineItems.length,
         hasUnsavedChanges: lineItemsState.hasUnsavedChanges,
-        poExistsInDB: lineItemsState.poExistsInDB,
         deletedIds: lineItemsState.deletedLineItemIds
     });
-
-    // 0. Check if PO exists in the database first
-    if (!lineItemsState.poExistsInDB) {
-        alert('The Purchase Order has not been saved to the database yet.\n\nPlease go to "New Purchase Order" or "Edit Purchase Order" page and save the PO first before adding line items.');
-        return;
-    }
 
     // 1. Check if the grid has any items at all OR if there are pending deletions
     const hasPendingDeletions = lineItemsState.deletedLineItemIds && lineItemsState.deletedLineItemIds.length > 0;
@@ -311,37 +304,36 @@ async function loadLineItemData() {
     try {
         console.log(`[LineItems] Fetching items for ${lineItemsState.poNumber}...`);
 
-        // First, check if the PO exists in the database
+        // Check if the PO exists in the database (for display purposes)
         const poRes = await api.get(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber.trim())}`);
 
-        if (poRes.error || !poRes.purchase_order) {
-            console.log('[LineItems] PO does not exist in database');
+        if (poRes.purchase_order) {
+            lineItemsState.poExistsInDB = true;
+            lineItemsState.currentPO = poRes.purchase_order;
+            console.log('[LineItems] PO exists in database:', lineItemsState.poNumber);
+
+            // Update display fields with PO data
+            const dateField = document.getElementById('li_display_po_date');
+            if (dateField && lineItemsState.currentPO.po_date) {
+                dateField.value = lineItemsState.currentPO.po_date;
+            }
+        } else {
+            console.log('[LineItems] PO does not exist in database yet (new PO)');
             lineItemsState.poExistsInDB = false;
             lineItemsState.currentPO = null;
-            renderLineItemsTable(); // Update button state
-            return;
         }
 
-        lineItemsState.poExistsInDB = true;
-        lineItemsState.currentPO = poRes.purchase_order;
-        console.log('[LineItems] PO exists in database:', lineItemsState.poNumber);
-
-        // Update display fields with PO data
-        const dateField = document.getElementById('li_display_po_date');
-        if (dateField && lineItemsState.currentPO.po_date) {
-            dateField.value = lineItemsState.currentPO.po_date;
-        }
-
-        // Now fetch line items
+        // Fetch line items (may be empty for new POs)
         const lineItemsRes = await api.get(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber.trim())}/line-items`);
 
         if (lineItemsRes.error) {
-            console.error('[LineItems] API Error:', lineItemsRes.error);
-            alert('Failed to load line items: ' + lineItemsRes.error);
-            return;
+            // For new POs, this may return an error - just continue with empty list
+            console.log('[LineItems] No line items found or error:', lineItemsRes.error);
+            lineItemsState.currentLineItems = [];
+        } else {
+            lineItemsState.currentLineItems = lineItemsRes.line_items || [];
         }
 
-        lineItemsState.currentLineItems = lineItemsRes.line_items || [];
         // Reset dirty flag after fresh load
         lineItemsState.hasUnsavedChanges = false;
         lineItemsState.saveButtonUnlocked = false;
@@ -372,23 +364,15 @@ function renderLineItemsTable() {
     const tbody = document.getElementById('li_summaryTableBody');
     tbody.innerHTML = '';
 
-    // Toggle Save Button based on: 
-    // 1. PO must exist in DB
-    // 2. Must have at least one line item
-    // 3. Must have unsaved changes
+    // Toggle Save Button - enable only when at least one line item exists in the grid
     const saveDbBtn = document.getElementById('btnSaveItemsToDB');
     if (saveDbBtn) {
         const hasLineItems = lineItemsState.currentLineItems.length > 0;
-        const canSave = lineItemsState.poExistsInDB && hasLineItems && lineItemsState.hasUnsavedChanges;
-        saveDbBtn.disabled = !canSave;
+        saveDbBtn.disabled = !hasLineItems;
 
-        // Update button tooltip to explain why it's disabled
-        if (!lineItemsState.poExistsInDB) {
-            saveDbBtn.title = 'PO must be saved first before saving line items';
-        } else if (!hasLineItems) {
+        // Update button tooltip
+        if (!hasLineItems) {
             saveDbBtn.title = 'Add at least one line item first';
-        } else if (!lineItemsState.hasUnsavedChanges) {
-            saveDbBtn.title = 'No unsaved changes';
         } else {
             saveDbBtn.title = 'Save all line items to database';
         }
