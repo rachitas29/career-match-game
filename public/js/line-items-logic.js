@@ -127,6 +127,14 @@ function closeLineItemsModal() {
 }
 
 async function commitPOToDB() {
+    console.log('[DEBUG] commitPOToDB called');
+    console.log('[DEBUG] Current state:', {
+        poNumber: lineItemsState.poNumber,
+        itemCount: lineItemsState.currentLineItems.length,
+        hasUnsavedChanges: lineItemsState.hasUnsavedChanges,
+        deletedIds: lineItemsState.deletedLineItemIds
+    });
+
     // 1. Check if the grid has any items at all OR if there are pending deletions
     const hasPendingDeletions = lineItemsState.deletedLineItemIds && lineItemsState.deletedLineItemIds.length > 0;
 
@@ -149,9 +157,6 @@ async function commitPOToDB() {
 
         for (const ms of li.milestones) {
             const hasName = ms.milestone_name && ms.milestone_name.trim() !== "";
-            // const hasValue = ms.cycle_value && parseFloat(ms.cycle_value) > 0; // Relaxed?
-            // Keeping value check as it seems critical, but removing terms/docs as requested previously
-
             if (!hasName) {
                 alert(`Missing Milestone Name in Line Item: ${li.line_item_no}.`);
                 return;
@@ -169,9 +174,12 @@ async function commitPOToDB() {
         let successCount = 0;
         let failCount = 0;
 
+        console.log('[DEBUG] Starting to process', lineItemsState.currentLineItems.length, 'line items');
+
         // 3. Process each line item
         for (const li of lineItemsState.currentLineItems) {
             const isNew = !li.id || li.id.toString().startsWith('temp_');
+            console.log('[DEBUG] Processing line item:', li.line_item_no, 'isNew:', isNew, 'id:', li.id);
 
             const payload = {
                 line_item_no: li.line_item_no,
@@ -190,7 +198,6 @@ async function commitPOToDB() {
                     documents: m.documents,
                     payment_terms: m.payment_terms,
                     delivery_date: m.delivery_date,
-                    // Preserve billing fields if they exist
                     invoice_no: m.invoice_no,
                     invoice_date: m.invoice_date,
                     invoice_value: m.invoice_value,
@@ -202,45 +209,50 @@ async function commitPOToDB() {
                 }))
             };
 
+            console.log('[DEBUG] Payload being sent:', JSON.stringify(payload, null, 2));
+
             let res;
             if (isNew) {
-                res = await api.post(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber)}/line-items`, payload);
+                const endpoint = `/purchase-orders/${encodeURIComponent(lineItemsState.poNumber)}/line-items`;
+                console.log('[DEBUG] POST to:', endpoint);
+                res = await api.post(endpoint, payload);
             } else {
-                res = await api.put(`/line-items/${li.id}`, payload);
+                const endpoint = `/line-items/${li.id}`;
+                console.log('[DEBUG] PUT to:', endpoint);
+                res = await api.put(endpoint, payload);
             }
+
+            console.log('[DEBUG] API Response:', res);
 
             if (res && (res.id || res.message)) {
                 successCount++;
-                // Update local ID if it was new
                 if (isNew && res.id) {
                     li.id = res.id;
-                    // We might need to reload milestones to get their new IDs, 
-                    // but for now let's just mark it as not-temp.
+                    console.log('[DEBUG] Updated temp ID to real ID:', res.id);
                 }
             } else {
                 failCount++;
-                console.error("Failed to save LI:", li, res);
+                console.error("[DEBUG] Failed to save LI:", li, res);
             }
         }
 
         // Handle deletions
         if (lineItemsState.deletedLineItemIds.length > 0) {
+            console.log('[DEBUG] Processing deletions:', lineItemsState.deletedLineItemIds);
             for (const id of lineItemsState.deletedLineItemIds) {
                 await api.delete(`/line-items/${id}`);
             }
-            lineItemsState.deletedLineItemIds = []; // Clear
+            lineItemsState.deletedLineItemIds = [];
         }
 
+        console.log('[DEBUG] Sync complete. Success:', successCount, 'Failed:', failCount);
         alert(`Sync Complete!\nSaved/Updated: ${successCount}\nFailed: ${failCount}`);
 
-        // Reset dirty flag
         lineItemsState.hasUnsavedChanges = false;
-
-        // Reload to ensure all IDs are synced
         window.location.reload();
 
     } catch (error) {
-        console.error("Error committing PO:", error);
+        console.error("[DEBUG] Error committing PO:", error);
         alert("Error saving to database: " + error.message);
     } finally {
         if (btn) {
