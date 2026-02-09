@@ -129,22 +129,29 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
         }
 
         .summary-table th {
             background: #4db6ac;
             color: white;
-            padding: 1rem;
-            font-size: 0.9rem;
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
             text-align: center;
             border: 1px solid #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .summary-table td {
-            padding: 0.75rem;
+            padding: 0.5rem 0.25rem;
             border: 1px solid #e0f2f1;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .action-btns {
@@ -372,21 +379,21 @@
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>Line Item No</th>
+                    <th>#</th>
                     <th>Description</th>
-                    <th>Quantity</th>
+                    <th>Qty</th>
                     <th>Cycle Value</th>
-                    <th>Mile Stone</th>
+                    <th>Milestone</th>
                     <th>Payment Terms</th>
-                    <th>Document to be submitted</th>
-                    <th>Expected Delivery Time</th>
-                    <th>Invoice No</th>
-                    <th>Invoice Date</th>
-                    <th>Invoice Value</th>
-                    <th>Payment Rec</th>
-                    <th>Pending Amt</th>
+                    <th>Documents</th>
+                    <th>Timeline</th>
+                    <th>Invoice#</th>
+                    <th>Inv Date</th>
+                    <th>Inv Value</th>
+                    <th>Pmt Rec</th>
+                    <th>Pending</th>
                     <th>Remarks</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="li_summaryTableBody">
