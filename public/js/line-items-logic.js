@@ -661,7 +661,12 @@ let tempLineItemIdCounter = 1; // Temporary ID counter for in-memory items
 
 // Save line item to memory only (not to database)
 async function saveLineItemToDB(stayOnIdentification = false) {
-    if (isSavingLineItem) return;
+    console.log('[DEBUG] saveLineItemToDB called');
+
+    if (isSavingLineItem) {
+        console.log('[DEBUG] BLOCKED: Already saving, returning');
+        return;
+    }
     isSavingLineItem = true;
 
     const saveBtn = document.getElementById('mainSaveBtn');
@@ -672,27 +677,32 @@ async function saveLineItemToDB(stayOnIdentification = false) {
     }
 
     try {
-        console.log("[saveLineItemToDB] Starting save process...", {
+        console.log("[DEBUG] Step 1: Checking PO Number...", {
             poNumber: lineItemsState.poNumber,
             isEditing: lineItemsState.editingItemId
         });
 
-        if (!lineItemsState.poNumber) throw new Error('No PO Number found in state.');
+        if (!lineItemsState.poNumber) {
+            alert('No PO Number found. Cannot save.');
+            throw new Error('No PO Number found in state.');
+        }
 
         // ========== STEP 1: Validate Line Item Identification & Specs fields FIRST ==========
-        const liNo = document.getElementById('li_line_item_no').value.trim();
-        const liDesc = document.getElementById('li_description').value.trim();
-        const hsnValue = document.getElementById('li_hsn_sac_code').value.trim();
-        const liQty = parseFloat(document.getElementById('li_li_quantity').value) || 0;
+        const liNo = document.getElementById('li_line_item_no')?.value?.trim() || '';
+        const liDesc = document.getElementById('li_description')?.value?.trim() || '';
+        const hsnValue = document.getElementById('li_hsn_sac_code')?.value?.trim() || '';
+        const liQty = parseFloat(document.getElementById('li_li_quantity')?.value) || 0;
 
-        if (!liNo) { alert('Field Required: Line#'); return; }
-        if (!liDesc) { alert('Field Required: Project Description / Scope of Work'); return; }
-        if (!hsnValue) { alert('Field Required: HSN/SAC Code'); return; }
-        if (liQty <= 0) { alert('Field Required: Qty (must be greater than 0)'); return; }
+        console.log('[DEBUG] Step 2: Read form values:', { liNo, liDesc, hsnValue, liQty });
+
+        if (!liNo) { alert('Field Required: Line#'); throw new Error('Missing Line#'); }
+        if (!liDesc) { alert('Field Required: Project Description / Scope of Work'); throw new Error('Missing Description'); }
+        if (!hsnValue) { alert('Field Required: HSN/SAC Code'); throw new Error('Missing HSN/SAC'); }
+        if (liQty <= 0) { alert('Field Required: Qty (must be greater than 0)'); throw new Error('Invalid Qty'); }
 
         if (hsnValue.length !== 8 || isNaN(hsnValue)) {
             alert('HSN/SAC Code must be exactly 8 digits.');
-            return;
+            throw new Error('Invalid HSN/SAC format');
         }
 
         // Check for duplicate Line Item Number (in memory)
@@ -703,8 +713,10 @@ async function saveLineItemToDB(stayOnIdentification = false) {
 
         if (duplicate) {
             alert(`Line Item Number "${liNo}" already exists! Please use a unique Line Item #.`);
-            return;
+            throw new Error('Duplicate Line Item Number');
         }
+
+        console.log('[DEBUG] Step 3: Validation passed. Building milestones...');
 
         // ========== STEP 2: Validate Financial Milestone Details ==========
         const finalMilestones = [...lineItemsState.stagedMilestones];
@@ -734,13 +746,13 @@ async function saveLineItemToDB(stayOnIdentification = false) {
                 finalMilestones.push(currentMs);
             } else {
                 alert('You have unsaved details in the Financial Milestone section. Please either clear them or click "+ Add Another Milestone" to include them.');
-                return;
+                throw new Error('Incomplete milestone details');
             }
         }
 
         if (finalMilestones.length === 0) {
             alert('Please add at least one milestone using the "+ Add Another Milestone" button.');
-            return;
+            throw new Error('No milestones');
         }
 
         // ========== STEP 3: Validate Integrity (Total Quantity Check) ==========
@@ -748,14 +760,14 @@ async function saveLineItemToDB(stayOnIdentification = false) {
 
         if (totalMilestoneQty <= 0) {
             alert('Milestone Qty cannot be empty. Please ensure at least one milestone has a quantity greater than 0.');
-            return;
+            throw new Error('Invalid milestone qty');
         }
 
         // Allow if total milestone qty <= line item qty (can add more milestones later)
         // Block only if total exceeds line item qty
         if (totalMilestoneQty > liQty) {
             alert(`Error: The sum of all Milestone Quantities (${totalMilestoneQty}) exceeds the Line Item Quantity (${liQty}). Please reduce milestone quantities.`);
-            return;
+            throw new Error('Milestone qty exceeds line item qty');
         }
 
         // ========== STEP 4: Store in memory (not database) ==========
@@ -798,15 +810,20 @@ async function saveLineItemToDB(stayOnIdentification = false) {
             }))
         };
 
+        console.log('[DEBUG] Step 4: Storing line item in memory:', lineItem);
+        console.log('[DEBUG] Current items before store:', lineItemsState.currentLineItems.length);
+
         if (lineItemsState.editingItemId) {
             // Update existing item in memory
             const idx = lineItemsState.currentLineItems.findIndex(item => item.id == lineItemsState.editingItemId);
             if (idx !== -1) {
                 lineItemsState.currentLineItems[idx] = lineItem;
+                console.log('[DEBUG] Updated existing item at index:', idx);
             }
         } else {
             // Add new item to memory
             lineItemsState.currentLineItems.push(lineItem);
+            console.log('[DEBUG] Added new item. Total items now:', lineItemsState.currentLineItems.length);
         }
 
         // Determine if we should keep the form open for more milestones
