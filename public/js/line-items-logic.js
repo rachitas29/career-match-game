@@ -224,7 +224,12 @@ async function commitPOToDB() {
 
             console.log('[DEBUG] API Response:', res);
 
-            if (res && (res.id || res.message)) {
+            if (res && res.error) {
+                // API returned an error
+                failCount++;
+                console.error("[DEBUG] API Error for LI:", li.line_item_no, res.error);
+                alert(`Error saving line item ${li.line_item_no}: ${res.error}`);
+            } else if (res && (res.id || res.message)) {
                 successCount++;
                 if (isNew && res.id) {
                     li.id = res.id;
@@ -232,7 +237,7 @@ async function commitPOToDB() {
                 }
             } else {
                 failCount++;
-                console.error("[DEBUG] Failed to save LI:", li, res);
+                console.error("[DEBUG] Unexpected response for LI:", li, res);
             }
         }
 
