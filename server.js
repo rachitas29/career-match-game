@@ -567,50 +567,82 @@ app.post('/api/purchase-orders/:po_number/line-items', (req, res) => {
         return res.status(400).json({ error: 'Qty cannot be empty. Please ensure quantity is greater than 0.' });
     }
 
-    db.transaction((err, tx, commit, rollback) => {
-        if (err) return res.status(500).json({ error: 'Failed to start transaction' });
+    // First, ensure the PO exists in the database (auto-create if not)
+    db.get('SELECT po_number FROM purchase_orders WHERE po_number = ?', [po_number], (err, existingPo) => {
+        if (err) {
+            console.error('Error checking PO existence:', err.message);
+            return res.status(500).json({ error: 'Database error: ' + err.message });
+        }
 
-        const poSql = `INSERT INTO po_line_items (po_number, line_item_no, line_item_type, description, quantity, gst_rate, hsn_sac_code) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-        tx.run(poSql, [po_number, line_item_no, line_item_type, description, qty, gst_rate, hsn_sac_code], function (err) {
-            if (err) {
-                return rollback(err, () => res.status(500).json({ error: err.message }));
-            }
+        const proceedWithLineItem = () => {
+            db.transaction((err, tx, commit, rollback) => {
+                if (err) return res.status(500).json({ error: 'Failed to start transaction' });
 
-            const lineItemId = this.lastID;
-            if (milestones && milestones.length > 0) {
-                const milestoneSql = `INSERT INTO po_milestones (
-                    line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, 
-                    cycle_value, documents, payment_terms, delivery_date, 
-                    invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks,
-                    status, credit_period
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const poSql = `INSERT INTO po_line_items (po_number, line_item_no, line_item_type, description, quantity, gst_rate, hsn_sac_code) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                tx.run(poSql, [po_number, line_item_no, line_item_type, description, qty, gst_rate, hsn_sac_code], function (err) {
+                    if (err) {
+                        console.error('Error inserting line item:', err.message);
+                        return rollback(err, () => res.status(500).json({ error: err.message }));
+                    }
 
-                let completed = 0;
-                let errorOccurred = false;
+                    const lineItemId = this.lastID;
+                    if (milestones && milestones.length > 0) {
+                        const milestoneSql = `INSERT INTO po_milestones (
+                            line_item_id, milestone_name, quantity, unit_price, payment_cycle_pct, 
+                            cycle_value, documents, payment_terms, delivery_date, 
+                            invoice_no, invoice_date, invoice_value, payment_received, pending_amount, remarks,
+                            status, credit_period
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-                milestones.forEach(m => {
-                    const mParams = [
-                        lineItemId, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
-                        m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
-                        m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
-                        m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
-                        m.status || 'Pending', m.credit_period || 0
-                    ];
-                    tx.run(milestoneSql, mParams, (err) => {
-                        if (err && !errorOccurred) {
-                            errorOccurred = true;
-                            return rollback(err, () => res.status(500).json({ error: err.message }));
-                        }
-                        completed++;
-                        if (completed === milestones.length && !errorOccurred) {
-                            commit(() => res.json({ message: 'Line item and milestones saved', id: lineItemId }));
-                        }
-                    });
+                        let completed = 0;
+                        let errorOccurred = false;
+
+                        milestones.forEach(m => {
+                            const mParams = [
+                                lineItemId, m.milestone_name, m.quantity, m.unit_price, m.payment_cycle_pct,
+                                m.cycle_value, m.documents, m.payment_terms, m.delivery_date,
+                                m.invoice_no || null, m.invoice_date || null, m.invoice_value || 0,
+                                m.payment_received || 0, m.pending_amount || 0, m.remarks || null,
+                                m.status || 'Pending', m.credit_period || 0
+                            ];
+                            tx.run(milestoneSql, mParams, (err) => {
+                                if (err && !errorOccurred) {
+                                    errorOccurred = true;
+                                    console.error('Error inserting milestone:', err.message);
+                                    return rollback(err, () => res.status(500).json({ error: err.message }));
+                                }
+                                completed++;
+                                if (completed === milestones.length && !errorOccurred) {
+                                    commit(() => res.json({ message: 'Line item and milestones saved', id: lineItemId }));
+                                }
+                            });
+                        });
+                    } else {
+                        commit(() => res.json({ message: 'Line item saved', id: lineItemId }));
+                    }
                 });
-            } else {
-                commit(() => res.json({ message: 'Line item saved', id: lineItemId }));
-            }
-        });
+            });
+        };
+
+        if (!existingPo) {
+            // PO doesn't exist - create a minimal stub entry
+            console.log(`PO ${po_number} does not exist, creating stub entry...`);
+            const today = new Date().toISOString().split('T')[0];
+            db.run(
+                'INSERT INTO purchase_orders (po_number, po_date, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
+                [po_number, today],
+                function (err) {
+                    if (err) {
+                        console.error('Error creating PO stub:', err.message);
+                        return res.status(500).json({ error: 'Failed to create PO: ' + err.message });
+                    }
+                    console.log(`Created stub PO: ${po_number}`);
+                    proceedWithLineItem();
+                }
+            );
+        } else {
+            proceedWithLineItem();
+        }
     });
 });
 
