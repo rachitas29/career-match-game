@@ -391,7 +391,7 @@ function renderLineItemsTable() {
                   <td>${li.line_item_no || (idx + 1)}</td>
                   <td>${li.description}</td>
                   <td>${li.quantity}</td>
-                  <td colspan="11">No milestones defined for this item</td>
+                  <td colspan="11" style="text-align:center; color:#888;">No milestones defined for this item</td>
                   <td>
                       <button onclick="editLineItem('${li.id}')" class="btn-utility btn-mini">Edit</button>
                       <button onclick="deleteLineItem('${li.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>
@@ -414,8 +414,8 @@ function renderLineItemsTable() {
                 <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
                 <td style="text-align: left;">${msIdx === 0 ? li.description : ''}</td>
                 <td>${msIdx === 0 ? li.quantity : ''}</td>
-                <td>${ms.cycle_value}</td>
                 <td>${ms.milestone_name}</td>
+                <td>${ms.cycle_value}</td>
                 <td>${ms.payment_terms || '-'}</td>
                 <td>${ms.documents || '-'}</td>
                 <td>${ms.delivery_date}</td>
