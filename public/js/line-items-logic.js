@@ -2057,6 +2057,10 @@ async function savePayment() {
     // Calculate Pending Amount: (Target - Amt Received + GST Hold Amt)
     const pendingAmount = Math.max(0, target - amountReceived + gstHoldAmt);
 
+    // Calculate Grid Paid Amount: (Amt Received + TDS-IT + TDS-GST + Other Ded)
+    // This value is what shows up in the "Paid" column of the Billing Grid
+    const gridPaidAmount = amountReceived + tdsIncomeAmt + tdsGstAmt + otherDed;
+
     // Collect remaining payment form fields
     const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
     const tdsGstPct = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
@@ -2098,7 +2102,7 @@ async function savePayment() {
             taxable_value: parseFloat(document.getElementById('pay_taxable_val').value) || 0,
             gst_value: parseFloat(document.getElementById('pay_gst_val').value) || 0,
             total_value: parseFloat(document.getElementById('pay_total_val').value) || 0,
-            payment_received: amountReceived,
+            payment_received: gridPaidAmount,
             pending_amount: pendingAmount,
             status: (pendingAmount <= 1) ? 'Paid' : 'Partially Paid',
             remarks: mInv.remarks // Keep original remarks untouched
@@ -2149,7 +2153,7 @@ async function savePayment() {
             lineItemsState.currentLineItems.forEach(li => {
                 li.milestones?.forEach(ms => {
                     if (ms.invoice_no === invoiceNo) {
-                        ms.payment_received = amountReceived;
+                        ms.payment_received = gridPaidAmount;
                         ms.pending_amount = pendingAmount;
                         ms.status = (pendingAmount <= 1) ? 'Paid' : 'Partially Paid';
                         // ms.remarks = cleanRemarks; // REVERTED: Do not update UI with payment remarks
