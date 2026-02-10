@@ -2050,18 +2050,19 @@ async function savePayment() {
     const amountReceived = parseFloat(document.getElementById('pay_amount_received').value) || 0;
     const actualReceivable = parseFloat(document.getElementById('pay_actual_receivable').value) || 0;
     const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
+    const gstHoldAmt = parseFloat(document.getElementById('pay_gst_hold').value) || 0;
+
     const target = actualReceivable - otherDed;
 
     // Calculate Pending Amount: (Target - Amt Received + GST Hold Amt)
     const pendingAmount = Math.max(0, target - amountReceived + gstHoldAmt);
 
-    // Collect all payment form fields
+    // Collect remaining payment form fields
     const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
     const tdsGstPct = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
     const gstHoldPct = parseFloat(document.getElementById('pay_tds_z_pct').value) || 0;
     const tdsIncomeAmt = parseFloat(document.getElementById('pay_tds_income').value) || 0;
     const tdsGstAmt = parseFloat(document.getElementById('pay_tds_gst').value) || 0;
-    const gstHoldAmt = parseFloat(document.getElementById('pay_gst_hold').value) || 0;
     const netReceivable = parseFloat(document.getElementById('pay_receivable').value) || 0;
     const paymentDate = document.getElementById('pay_payment_date').value;
     const paymentMode = document.getElementById('pay_mode').value;
