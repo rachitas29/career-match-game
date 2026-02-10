@@ -388,13 +388,15 @@ function renderLineItemsTable() {
         if (!li.milestones || li.milestones.length === 0) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                  <td>${li.line_item_no || (idx + 1)}</td>
-                  <td>${li.description}</td>
-                  <td>${li.quantity}</td>
-                  <td colspan="11" style="text-align:center; color:#888;">No milestones defined for this item</td>
-                  <td>
-                      <button onclick="editLineItem('${li.id}')" class="btn-utility btn-mini">Edit</button>
-                      <button onclick="deleteLineItem('${li.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>
+                  <td class="col-index">${li.line_item_no || (idx + 1)}</td>
+                  <td class="col-desc" style="text-align: left;">${li.description}</td>
+                  <td class="col-qty">${li.quantity}</td>
+                  <td colspan="5" style="text-align:center; color:#888;">No milestones defined for this item</td>
+                  <td class="col-actions">
+                      <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                          <button onclick="editLineItem('${li.id}')" class="btn-utility btn-mini">Edit</button>
+                          <button onclick="deleteLineItem('${li.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>
+                      </div>
                   </td>
               `;
             tbody.appendChild(tr);
@@ -411,21 +413,15 @@ function renderLineItemsTable() {
             }
 
             tr.innerHTML = `
-                <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
-                <td style="text-align: left;">${msIdx === 0 ? li.description : ''}</td>
-                <td>${msIdx === 0 ? li.quantity : ''}</td>
-                <td>${ms.milestone_name}</td>
-                <td>${ms.cycle_value}</td>
-                <td>${ms.payment_terms || '-'}</td>
-                <td>${ms.documents || '-'}</td>
-                <td>${ms.delivery_date}</td>
-                <td>${ms.invoice_no || '-'}</td>
-                <td>${ms.invoice_date || '-'}</td>
-                <td>${ms.invoice_value ? parseFloat(ms.invoice_value).toFixed(2) : '-'}</td>
-                <td>${ms.payment_received ? parseFloat(ms.payment_received).toFixed(2) : '-'}</td>
-                <td>${ms.pending_amount ? parseFloat(ms.pending_amount).toFixed(2) : '-'}</td>
-                <td>${ms.remarks || '-'}</td>
-                <td style="text-align: right;">
+                <td class="col-index">${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
+                <td class="col-desc" style="text-align: left;">${msIdx === 0 ? li.description : ''}</td>
+                <td class="col-qty">${msIdx === 0 ? li.quantity : ''}</td>
+                <td class="col-milestone">${ms.cycle_value}</td>
+                <td class="col-value">${ms.milestone_name}</td>
+                <td class="col-terms">${ms.payment_terms || '-'}</td>
+                <td class="col-docs">${ms.documents || '-'}</td>
+                <td class="col-timeline">${ms.delivery_date}</td>
+                <td class="col-actions" style="text-align: right;">
                     <div style="display: flex; gap: 4px; justify-content: flex-end;">
                         <button onclick="editLineItem('${li.id}', '${ms.id}')" class="btn-utility btn-mini">Edit</button>
                         <button onclick="deleteLineItem('${li.id}', '${ms.id}')" class="btn-utility btn-mini" style="border-color:#ef4444; color:#ef4444;">Del</button>

@@ -130,12 +130,13 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             table-layout: fixed;
+            /* Crucial for alignment */
         }
 
         .summary-table th {
             background: #4db6ac;
             color: white;
-            padding: 0.5rem 0.25rem;
+            padding: 0.75rem 0.25rem;
             font-size: 0.75rem;
             text-align: center;
             border: 1px solid #ffffff;
@@ -150,8 +151,45 @@
             text-align: center;
             font-size: 0.75rem;
             word-wrap: break-word;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            /* Allow description etc to wrap */
+            vertical-align: middle;
+        }
+
+        /* Specific column widths */
+        .col-index {
+            width: 30px;
+        }
+
+        .col-desc {
+            width: 120px;
+        }
+
+        .col-qty {
+            width: 40px;
+        }
+
+        .col-milestone {
+            width: 100px;
+        }
+
+        .col-value {
+            width: 80px;
+        }
+
+        .col-terms {
+            width: 100px;
+        }
+
+        .col-docs {
+            width: 100px;
+        }
+
+        .col-timeline {
+            width: 85px;
+        }
+
+        .col-actions {
+            width: 90px;
         }
 
         .action-btns {
@@ -379,21 +417,16 @@
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>Milestone</th>
-                    <th>Cycle Value</th>
-                    <th>Payment Terms</th>
-                    <th>Documents</th>
-                    <th>Timeline</th>
-                    <th>Invoice#</th>
-                    <th>Inv Date</th>
-                    <th>Inv Value</th>
-                    <th>Pmt Rec</th>
-                    <th>Pending</th>
-                    <th>Remarks</th>
-                    <th>Actions</th>
+                <tr>
+                    <th class="col-index">#</th>
+                    <th class="col-desc">Description</th>
+                    <th class="col-qty">Qty</th>
+                    <th class="col-milestone">Milestone</th>
+                    <th class="col-value">Cycle Value</th>
+                    <th class="col-terms">Payment Terms</th>
+                    <th class="col-docs">Documents</th>
+                    <th class="col-timeline">Timeline</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody id="li_summaryTableBody">
