@@ -1507,8 +1507,13 @@ function populateBillingGrid() {
 
             const payRecVal = (ms.payment_received != null) ? parseFloat(ms.payment_received) : 0;
             const invTotalVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value) : 0;
-            // Commented as requested: pending amount is now calculated in payment form
+
+            // LOGIC UPDATED (Feb 10, 2026): Simple subtraction (Total - Paid) commented out.
+            // Pending Amount is now calculated in the Payment Form as:
+            // Pending Amount = (Target Received - Amt Received + GST Hold Amt)
+            // and reflected back to this billing grid.
             // const pendAmt = (invTotalVal - payRecVal).toFixed(2);
+
             const pendAmt = (ms.pending_amount != null) ? parseFloat(ms.pending_amount).toFixed(2) : (invTotalVal - payRecVal).toFixed(2);
             const payRec = payRecVal.toFixed(2);
 
@@ -1650,10 +1655,12 @@ window.mapFormToGridRow = function (checkbox) {
             remSpan.closest('td').setAttribute('title', remarks);
         }
         if (pendingSpan) {
-            // Commented as requested: Pending = Row Total - Paid
+            // LOGIC UPDATED (Feb 10, 2026): Simple subtraction (Total - Paid) commented out.
+            // Pending Amount is now calculated in the Payment Form as:
+            // Pending Amount = (Target Received - Amt Received + GST Hold Amt)
+            // and reflected back to this billing grid.
             // const rowTotal = parseFloat(valueSpan.textContent) || 0;
             // pendingSpan.textContent = (rowTotal - parseFloat(payRec || 0)).toFixed(2);
-            // We just keep the existing pendingSpan.textContent which might be from DB or Payment Form
         }
     } else {
         // Restore from memory if unchecked
