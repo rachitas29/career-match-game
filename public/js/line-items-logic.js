@@ -2037,8 +2037,8 @@ async function savePayment() {
     const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
     const target = actualReceivable - otherDed;
 
-    // Calculate Pending Amount: What's left to collect from the target
-    const pendingAmount = Math.max(0, target - amountReceived);
+    // Calculate Pending Amount: (Target - Amt Received + GST Hold Amt)
+    const pendingAmount = Math.max(0, target - amountReceived + gstHoldAmt);
 
     // Collect all payment form fields
     const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
