@@ -2034,13 +2034,15 @@ function handlePaymentButtonClick() {
 }
 
 async function savePayment() {
+    alert("DEBUG: savePayment started");
     const no = document.getElementById('pay_invoice_no').value;
     if (!no) return alert("Select invoice");
 
-    const inv = currentInvoices.find(i => i.invoice_no === no);
-    if (!inv) return alert("Invoice data not found.");
+    const inv = (typeof currentInvoices !== 'undefined') ? currentInvoices.find(i => i.invoice_no === no) : null;
+    if (!inv) return alert("Invoice data not found in currentInvoices array.");
 
     // COLLECT ALL FORM FIELDS AT THE TOP
+    alert("DEBUG: collecting fields");
     const amountReceived = parseFloat(document.getElementById('pay_amount_received').value) || 0;
     const actualReceivable = parseFloat(document.getElementById('pay_actual_receivable').value) || 0;
     const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
@@ -2071,6 +2073,7 @@ async function savePayment() {
     const cleanRemarks = `${custRem} | ${appoloRem} | ${payDetails}`;
 
     const poNum = lineItemsState.poNumber;
+    alert("DEBUG: poNum is " + poNum);
 
     // Helper to ensure YYYY-MM-DD for backend
     const rawDate = document.getElementById('pay_invoice_date').value;

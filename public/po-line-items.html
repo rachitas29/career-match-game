@@ -488,20 +488,7 @@
             }
         });
 
-        // Global function for payment details
-        function handlePaymentButtonClick() {
-            const currentPoNum = document.getElementById('li_display_po_number').value || poNumber;
-            if (!currentPoNum) {
-                alert('Please search for a PO first.');
-                return;
-            }
-            window.location.href = `payments.html?po_number=${encodeURIComponent(currentPoNum)}`;
-        }
-
-        function openBillingModal() {
-            const currentPoNum = document.getElementById('li_display_po_number').value || poNumber;
-            window.location.href = 'billing.html?po_number=' + encodeURIComponent(currentPoNum);
-        }
+        // Local redirection functions removed to use shared logic in line-items-logic.js
 
         // Catch global errors and alert them
         window.onerror = function (msg, url, lineNo, columnNo, error) {
