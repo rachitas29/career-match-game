@@ -2040,10 +2040,24 @@ async function savePayment() {
     const inv = currentInvoices.find(i => i.invoice_no === no);
     if (!inv) return alert("Invoice data not found.");
 
+    // COLLECT ALL FORM FIELDS AT THE TOP
     const amountReceived = parseFloat(document.getElementById('pay_amount_received').value) || 0;
     const actualReceivable = parseFloat(document.getElementById('pay_actual_receivable').value) || 0;
     const otherDed = parseFloat(document.getElementById('pay_other_deduction').value) || 0;
     const gstHoldAmt = parseFloat(document.getElementById('pay_gst_hold').value) || 0;
+
+    const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
+    const tdsGstPct = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
+    const gstHoldPct = parseFloat(document.getElementById('pay_tds_z_pct').value) || 0;
+    const tdsIncomeAmt = parseFloat(document.getElementById('pay_tds_income').value) || 0;
+    const tdsGstAmt = parseFloat(document.getElementById('pay_tds_gst').value) || 0;
+    const netReceivable = parseFloat(document.getElementById('pay_receivable').value) || 0;
+
+    const paymentDate = document.getElementById('pay_payment_date').value;
+    const paymentMode = document.getElementById('pay_mode').value;
+    const custRem = document.getElementById('pay_customer_remarks').value;
+    const appoloRem = document.getElementById('pay_appolo_remarks').value;
+    const dedType = document.getElementById('pay_other_deduction_type').value;
 
     const target = actualReceivable - otherDed;
 
@@ -2051,21 +2065,8 @@ async function savePayment() {
     const pendingAmount = Math.max(0, target - amountReceived + gstHoldAmt);
 
     // Calculate Grid Paid Amount: (Amt Received + TDS-IT + TDS-GST + Other Ded)
-    // This value is what shows up in the "Paid" column of the Billing Grid
     const gridPaidAmount = amountReceived + tdsIncomeAmt + tdsGstAmt + otherDed;
 
-    // Collect remaining payment form fields
-    const tdsIncomePct = parseFloat(document.getElementById('pay_tds_x_pct').value) || 0;
-    const tdsGstPct = parseFloat(document.getElementById('pay_tds_y_pct').value) || 0;
-    const gstHoldPct = parseFloat(document.getElementById('pay_tds_z_pct').value) || 0;
-    const tdsIncomeAmt = parseFloat(document.getElementById('pay_tds_income').value) || 0;
-    const tdsGstAmt = parseFloat(document.getElementById('pay_tds_gst').value) || 0;
-    const netReceivable = parseFloat(document.getElementById('pay_receivable').value) || 0;
-    const paymentDate = document.getElementById('pay_payment_date').value;
-    const paymentMode = document.getElementById('pay_mode').value;
-    const custRem = document.getElementById('pay_customer_remarks').value;
-    const appoloRem = document.getElementById('pay_appolo_remarks').value;
-    const dedType = document.getElementById('pay_other_deduction_type').value;
     const payDetails = `[Payment] TDS-IT: ${tdsIncomeAmt}, TDS-GST: ${tdsGstAmt}, GST-Hold: ${gstHoldAmt}, Other(${dedType}): ${otherDed}`;
     const cleanRemarks = `${custRem} | ${appoloRem} | ${payDetails}`;
 
