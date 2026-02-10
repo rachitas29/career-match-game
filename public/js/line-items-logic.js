@@ -256,7 +256,8 @@ async function commitPOToDB() {
         alert(`Sync Complete!\nSaved/Updated: ${successCount}\nFailed: ${failCount}`);
 
         lineItemsState.hasUnsavedChanges = false;
-        window.location.reload();
+        await loadLineItemData();
+        // window.location.reload(); // Removed to stay on form
 
     } catch (error) {
         console.error("[DEBUG] Error committing PO:", error);
