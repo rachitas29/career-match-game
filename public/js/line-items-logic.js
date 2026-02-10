@@ -13,7 +13,8 @@ let lineItemsState = {
     hasUnsavedChanges: false, // Tracks if anything in the grid has changed since last save
     saveButtonUnlocked: false, // Locked by default, unlocked by Close attempt
     poExistsInDB: false, // Tracks if the PO exists in the database
-    hasDbLineItems: false // Tracks if at least one line item exists in the database for this PO
+    hasDbLineItems: false, // Tracks if at least one line item exists in the database for this PO
+    hasUnsavedBillingChanges: false // Tracks if anything in the billing grid has changed
 };
 
 // Expose line items for saving via main form
@@ -1410,6 +1411,7 @@ async function openBillingModal() {
     if (modal) {
         modal.classList.add('open');
         billingEditMode = false;
+        lineItemsState.hasUnsavedBillingChanges = false; // Reset on open
 
         // Reset Selection State
         const allBoxes = document.querySelectorAll('.bill-row-select');
@@ -1549,6 +1551,7 @@ window.calcBillTotal = function () {
 
 // DECOUPLED: Updated from Form Inputs (does NOT run Auto-Sum)
 window.syncFormToGrid = function () {
+    lineItemsState.hasUnsavedBillingChanges = true; // Track change
     // If user manually types Taxable Val, we trust it (unless >1 rows selected, see mapFormToGridRow)
     if (document.activeElement.id === 'bill_taxable_val') {
         calcBillTotal(); // Sync GST/Total fields in form first
@@ -1691,6 +1694,7 @@ window.toggleAllBillingRows = function (selectAll) {
 }
 
 window.handleBillingRowChange = function (checkbox) {
+    lineItemsState.hasUnsavedBillingChanges = true; // Track change
     const tr = checkbox.closest('tr');
     const checkedBoxes = document.querySelectorAll('.bill-row-select:checked');
 
@@ -1830,6 +1834,7 @@ async function saveBillingItem() {
         const res = await api.post(`/purchase-orders/${encodeURIComponent(poNum)}/invoices`, toSave);
         if (!res.error) {
             alert("Invoices saved successfully!");
+            lineItemsState.hasUnsavedBillingChanges = false; // Reset on success
 
             // SYNC LOCAL STATE: Update lineItemsState with the saved data
             console.log("DEBUG: syncing local state with", toSave);
@@ -2156,6 +2161,13 @@ async function savePayment() {
 }
 
 function editPayment() { paymentEditMode = true; alert("Edit mode enabled"); }
-function closeBillingModal() { document.getElementById('billingModal').classList.remove('open'); }
+function closeBillingModal() {
+    if (lineItemsState.hasUnsavedBillingChanges) {
+        if (!confirm("Invoice details been changed so please save the payment details")) {
+            return;
+        }
+    }
+    document.getElementById('billingModal').classList.remove('open');
+}
 function recordPayment() { handlePaymentButtonClick(); }
 function openBillingPage() { openBillingModal(); }
