@@ -1508,13 +1508,9 @@ function populateBillingGrid() {
             const payRecVal = (ms.payment_received != null) ? parseFloat(ms.payment_received) : 0;
             const invTotalVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value) : 0;
 
-            // LOGIC UPDATED (Feb 10, 2026): Simple subtraction (Total - Paid) commented out.
-            // Pending Amount is now calculated in the Payment Form as:
-            // Pending Amount = (Target Received - Amt Received + GST Hold Amt)
-            // and reflected back to this billing grid.
-            // const pendAmt = (invTotalVal - payRecVal).toFixed(2);
+            // LOGIC RESTORED: Directly calculate based on (Total - Paid)
+            const pendAmt = (invTotalVal - payRecVal).toFixed(2);
 
-            const pendAmt = (ms.pending_amount != null) ? parseFloat(ms.pending_amount).toFixed(2) : (invTotalVal - payRecVal).toFixed(2);
             const payRec = payRecVal.toFixed(2);
 
             const isLiTemp = li.id && typeof li.id === 'string' && li.id.startsWith('temp_');
@@ -1655,12 +1651,9 @@ window.mapFormToGridRow = function (checkbox) {
             remSpan.closest('td').setAttribute('title', remarks);
         }
         if (pendingSpan) {
-            // LOGIC UPDATED (Feb 10, 2026): Simple subtraction (Total - Paid) commented out.
-            // Pending Amount is now calculated in the Payment Form as:
-            // Pending Amount = (Target Received - Amt Received + GST Hold Amt)
-            // and reflected back to this billing grid.
-            // const rowTotal = parseFloat(valueSpan.textContent) || 0;
-            // pendingSpan.textContent = (rowTotal - parseFloat(payRec || 0)).toFixed(2);
+            // LOGIC RESTORED: Automatically update grid pending during form entry
+            const rowTotal = parseFloat(valueSpan.textContent) || 0;
+            pendingSpan.textContent = (rowTotal - parseFloat(payRec || 0)).toFixed(2);
         }
     } else {
         // Restore from memory if unchecked
