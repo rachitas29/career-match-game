@@ -1398,6 +1398,11 @@ function resetBillingFormFieldsOnly() {
 }
 
 async function openBillingModal() {
+    if (lineItemsState.hasUnsavedChanges) {
+        alert("You have unsaved changes in the grid. Please click 'SAVE ITEMS TO DB' first before adding billing details.");
+        return;
+    }
+
     ensureBillingModalExists();
 
     const modal = document.getElementById('billingModal');
