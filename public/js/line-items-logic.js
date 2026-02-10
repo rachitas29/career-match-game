@@ -1505,7 +1505,9 @@ function populateBillingGrid() {
 
             const payRecVal = (ms.payment_received != null) ? parseFloat(ms.payment_received) : 0;
             const invTotalVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value) : 0;
-            const pendAmt = (invTotalVal - payRecVal).toFixed(2);
+            // Commented as requested: pending amount is now calculated in payment form
+            // const pendAmt = (invTotalVal - payRecVal).toFixed(2);
+            const pendAmt = (ms.pending_amount != null) ? parseFloat(ms.pending_amount).toFixed(2) : (invTotalVal - payRecVal).toFixed(2);
             const payRec = payRecVal.toFixed(2);
 
             const isLiTemp = li.id && typeof li.id === 'string' && li.id.startsWith('temp_');
@@ -1645,9 +1647,10 @@ window.mapFormToGridRow = function (checkbox) {
             remSpan.closest('td').setAttribute('title', remarks);
         }
         if (pendingSpan) {
-            // Pending = Row Total - Paid
-            const rowTotal = parseFloat(valueSpan.textContent) || 0;
-            pendingSpan.textContent = (rowTotal - parseFloat(payRec || 0)).toFixed(2);
+            // Commented as requested: Pending = Row Total - Paid
+            // const rowTotal = parseFloat(valueSpan.textContent) || 0;
+            // pendingSpan.textContent = (rowTotal - parseFloat(payRec || 0)).toFixed(2);
+            // We just keep the existing pendingSpan.textContent which might be from DB or Payment Form
         }
     } else {
         // Restore from memory if unchecked
