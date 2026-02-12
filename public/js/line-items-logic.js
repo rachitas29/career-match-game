@@ -1065,6 +1065,7 @@ const billingModalHTML = `
                             <select id="bill_status">
                                 <option value="Pending">Pending</option>
                                 <option value="Sent">Sent</option>
+                                <option value="Partially Paid">Partially Paid</option>
                                 <option value="Paid">Paid</option>
                                 <option value="Overdue">Overdue</option>
                                 <option value="Hold">Hold</option>
@@ -1291,9 +1292,23 @@ function formatDateToDDMMYYYY(dateString) {
     if (!dateString) return '';
     const parts = dateString.split('-');
     if (parts.length === 3) {
-        return `${parts[2]} /${parts[1]}/${parts[0]} `;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
     return dateString;
+}
+
+// Helper: Convert DD/MM/YYYY to YYYY-MM-DD
+function parseToISO(dateStr) {
+    if (!dateStr) return '';
+    // Handle "14/02/2026" or "14 /02/2026 " or "2026-02-14"
+    if (dateStr.includes('/')) {
+        const parts = dateStr.replace(/\s/g, '').split('/');
+        if (parts.length === 3) {
+            // Assume DD/MM/YYYY
+            return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+    }
+    return dateStr.trim();
 }
 
 let billingEditMode = false;
@@ -1609,7 +1624,7 @@ window.mapFormToGridRow = function (checkbox) {
         if (noSpan) noSpan.textContent = invNo;
         if (dateSpan) {
             dateSpan.textContent = formatDateToDDMMYYYY(invDate);
-            dateSpan.setAttribute('data-raw-date', invDate);
+            dateSpan.setAttribute('data-raw-date', parseToISO(invDate));
         }
         if (valueSpan) {
             const checkboxes = document.querySelectorAll('.bill-row-select:checked');
@@ -1732,18 +1747,23 @@ window.handleBillingRowChange = function (checkbox) {
         const invDate = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
         const paymentRec = tr.querySelector('[data-field="payment_received"]')?.textContent || '0';
 
-        const { status, credit, rawRemarks } = parseRemarksFallback(remSpan);
+        const status, credit, rawRemarks
+    } = parseRemarksFallback(remSpan);
 
-        document.getElementById('bill_invoice_no').value = invNo;
-        document.getElementById('bill_invoice_date').value = invDate;
-        document.getElementById('bill_payment_rec').value = paymentRec;
-        document.getElementById('bill_remarks').value = rawRemarks;
-        document.getElementById('bill_status').value = status;
-        document.getElementById('bill_credit_period').value = credit;
-    }
+    document.getElementById('bill_invoice_no').value = invNo;
+    // Robust Date assignment:
+    document.getElementById('bill_invoice_date').value = parseToISO(invDate);
+    document.getElementById('bill_payment_rec').value = paymentRec;
+    document.getElementById('bill_remarks').value = rawRemarks;
+    document.getElementById('bill_status').value = status;
+    document.getElementById('bill_credit_period').value = credit;
 
-    // 2. Aggregate Taxable Value across ALL checked rows
-    recalculateAggregateValues();
+    // Force Due Date update
+    updateDueDate();
+}
+
+// 2. Aggregate Taxable Value across ALL checked rows
+recalculateAggregateValues();
 }
 
 window.editBillingItem = function () {
