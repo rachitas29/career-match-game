@@ -1847,19 +1847,12 @@ async function saveBillingItem() {
     const rows = document.querySelectorAll('#billingGridBody tr');
 
     // 1. Identify "Old Invoice" context from selected rows before we sync
-    // 1. Identify "Old Invoice" context and its CURRENT aggregated total from any of the affected rows
     let oldInvNo = '';
-    let oldTotalValAtStart = 0;
-
     checkboxes.forEach(cb => {
         const tr = cb.closest('tr');
         const rowInvNo = tr.querySelector('[data-field="invoice_no"]')?.textContent.trim();
         if (rowInvNo && rowInvNo !== newInvNo) {
             oldInvNo = rowInvNo;
-            // Capture the current aggregated total from any of the affected rows once
-            if (oldTotalValAtStart === 0) {
-                oldTotalValAtStart = parseFloat(tr.querySelector('[data-field="invoice_value"]')?.textContent) || 0;
-            }
         }
     });
 
@@ -1869,7 +1862,7 @@ async function saveBillingItem() {
     const poNum = lineItemsState.poNumber;
     let toSave = [];
 
-    // 3. Normal collection of CHECKED rows (the ones being moved/updated)
+    // 2. Normal collection of CHECKED rows (the ones being moved/updated)
     rows.forEach(tr => {
         const cb = tr.querySelector('.bill-row-select');
         if (!cb || !cb.checked) return;
@@ -1895,54 +1888,69 @@ async function saveBillingItem() {
         });
     });
 
-    // 4. SPLIT ADJUSTMENT: If we moved items from oldInvNo, update remaining rows
+    // 3. SPLIT ADJUSTMENT (REVISED): If we moved items from oldInvNo, recalculate remaining rows
     if (oldInvNo && oldInvNo !== newInvNo) {
-        const movedTotal = parseFloat(document.getElementById('bill_total_val').value) || 0;
-        const remainderTotal = oldTotalValAtStart - movedTotal;
+        console.log(`DEBUG: Splitting ${oldInvNo}. Recalculating remaining rows based on cycle values.`);
 
-        // Basic proportional split for taxable/gst (simple fallback)
-        const remainderTaxable = (remainderTotal / 1.18).toFixed(2);
-        const remainderGst = (remainderTotal - remainderTaxable).toFixed(2);
+        // Find ALL rows (checked or unchecked) that still have the oldInvNo after sync
+        let remainingRows = [];
+        let remainderCycleSum = 0;
 
-        console.log(`DEBUG: Splitting ${oldInvNo}. Moved: ${movedTotal}, Remainder: ${remainderTotal}`);
-
-        // Find UNCHECKED rows that still have the oldInvNo
         rows.forEach(tr => {
-            const cb = tr.querySelector('.bill-row-select');
             const rowInvNo = tr.querySelector('[data-field="invoice_no"]')?.textContent.trim();
+            if (rowInvNo === oldInvNo) {
+                remainingRows.push(tr);
+                // Get cycle value from the 5th cell (index 4) attribute 'data-cycle-val'
+                const cycleVal = parseFloat(tr.cells[4]?.getAttribute('data-cycle-val')) || 0;
+                remainderCycleSum += cycleVal;
+            }
+        });
 
-            if (rowInvNo === oldInvNo && (!cb || !cb.checked)) {
-                // Update grid UI for the remainder
+        if (remainingRows.length > 0) {
+            const remainderTaxable = remainderCycleSum;
+            const remainderGst = remainderTaxable * 0.18;
+            const remainderTotal = remainderTaxable + remainderGst;
+
+            console.log(`DEBUG: Remaining rows for ${oldInvNo}: ${remainingRows.length}. New Total: ${remainderTotal}`);
+
+            remainingRows.forEach(tr => {
+                const cb = tr.querySelector('.bill-row-select');
                 const valSpan = tr.querySelector('[data-field="invoice_value"]');
-                valSpan.textContent = remainderTotal.toFixed(2);
-                valSpan.setAttribute('data-taxable', remainderTaxable);
-                valSpan.setAttribute('data-gst', remainderGst);
-
-                // Recalculate pending for the remainder
-                const payRec = parseFloat(tr.querySelector('[data-field="payment_received"]').textContent) || 0;
-                tr.querySelector('.pending-amt').textContent = (remainderTotal - payRec).toFixed(2);
-
-                // Add to toSave array so backend is updated
                 const remSpan = tr.querySelector('[data-field="remarks"]');
                 const dateSpan = tr.querySelector('[data-field="invoice_date"]');
 
-                toSave.push({
-                    line_item_id: cb.getAttribute('data-li'),
-                    milestone_id: cb.getAttribute('data-ms'),
-                    invoice_no: oldInvNo,
-                    invoice_date: dateSpan.getAttribute('data-raw-date') || dateSpan.textContent,
-                    taxable_value: parseFloat(remainderTaxable),
-                    gst_value: parseFloat(remainderGst),
-                    total_value: remainderTotal,
-                    credit_period: parseInt(remSpan.getAttribute('data-credit-period')) || 0,
-                    due_date: tr.querySelector('[data-field="due_date"]')?.textContent || '', // fallback
-                    payment_received: payRec,
-                    pending_amount: remainderTotal - payRec,
-                    status: remSpan.getAttribute('data-status'),
-                    remarks: remSpan.getAttribute('data-raw-remarks')
-                });
-            }
-        });
+                // Update grid UI
+                valSpan.textContent = remainderTotal.toFixed(2);
+                valSpan.setAttribute('data-taxable', remainderTaxable.toFixed(2));
+                valSpan.setAttribute('data-gst', remainderGst.toFixed(2));
+
+                // Recalculate pending
+                const payRec = parseFloat(tr.querySelector('[data-field="payment_received"]').textContent) || 0;
+                tr.querySelector('.pending-amt').textContent = (remainderTotal - payRec).toFixed(2);
+
+                // Add to toSave array if not already there (though remainingRows should be UNCHECKED mostly)
+                // If it's already in toSave (unlikely based on checkboxes), we should avoid duplicates
+                const alreadyAdded = toSave.some(item => item.line_item_id == cb.getAttribute('data-li') && item.milestone_id == cb.getAttribute('data-ms'));
+
+                if (!alreadyAdded) {
+                    toSave.push({
+                        line_item_id: cb.getAttribute('data-li'),
+                        milestone_id: cb.getAttribute('data-ms'),
+                        invoice_no: oldInvNo,
+                        invoice_date: dateSpan.getAttribute('data-raw-date') || dateSpan.textContent,
+                        taxable_value: remainderTaxable,
+                        gst_value: remainderGst,
+                        total_value: remainderTotal,
+                        credit_period: parseInt(remSpan.getAttribute('data-credit-period')) || 0,
+                        due_date: tr.querySelector('[data-field="due_date"]')?.textContent || '',
+                        payment_received: payRec,
+                        pending_amount: remainderTotal - payRec,
+                        status: remSpan.getAttribute('data-status'),
+                        remarks: remSpan.getAttribute('data-raw-remarks')
+                    });
+                }
+            });
+        }
     }
     // --- END INVOICE SPLITTING LOGIC ---
 
