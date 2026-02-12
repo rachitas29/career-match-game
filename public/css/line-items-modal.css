@@ -156,7 +156,7 @@
 
 .li-compact-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
 }
 
@@ -164,15 +164,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
-    grid-column: span 2;
-    /* Default for 6-col grid (equivalent to 1/3) */
 }
 
 .li-field.full {
-    grid-column: span 6;
-}
-
-.li-field.half {
     grid-column: span 3;
 }
 
