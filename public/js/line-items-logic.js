@@ -1297,18 +1297,25 @@ function formatDateToDDMMYYYY(dateString) {
     return dateString;
 }
 
-// Helper: Convert DD/MM/YYYY to YYYY-MM-DD
+// Helper: Convert any date format to YYYY-MM-DD
 function parseToISO(dateStr) {
     if (!dateStr) return '';
-    // Handle "14/02/2026" or "14 /02/2026 " or "2026-02-14"
-    if (dateStr.includes('/')) {
-        const parts = dateStr.replace(/\s/g, '').split('/');
-        if (parts.length === 3) {
-            // Assume DD/MM/YYYY
+    const clean = dateStr.toString().trim().replace(/\s/g, '');
+    if (!clean) return '';
+
+    // Already ISO? YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+
+    // DD/MM/YYYY or DD-MM-YYYY
+    const parts = clean.split(/[/ -]/);
+    if (parts.length === 3) {
+        if (parts[0].length === 4) { // YYYY-MM-DD (but with / or spaces)
+            return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        } else { // DD-MM-YYYY
             return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         }
     }
-    return dateStr.trim();
+    return clean;
 }
 
 let billingEditMode = false;
@@ -1316,6 +1323,7 @@ let paymentEditMode = false;
 let currentInvoices = []; // Local cache of invoices for the current PO
 
 function ensureBillingModalExists() {
+    // ...
     // If it exists, we just need to ensure the listener is there or refreshed
     if (document.getElementById('billingModal')) {
         // Refresh listener just in case (though it should persist)
@@ -1709,59 +1717,58 @@ window.toggleAllBillingRows = function (selectAll) {
 }
 
 window.handleBillingRowChange = function (checkbox) {
-    lineItemsState.hasUnsavedBillingChanges = true; // Track change
+    console.log("DEBUG: handleBillingRowChange triggered", checkbox.checked);
+    lineItemsState.hasUnsavedBillingChanges = true;
     const tr = checkbox.closest('tr');
     const checkedBoxes = document.querySelectorAll('.bill-row-select:checked');
 
-    // 0. If no rows are checked, reset the entire form
     if (checkedBoxes.length === 0) {
         resetBillingForm();
         return;
     }
 
-    // Internal Helper for Fallback Parsing
     const parseRemarksFallback = (remSpan) => {
         let status = remSpan?.getAttribute('data-status') || 'Pending';
         let credit = parseInt(remSpan?.getAttribute('data-credit-period')) || 0;
         let rawRemarks = remSpan?.getAttribute('data-raw-remarks') || '';
 
-        if (rawRemarks.includes(' | ')) {
+        // Only split if we have a pipe AND it looks like the old merged format
+        // If data-status is present and not default, we trust the attributes more
+        const hasPipe = rawRemarks.includes(' | ');
+        if (hasPipe && !remSpan?.getAttribute('data-status')) {
             const parts = rawRemarks.split(' | ');
             if (parts.length >= 2) {
                 credit = parseInt(parts[0]) || 0;
                 status = parts[1].trim();
                 rawRemarks = parts.slice(2).join(' | ');
-                return { status, credit, rawRemarks };
             }
         }
         return { status, credit, rawRemarks };
     };
 
-    // 1. If checking a row, always populate the form from THAT row's data
     if (checkbox.checked) {
         const remSpan = tr.querySelector('[data-field="remarks"]');
-        const valSpan = tr.querySelector('[data-field="invoice_value"]');
-        const cycleTd = tr.cells[4];
-
         const invNo = tr.querySelector('[data-field="invoice_no"]')?.textContent || '';
-        const invDate = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
+        const invDateAttr = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
         const paymentRec = tr.querySelector('[data-field="payment_received"]')?.textContent || '0';
 
+        console.log("DEBUG: Row Data extracted", { invNo, invDateAttr, paymentRec });
+
         const { status, credit, rawRemarks } = parseRemarksFallback(remSpan);
+        console.log("DEBUG: Remarks parsed", { status, credit, rawRemarks });
 
         document.getElementById('bill_invoice_no').value = invNo;
-        // Robust Date assignment:
-        document.getElementById('bill_invoice_date').value = parseToISO(invDate);
+        const isoDate = parseToISO(invDateAttr);
+        console.log("DEBUG: ISO Date", isoDate);
+        document.getElementById('bill_invoice_date').value = isoDate;
         document.getElementById('bill_payment_rec').value = paymentRec;
         document.getElementById('bill_remarks').value = rawRemarks;
         document.getElementById('bill_status').value = status;
         document.getElementById('bill_credit_period').value = credit;
 
-        // Force Due Date update
         updateDueDate();
     }
 
-    // 2. Aggregate Taxable Value across ALL checked rows
     recalculateAggregateValues();
 }
 
