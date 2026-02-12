@@ -1300,18 +1300,19 @@ function formatDateToDDMMYYYY(dateString) {
 // Helper: Convert any date format to YYYY-MM-DD
 function parseToISO(dateStr) {
     if (!dateStr) return '';
-    const clean = dateStr.toString().trim().replace(/\s/g, '');
+    // 1. Stringify and take only the date part (strip time)
+    let clean = dateStr.toString().trim().split(/[ T]/)[0];
     if (!clean) return '';
 
-    // Already ISO? YYYY-MM-DD
+    // 2. Already ISO? YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
 
-    // DD/MM/YYYY or DD-MM-YYYY
+    // 3. Handle DD/MM/YYYY or DD-MM-YYYY
     const parts = clean.split(/[/ -]/);
     if (parts.length === 3) {
-        if (parts[0].length === 4) { // YYYY-MM-DD (but with / or spaces)
+        if (parts[0].length === 4) { // YYYY-MM-DD (but with different separator)
             return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-        } else { // DD-MM-YYYY
+        } else { // DD-MM-YYYY or DD/MM/YYYY
             return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         }
     }
@@ -1558,6 +1559,23 @@ function populateBillingGrid() {
                 <td><span class="pending-amt" data-li="${li.id}" data-ms="${ms.id}">${pendAmt}</span></td>
                 <td title="${ms.remarks || ''}"><span data-field="remarks" data-raw-remarks="${ms.remarks || ''}" data-status="${ms.status || 'Pending'}" data-credit-period="${ms.credit_period || 0}">${(ms.remarks || '').length > 30 ? (ms.remarks || '').substring(0, 30) + '...' : (ms.remarks || '')}</span></td>
             `;
+
+            // Row-level click handler to populate form even without checking box
+            tr.style.cursor = 'pointer';
+            tr.onclick = (e) => {
+                // If user clicked the checkbox itself, ignore (onchange will handle it)
+                if (e.target.type === 'checkbox') return;
+
+                const cb = tr.querySelector('.bill-row-select');
+                // Force population regardless of checkbox disabled status
+                handleBillingRowChange(cb, true);
+
+                // If not disabled, also toggle the checkbox
+                if (cb && !cb.disabled) {
+                    cb.checked = !cb.checked;
+                    handleBillingRowChange(cb); // Run aggregated sums
+                }
+            };
             tbody.appendChild(tr);
         });
     });
@@ -1716,13 +1734,15 @@ window.toggleAllBillingRows = function (selectAll) {
     autoSumAndSync();
 }
 
-window.handleBillingRowChange = function (checkbox) {
-    console.log("DEBUG: handleBillingRowChange triggered", checkbox.checked);
+window.handleBillingRowChange = function (checkbox, force = false) {
+    console.log("DEBUG: handleBillingRowChange triggered", { checked: checkbox?.checked, force });
     lineItemsState.hasUnsavedBillingChanges = true;
-    const tr = checkbox.closest('tr');
+    const tr = checkbox?.closest('tr');
+    if (!tr) return;
+
     const checkedBoxes = document.querySelectorAll('.bill-row-select:checked');
 
-    if (checkedBoxes.length === 0) {
+    if (checkedBoxes.length === 0 && !force) {
         resetBillingForm();
         return;
     }
@@ -1746,7 +1766,7 @@ window.handleBillingRowChange = function (checkbox) {
         return { status, credit, rawRemarks };
     };
 
-    if (checkbox.checked) {
+    if (checkbox.checked || force) {
         const remSpan = tr.querySelector('[data-field="remarks"]');
         const invNo = tr.querySelector('[data-field="invoice_no"]')?.textContent || '';
         const invDateAttr = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
@@ -1769,7 +1789,7 @@ window.handleBillingRowChange = function (checkbox) {
         updateDueDate();
     }
 
-    recalculateAggregateValues();
+    if (!force) recalculateAggregateValues();
 }
 
 window.editBillingItem = function () {
