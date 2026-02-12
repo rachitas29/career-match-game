@@ -1747,23 +1747,22 @@ window.handleBillingRowChange = function (checkbox) {
         const invDate = tr.querySelector('[data-field="invoice_date"]')?.getAttribute('data-raw-date') || '';
         const paymentRec = tr.querySelector('[data-field="payment_received"]')?.textContent || '0';
 
-        const status, credit, rawRemarks
-    } = parseRemarksFallback(remSpan);
+        const { status, credit, rawRemarks } = parseRemarksFallback(remSpan);
 
-    document.getElementById('bill_invoice_no').value = invNo;
-    // Robust Date assignment:
-    document.getElementById('bill_invoice_date').value = parseToISO(invDate);
-    document.getElementById('bill_payment_rec').value = paymentRec;
-    document.getElementById('bill_remarks').value = rawRemarks;
-    document.getElementById('bill_status').value = status;
-    document.getElementById('bill_credit_period').value = credit;
+        document.getElementById('bill_invoice_no').value = invNo;
+        // Robust Date assignment:
+        document.getElementById('bill_invoice_date').value = parseToISO(invDate);
+        document.getElementById('bill_payment_rec').value = paymentRec;
+        document.getElementById('bill_remarks').value = rawRemarks;
+        document.getElementById('bill_status').value = status;
+        document.getElementById('bill_credit_period').value = credit;
 
-    // Force Due Date update
-    updateDueDate();
-}
+        // Force Due Date update
+        updateDueDate();
+    }
 
-// 2. Aggregate Taxable Value across ALL checked rows
-recalculateAggregateValues();
+    // 2. Aggregate Taxable Value across ALL checked rows
+    recalculateAggregateValues();
 }
 
 window.editBillingItem = function () {
