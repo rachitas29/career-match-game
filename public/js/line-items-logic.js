@@ -90,6 +90,8 @@ async function openLineItemsModal(poNum, forceLoadFromDB = false) {
     // Initialize date dropdowns if not already done
     initLineItemDateDropdowns();
 
+    const api = window.api;
+    console.log("LINE-ITEMS-LOGIC v1.2 LOADED");
     // Robust Edit Page Detection
     const isEditPage = window.location.pathname.includes('edit-purchase-order.html') ||
         new URLSearchParams(window.location.search).has('po_number');
@@ -1919,8 +1921,9 @@ async function saveBillingItem() {
             const rowInvNo = tr.querySelector('[data-field="invoice_no"]')?.textContent.trim();
             if (rowInvNo === oldInvNo) {
                 remainingRows.push(tr);
-                // Get cycle value from the 5th cell (index 4) attribute 'data-cycle-val'
-                const cycleVal = parseFloat(tr.cells[4]?.getAttribute('data-cycle-val')) || 0;
+                // Safer cell access using nth-child(5) for Cycle Value
+                const cycleTd = tr.querySelector('td:nth-child(5)');
+                const cycleVal = parseFloat(cycleTd?.getAttribute('data-cycle-val')) || 0;
                 remainderCycleSum += cycleVal;
             }
         });
