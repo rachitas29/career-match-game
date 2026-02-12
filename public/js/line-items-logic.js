@@ -1847,6 +1847,7 @@ async function saveBillingItem() {
     const rows = document.querySelectorAll('#billingGridBody tr');
 
     // 1. Identify "Old Invoice" context from selected rows before we sync
+    // 1. Identify "Old Invoice" context and its CURRENT aggregated total from any of the affected rows
     let oldInvNo = '';
     let oldTotalValAtStart = 0;
 
@@ -1855,19 +1856,12 @@ async function saveBillingItem() {
         const rowInvNo = tr.querySelector('[data-field="invoice_no"]')?.textContent.trim();
         if (rowInvNo && rowInvNo !== newInvNo) {
             oldInvNo = rowInvNo;
+            // Capture the current aggregated total from any of the affected rows once
+            if (oldTotalValAtStart === 0) {
+                oldTotalValAtStart = parseFloat(tr.querySelector('[data-field="invoice_value"]')?.textContent) || 0;
+            }
         }
     });
-
-    // 2. If we are moving items, sum up the current total of the old invoice in the grid
-    if (oldInvNo && oldInvNo !== newInvNo) {
-        rows.forEach(tr => {
-            const rowInvNo = tr.querySelector('[data-field="invoice_no"]')?.textContent.trim();
-            if (rowInvNo === oldInvNo) {
-                const rowTotal = parseFloat(tr.querySelector('[data-field="invoice_value"]')?.textContent) || 0;
-                oldTotalValAtStart += rowTotal;
-            }
-        });
-    }
 
     // CRITICAL: Sync form values to grid (this updates the checked rows to newInvNo and bill_total_val)
     syncFormToGrid();
