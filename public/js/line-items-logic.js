@@ -1517,67 +1517,86 @@ function populateBillingGrid() {
         return;
     }
 
-    tbody.innerHTML = ''; // Restore clearing to ensure fresh render with correct states
-    console.log("DEBUG: lineItemsState.currentLineItems", lineItemsState.currentLineItems);
+    tbody.innerHTML = '';
 
+    // Flatten and sort by Invoice Number
+    let flattened = [];
     lineItemsState.currentLineItems.forEach((li, idx) => {
         if (!li.milestones) return;
         li.milestones.forEach((ms, msIdx) => {
-            const tr = document.createElement('tr');
-
-            const invVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value).toFixed(2) : '';
-            const taxVal = (ms.taxable_value != null) ? parseFloat(ms.taxable_value).toFixed(2) : '';
-            const gstVal = (ms.gst_value != null) ? parseFloat(ms.gst_value).toFixed(2) : '';
-
-            const payRecVal = (ms.payment_received != null) ? parseFloat(ms.payment_received) : 0;
-            const invTotalVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value) : 0;
-
-            // LOGIC RESTORED: Directly calculate based on (Total - Paid)
-            const pendAmt = (invTotalVal - payRecVal).toFixed(2);
-
-            const payRec = payRecVal.toFixed(2);
-
-            const isLiTemp = li.id && typeof li.id === 'string' && li.id.startsWith('temp_');
-            const isMsTemp = ms.id && typeof ms.id === 'string' && ms.id.startsWith('temp_');
-            const isTemp = isLiTemp || isMsTemp;
-
-            const displayRemarks = `${ms.credit_period || 0} | ${ms.status || 'Pending'} | ${ms.remarks || ''}`;
-            tr.innerHTML = `
-                <td><input type="checkbox" class="bill-row-select" data-li="${li.id}" data-ms="${ms.id}" onchange="handleBillingRowChange(this)" ${(ms.invoice_no || isTemp) ? 'disabled' : ''} title="${isTemp ? 'Save items to DB first' : ''}"></td>
-                <td>${msIdx === 0 ? (li.line_item_no || (idx + 1)) : ''}</td>
-                <td>${msIdx === 0 ? (li.description || '') : ''}</td>
-                <td>${ms.quantity || ''}</td>
-                <td data-cycle-val="${ms.cycle_value || 0}">${ms.cycle_value || ''}</td>
-                <td>${ms.milestone_name || ''}</td>
-                <td>${ms.payment_terms || '-'}</td>
-                <td>${ms.documents || '-'}</td>
-                <td>${ms.delivery_date || '-'}</td>
-                <td><span data-field="invoice_no">${ms.invoice_no || ''}</span></td>
-                <td><span data-field="invoice_date" data-raw-date="${ms.invoice_date || ''}">${formatDateToDDMMYYYY(ms.invoice_date) || ''}</span></td>
-                <td><span data-field="invoice_value" data-taxable="${taxVal}" data-gst="${gstVal}">${invVal}</span></td>
-                <td><span data-field="payment_received">${payRec}</span></td>
-                <td><span class="pending-amt" data-li="${li.id}" data-ms="${ms.id}">${pendAmt}</span></td>
-                <td title="${ms.remarks || ''}"><span data-field="remarks" data-raw-remarks="${ms.remarks || ''}" data-status="${ms.status || 'Pending'}" data-credit-period="${ms.credit_period || 0}">${(ms.remarks || '').length > 30 ? (ms.remarks || '').substring(0, 30) + '...' : (ms.remarks || '')}</span></td>
-            `;
-
-            // Row-level click handler to populate form even without checking box
-            tr.style.cursor = 'pointer';
-            tr.onclick = (e) => {
-                // If user clicked the checkbox itself, ignore (onchange will handle it)
-                if (e.target.type === 'checkbox') return;
-
-                const cb = tr.querySelector('.bill-row-select');
-                // Force population regardless of checkbox disabled status
-                handleBillingRowChange(cb, true);
-
-                // If not disabled, also toggle the checkbox
-                if (cb && !cb.disabled) {
-                    cb.checked = !cb.checked;
-                    handleBillingRowChange(cb); // Run aggregated sums
-                }
-            };
-            tbody.appendChild(tr);
+            flattened.push({ li, ms, liIdx: idx, msIdx });
         });
+    });
+
+    // Sort: Invoices first (ASC), then empty ones at the bottom
+    flattened.sort((a, b) => {
+        const invA = (a.ms.invoice_no || '').trim();
+        const invB = (b.ms.invoice_no || '').trim();
+
+        if (invA && !invB) return -1;
+        if (!invA && invB) return 1;
+        if (invA && invB) {
+            // Natural sort would be better but simple string comparison for now
+            if (invA < invB) return -1;
+            if (invA > invB) return 1;
+        }
+        // Maintain original order for items in same invoice or both empty
+        if (a.liIdx !== b.liIdx) return a.liIdx - b.liIdx;
+        return a.msIdx - b.msIdx;
+    });
+
+    flattened.forEach((item) => {
+        const { li, ms, liIdx, msIdx } = item;
+        const tr = document.createElement('tr');
+
+        const invVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value).toFixed(2) : '';
+        const taxVal = (ms.taxable_value != null) ? parseFloat(ms.taxable_value).toFixed(2) : '';
+        const gstVal = (ms.gst_value != null) ? parseFloat(ms.gst_value).toFixed(2) : '';
+
+        const payRecVal = (ms.payment_received != null) ? parseFloat(ms.payment_received) : 0;
+        const invTotalVal = (ms.invoice_value != null) ? parseFloat(ms.invoice_value) : 0;
+
+        // LOGIC RESTORED: Directly calculate based on (Total - Paid)
+        const pendAmt = (invTotalVal - payRecVal).toFixed(2);
+        const payRec = payRecVal.toFixed(2);
+
+        const isLiTemp = li.id && typeof li.id === 'string' && li.id.startsWith('temp_');
+        const isMsTemp = ms.id && typeof ms.id === 'string' && ms.id.startsWith('temp_');
+        const isTemp = isLiTemp || isMsTemp;
+
+        // Re-calculate Line Item Display Info (always show on every row if sorted)
+        const lineItemNo = li.line_item_no || (liIdx + 1);
+        const description = li.description || '';
+
+        tr.innerHTML = `
+            <td><input type="checkbox" class="bill-row-select" data-li="${li.id}" data-ms="${ms.id}" onchange="handleBillingRowChange(this)" ${(ms.invoice_no || isTemp) ? 'disabled' : ''} title="${isTemp ? 'Save items to DB first' : ''}"></td>
+            <td>${lineItemNo}</td>
+            <td>${description}</td>
+            <td>${ms.quantity || ''}</td>
+            <td data-cycle-val="${ms.cycle_value || 0}">${ms.cycle_value || ''}</td>
+            <td>${ms.milestone_name || ''}</td>
+            <td>${ms.payment_terms || '-'}</td>
+            <td>${ms.documents || '-'}</td>
+            <td>${ms.delivery_date || '-'}</td>
+            <td><span data-field="invoice_no">${ms.invoice_no || ''}</span></td>
+            <td><span data-field="invoice_date" data-raw-date="${ms.invoice_date || ''}">${formatDateToDDMMYYYY(ms.invoice_date) || ''}</span></td>
+            <td><span data-field="invoice_value" data-taxable="${taxVal}" data-gst="${gstVal}">${invVal}</span></td>
+            <td><span data-field="payment_received">${payRec}</span></td>
+            <td><span class="pending-amt" data-li="${li.id}" data-ms="${ms.id}">${pendAmt}</span></td>
+            <td title="${ms.remarks || ''}"><span data-field="remarks" data-raw-remarks="${ms.remarks || ''}" data-status="${ms.status || 'Pending'}" data-credit-period="${ms.credit_period || 0}">${(ms.remarks || '').length > 30 ? (ms.remarks || '').substring(0, 30) + '...' : (ms.remarks || '')}</span></td>
+        `;
+
+        tr.style.cursor = 'pointer';
+        tr.onclick = (e) => {
+            if (e.target.type === 'checkbox') return;
+            const cb = tr.querySelector('.bill-row-select');
+            handleBillingRowChange(cb, true);
+            if (cb && !cb.disabled) {
+                cb.checked = !cb.checked;
+                handleBillingRowChange(cb);
+            }
+        };
+        tbody.appendChild(tr);
     });
 }
 
