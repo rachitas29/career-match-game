@@ -529,13 +529,15 @@ app.post('/api/purchase-orders/:po_number/bg-fd', (req, res) => {
                 fd_margin_actual, fd_maturity_date, fd_maturity_amount, rate_of_interest, fd_status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
+            const n = (val) => (val === "" || val === null || val === undefined) ? 0 : val;
+
             const params = [
-                po_number, body.opening_balance_bg_limit, body.bg_number, body.bg_start_date,
-                body.bg_tenure_dd, body.bg_tenure_mm, body.bg_tenure_yy, body.bg_end_date,
-                body.bg_percentage, body.bg_value, body.bg_claim_period_required, body.bg_status,
-                body.bg_claim_period_dd, body.bg_claim_period_mm, body.bg_claim_period_yy, body.bg_claim_date,
-                body.bg_limit_remaining, body.fd_percentage_on_bg, body.fd_number, body.fd_start_date,
-                body.fd_margin_actual, body.fd_maturity_date, body.fd_maturity_amount, body.rate_of_interest, body.fd_status
+                po_number, n(body.opening_balance_bg_limit), body.bg_number, body.bg_start_date,
+                n(body.bg_tenure_dd), n(body.bg_tenure_mm), n(body.bg_tenure_yy), body.bg_end_date,
+                n(body.bg_percentage), n(body.bg_value), body.bg_claim_period_required, body.bg_status,
+                n(body.bg_claim_period_dd), n(body.bg_claim_period_mm), n(body.bg_claim_period_yy), body.bg_claim_date,
+                n(body.bg_limit_remaining), n(body.fd_percentage_on_bg), body.fd_number, body.fd_start_date,
+                n(body.fd_margin_actual), body.fd_maturity_date, n(body.fd_maturity_amount), n(body.rate_of_interest), body.fd_status
             ];
 
             tx.run(sql, params, function (err) {

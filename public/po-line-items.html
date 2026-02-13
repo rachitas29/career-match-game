@@ -945,30 +945,35 @@
             };
 
 
+            const getNum = (id) => {
+                const val = document.getElementById(id)?.value;
+                return val === "" || val === null || val === undefined ? 0 : parseFloat(val);
+            };
+
             const bgFdData = {
-                opening_balance_bg_limit: document.getElementById('m_opening_balance').value,
+                opening_balance_bg_limit: getNum('m_opening_balance'),
                 bg_number: document.getElementById('m_bg_number').value,
                 bg_start_date: document.getElementById('m_bg_start_date').value,
-                bg_tenure_dd: document.getElementById('m_bg_tenure_dd').value,
-                bg_tenure_mm: document.getElementById('m_bg_tenure_mm').value,
-                bg_tenure_yy: document.getElementById('m_bg_tenure_yy').value,
+                bg_tenure_dd: Math.floor(getNum('m_bg_tenure_dd')),
+                bg_tenure_mm: Math.floor(getNum('m_bg_tenure_mm')),
+                bg_tenure_yy: Math.floor(getNum('m_bg_tenure_yy')),
                 bg_end_date: toISO(document.getElementById('m_bg_end_date').value),
-                bg_percentage: document.getElementById('m_bg_percentage').value,
-                bg_value: document.getElementById('m_bg_value').value,
+                bg_percentage: getNum('m_bg_percentage'),
+                bg_value: getNum('m_bg_value'),
                 bg_claim_period_required: document.querySelector('input[name="m_claim_required"]:checked')?.value || 'No',
                 bg_status: document.getElementById('m_bg_status').value,
-                bg_claim_period_dd: document.getElementById('m_claim_dd').value,
-                bg_claim_period_mm: document.getElementById('m_claim_mm').value,
-                bg_claim_period_yy: document.getElementById('m_claim_yy').value,
+                bg_claim_period_dd: Math.floor(getNum('m_claim_dd')),
+                bg_claim_period_mm: Math.floor(getNum('m_claim_mm')),
+                bg_claim_period_yy: Math.floor(getNum('m_claim_yy')),
                 bg_claim_date: toISO(document.getElementById('m_bg_claim_date').value),
-                bg_limit_remaining: document.getElementById('m_bg_limit_rem').value,
-                fd_percentage_on_bg: document.getElementById('m_fd_percentage').value,
+                bg_limit_remaining: getNum('m_bg_limit_rem'),
+                fd_percentage_on_bg: getNum('m_fd_percentage'),
                 fd_number: document.getElementById('m_fd_number').value,
                 fd_start_date: document.getElementById('m_fd_start_date').value,
-                fd_margin_actual: document.getElementById('m_fd_margin').value,
+                fd_margin_actual: getNum('m_fd_margin'),
                 fd_maturity_date: document.getElementById('m_fd_maturity_date').value,
-                fd_maturity_amount: document.getElementById('m_fd_maturity_amount').value,
-                rate_of_interest: document.getElementById('m_roi').value,
+                fd_maturity_amount: getNum('m_fd_maturity_amount'),
+                rate_of_interest: getNum('m_roi'),
                 fd_status: document.getElementById('m_fd_status').value
             };
 
