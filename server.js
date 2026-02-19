@@ -174,12 +174,14 @@ app.post('/api/forgot-password', (req, res) => {
 
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
-            port: 465,
-            secure: true,
+            port: 587,
+            secure: false, // TLS
             auth: {
                 user: senderEmail,
                 pass: senderPassword
-            }
+            },
+            connectionTimeout: 10000, // 10 seconds
+            socketTimeout: 10000
         });
 
         const mailOptions = {
