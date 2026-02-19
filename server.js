@@ -4,9 +4,37 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const db = require('./database');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Encryption Configuration
+const ENCRYPTION_KEY = Buffer.from(process.env.ENCRYPTION_KEY, 'hex'); // 32 bytes
+const ALGORITHM = 'aes-256-gcm';
+
+function encrypt(text) {
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag().toString('hex');
+    return JSON.stringify({ iv: iv.toString('hex'), encryptedData: encrypted, authTag });
+}
+
+function decrypt(jsonStr) {
+    try {
+        const { iv, encryptedData, authTag } = JSON.parse(jsonStr);
+        const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, Buffer.from(iv, 'hex'));
+        decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+        let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+    } catch (e) {
+        return null;
+    }
+}
 
 // Middleware
 app.use(cors());
@@ -25,14 +53,10 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const bcrypt = require('bcryptjs');
-    const saltRounds = 10;
-
-    bcrypt.hash(password, saltRounds, function (err, hash) {
-        if (err) return res.status(500).json({ error: 'Error hashing password' });
-
+    try {
+        const encryptedPassword = encrypt(password);
         const stmt = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)");
-        stmt.run([email, hash], function (err) {
+        stmt.run([email, encryptedPassword], function (err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed') || err.message.toLowerCase().includes('duplicate key') || err.message.toLowerCase().includes('unique constraint')) {
                     return res.status(400).json({ error: 'Email already exists' });
@@ -42,7 +66,9 @@ app.post('/api/register', (req, res) => {
             res.status(201).json({ message: 'User registered successfully', userId: this.lastID });
         });
         stmt.finalize();
-    });
+    } catch (e) {
+        res.status(500).json({ error: 'Encryption error' });
+    }
 });
 
 // Login
@@ -64,16 +90,14 @@ app.post('/api/login', (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const bcrypt = require('bcryptjs');
-        bcrypt.compare(password, user.password, function (err, result) {
-            if (result) {
-                console.log('Password Match. Login Success.');
-                res.json({ message: 'Login successful', user: { id: user.id, email: user.email, name: user.name, phone: user.phone } });
-            } else {
-                console.log('Password Mismatch.');
-                res.status(401).json({ error: 'Invalid email or password' });
-            }
-        });
+        const decrypted = decrypt(user.password);
+        if (decrypted === password) {
+            console.log('Password Match. Login Success.');
+            res.json({ message: 'Login successful', user: { id: user.id, email: user.email, name: user.name, phone: user.phone } });
+        } else {
+            console.log('Password Mismatch.');
+            res.status(401).json({ error: 'Invalid email or password' });
+        }
     });
 });
 
@@ -93,17 +117,74 @@ app.put('/api/change-password', (req, res) => {
     const { id, new_password } = req.body;
     if (!id || !new_password) return res.status(400).json({ error: 'User ID and New Password required' });
 
-    const bcrypt = require('bcryptjs');
-    const saltRounds = 10;
-
-    bcrypt.hash(new_password, saltRounds, function (err, hash) {
-        if (err) return res.status(500).json({ error: 'Error hashing password' });
-
+    try {
+        const encryptedPassword = encrypt(new_password);
         const sql = `UPDATE users SET password = ? WHERE id = ?`;
-        db.run(sql, [hash, id], function (err) {
+        db.run(sql, [encryptedPassword, id], function (err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: 'Password updated successfully' });
         });
+    } catch (e) {
+        res.status(500).json({ error: 'Encryption error' });
+    }
+});
+
+app.post('/api/forgot-password', (req, res) => {
+    const { targetEmail, senderEmail, senderPassword } = req.body;
+    if (!targetEmail || !senderEmail || !senderPassword) {
+        return res.status(400).json({ error: 'Target Email, Sender Email, and Sender Password are required' });
+    }
+
+    db.get("SELECT * FROM users WHERE email = ?", [targetEmail], async (err, user) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+
+        if (!user) {
+            return res.json({ message: 'If this email is registered, the password will be sent shortly.' });
+        }
+
+        const originalPassword = decrypt(user.password);
+        if (!originalPassword) {
+            return res.status(500).json({ error: 'Failed to retrieve password. It might be in an old format.' });
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
+            auth: {
+                user: senderEmail,
+                pass: senderPassword
+            }
+        });
+
+        const mailOptions = {
+            from: `"Account Flow Recovery" <${senderEmail}>`,
+            to: targetEmail,
+            subject: 'Your Password Recovery - Account Flow',
+            text: `Hello,\n\nYou requested your password for Account Flow. Your original password is: ${originalPassword}\n\nRegards,\nAccount Flow Team`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #4f46e5;">Password Recovery</h2>
+                    <p>Hello,</p>
+                    <p>You requested to recover your original password for your Account Flow account.</p>
+                    <p style="background: #f3f4f6; padding: 15px; font-size: 1.2rem; font-weight: bold; text-align: center; border-radius: 8px;">
+                        Your password: <span style="color: #ec4899;">${originalPassword}</span>
+                    </p>
+                    <p>Please log in and keep your credentials secure.</p>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                    <p style="font-size: 0.8rem; color: #6b7280;">If you did not request this, please ignore this email.</p>
+                </div>
+            `
+        };
+
+        try {
+            console.log('Attempting to send recovery email to:', targetEmail, 'using sender:', senderEmail);
+            await transporter.sendMail(mailOptions);
+            res.json({ message: 'Password recovery email sent successfully!' });
+        } catch (sendErr) {
+            console.error('Email send failure:', sendErr.message);
+            res.status(500).json({ error: 'Could not send email. Please verify your Sender Email and App Password.' });
+        }
     });
 });
 
@@ -446,18 +527,39 @@ app.get('/api/purchase-orders', (req, res) => {
 
 app.put('/api/purchase-orders/:po_number', (req, res) => {
     const { po_number } = req.params;
-    const { po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, user_id, po_number: new_po_number, contact_id, project_name } = req.body;
+    const body = req.body;
+    const user_id = body.user_id || req.query.user_id; // Try both body and query
 
-    const sql = `UPDATE purchase_orders SET 
-        po_number = ?, po_date = ?, po_value = ?, bank_guarantee = ?, bill_to = ?, ship_to = ?, notes = ?, account_id = ?, client_id = ?, contact_id = ?, project_name = ?
-        WHERE po_number = ? AND user_id = ?`;
+    if (!user_id) return res.status(400).json({ error: 'User ID is required' });
 
-    const params = [new_po_number || po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, account_id, client_id, contact_id, project_name, po_number, user_id];
+    // Fields that can be updated
+    const allowedFields = [
+        'po_number', 'po_date', 'po_value', 'bank_guarantee',
+        'bill_to', 'ship_to', 'notes', 'account_id',
+        'client_id', 'contact_id', 'project_name'
+    ];
+
+    let updates = [];
+    let params = [];
+
+    allowedFields.forEach(field => {
+        if (body.hasOwnProperty(field)) {
+            updates.push(`${field} = ?`);
+            params.push(body[field] === undefined ? null : body[field]);
+        }
+    });
+
+    if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields provided for update' });
+    }
+
+    const sql = `UPDATE purchase_orders SET ${updates.join(', ')} WHERE po_number = ? AND user_id = ?`;
+    params.push(po_number, user_id);
 
     db.run(sql, params, function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: 'Purchase Order not found or no changes made' });
-        res.json({ message: 'Purchase Order updated successfully', po_number: new_po_number || po_number });
+        res.json({ message: 'Purchase Order updated successfully', po_number: body.po_number || po_number });
     });
 });
 

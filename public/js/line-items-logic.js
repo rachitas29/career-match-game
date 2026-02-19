@@ -742,8 +742,8 @@ async function saveLineItemToDB(stayOnIdentification = false) {
         if (!hsnValue) { alert('Field Required: HSN/SAC Code'); throw new Error('Missing HSN/SAC'); }
         if (liQty <= 0) { alert('Field Required: Qty (must be greater than 0)'); throw new Error('Invalid Qty'); }
 
-        if (hsnValue.length !== 8 || isNaN(hsnValue)) {
-            alert('HSN/SAC Code must be exactly 8 digits.');
+        if (hsnValue.length > 8 || isNaN(hsnValue)) {
+            alert('HSN/SAC Code must be a numeric value up to 8 digits.');
             throw new Error('Invalid HSN/SAC format');
         }
 
@@ -922,15 +922,18 @@ async function saveLineItemToDB(stayOnIdentification = false) {
 
 // Update PO value from in-memory line items
 function updateMainPOValueFromMemory() {
-    let total = 0;
+    let totalWithGST = 0;
     lineItemsState.currentLineItems.forEach(li => {
+        const gstRate = parseFloat(li.gst_rate) || 0;
         if (li.milestones) {
             li.milestones.forEach(ms => {
-                total += parseFloat(ms.cycle_value) || 0;
+                const baseVal = parseFloat(ms.cycle_value) || 0;
+                totalWithGST += baseVal * (1 + gstRate / 100);
             });
         }
     });
 
+    const total = totalWithGST;
     const formattedTotal = total.toFixed(2);
 
     // Update modal header
@@ -957,16 +960,19 @@ function updateMainPOValueFromMemory() {
 }
 
 function updateMainPOValue() {
-    // Calculate total value from current line items
-    let total = 0;
+    // Calculate total value from current line items including GST
+    let totalWithGST = 0;
     lineItemsState.currentLineItems.forEach(li => {
+        const gstRate = parseFloat(li.gst_rate) || 0;
         if (li.milestones) {
             li.milestones.forEach(ms => {
-                total += parseFloat(ms.cycle_value) || 0;
+                const baseVal = parseFloat(ms.cycle_value) || 0;
+                totalWithGST += baseVal * (1 + gstRate / 100);
             });
         }
     });
 
+    const total = totalWithGST;
     const formattedTotal = total.toFixed(2);
 
     // Update modal header
@@ -979,8 +985,10 @@ function updateMainPOValue() {
     }
 
     // Optionally update the backend PO value as well
+    const user = api.getCurrentUser();
     api.put(`/purchase-orders/${encodeURIComponent(lineItemsState.poNumber)}`, {
-        po_value: formattedTotal
+        po_value: formattedTotal,
+        user_id: user?.id
     }).then(() => {
         // If there's a global BG calculation function, call it to sync BG with new PO value
         if (typeof window.calculateBgFd === 'function') {

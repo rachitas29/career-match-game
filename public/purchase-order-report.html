@@ -494,7 +494,7 @@
                 <!-- Footer Summary (Financials) -->
                 <div class="footer-summary">
                     <div class="summary-box">
-                        <span class="summary-label">Total PO Value (A)</span>
+                        <span class="summary-label">Total PO Value (A) - Incl. GST</span>
                         <div id="disp_total_po_value" class="summary-val">$0.00</div>
                     </div>
                     <div class="summary-box">
@@ -846,8 +846,19 @@
 
 
         function renderFooter(poData, lineItems, bgDetails) {
-            // Calculate Totals
-            const totalPOVal = parseFloat(poData.po_value) || 0;
+            // Calculate Totals (Recalculate to ensure GST is included)
+            let calculatedTotalWithGST = 0;
+            lineItems.forEach(li => {
+                const gstRate = parseFloat(li.gst_rate) || 0;
+                if (li.milestones) {
+                    li.milestones.forEach(ms => {
+                        const baseVal = parseFloat(ms.cycle_value) || 0;
+                        calculatedTotalWithGST += baseVal * (1 + gstRate / 100);
+                    });
+                }
+            });
+
+            const totalPOVal = calculatedTotalWithGST;
 
             // Calculate Billed Value (Sum of all invoices)
             let billedVal = 0;
