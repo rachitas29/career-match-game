@@ -172,6 +172,7 @@ app.post('/api/forgot-password', (req, res) => {
             return res.status(500).json({ error: 'Failed to retrieve password. It might be in an old format.' });
         }
 
+        console.log('Creating SMTP transporter for port 587...');
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             port: 587,
@@ -181,6 +182,7 @@ app.post('/api/forgot-password', (req, res) => {
                 pass: senderPassword
             },
             connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 10000,
             socketTimeout: 10000
         });
 
@@ -205,12 +207,12 @@ app.post('/api/forgot-password', (req, res) => {
         };
 
         try {
-            console.log('Attempting to send recovery email to:', targetEmail, 'using sender:', senderEmail);
+            console.log(`Starting email send process to ${targetEmail} via ${senderEmail}...`);
             await transporter.sendMail(mailOptions);
             res.json({ message: 'Password recovery email sent successfully!' });
         } catch (sendErr) {
-            console.error('Email send failure:', sendErr.message);
-            res.status(500).json({ error: 'Could not send email. Please verify your Sender Email and App Password.' });
+            console.error('SMTP Error:', sendErr);
+            res.status(500).json({ error: `SMTP Error: ${sendErr.message}. Please verify your App Password.` });
         }
     });
 });
