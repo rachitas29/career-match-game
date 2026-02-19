@@ -11,9 +11,7 @@ services:
           name: account_management_db
           property: connectionString
       - key: ENCRYPTION_KEY
-        generateValue: true # This will generate a random key if not set, or we can use a fixed one.
-        # Actually, let's use sync: false so the user can set it or we can manually add it.
-        # For security, I'll just add the key entry.
+        sync: false # User must set this manually in the dashboard
 
 databases:
   - name: account_management_db

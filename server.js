@@ -12,22 +12,32 @@ const PORT = process.env.PORT || 3000;
 
 // Encryption Configuration
 const ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY;
-if (!ENCRYPTION_KEY_RAW || ENCRYPTION_KEY_RAW.length < 32) {
-    console.error('CRITICAL ERROR: ENCRYPTION_KEY environment variable is missing or too short.');
-    console.error('Please set ENCRYPTION_KEY in your environment variables (must be a 64-character hex string).');
+if (!ENCRYPTION_KEY_RAW || ENCRYPTION_KEY_RAW.length !== 64) {
+    console.error('CRITICAL ERROR: ENCRYPTION_KEY environment variable is missing or invalid.');
+    console.error(`Expected 64 characters, got ${ENCRYPTION_KEY_RAW ? ENCRYPTION_KEY_RAW.length : 0}.`);
+    console.error('Please set ENCRYPTION_KEY to a 64-character hex string in your environment variables.');
     process.exit(1);
 }
 
-const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_RAW, 'hex'); // 32 bytes
+const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_RAW, 'hex');
+if (ENCRYPTION_KEY.length !== 32) {
+    console.error('CRITICAL ERROR: ENCRYPTION_KEY must be a valid 32-byte hex string.');
+    process.exit(1);
+}
 const ALGORITHM = 'aes-256-gcm';
 
 function encrypt(text) {
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    const authTag = cipher.getAuthTag().toString('hex');
-    return JSON.stringify({ iv: iv.toString('hex'), encryptedData: encrypted, authTag });
+    try {
+        const iv = crypto.randomBytes(12);
+        const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+        let encrypted = cipher.update(text, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        const authTag = cipher.getAuthTag().toString('hex');
+        return JSON.stringify({ iv: iv.toString('hex'), encryptedData: encrypted, authTag });
+    } catch (err) {
+        console.error('Encryption function failed:', err.message);
+        throw err;
+    }
 }
 
 function decrypt(jsonStr) {
@@ -39,6 +49,7 @@ function decrypt(jsonStr) {
         decrypted += decipher.final('utf8');
         return decrypted;
     } catch (e) {
+        console.error('Decryption function failed:', e.message);
         return null;
     }
 }
@@ -74,7 +85,8 @@ app.post('/api/register', (req, res) => {
         });
         stmt.finalize();
     } catch (e) {
-        res.status(500).json({ error: 'Encryption error' });
+        console.error('Registration encryption error:', e.message);
+        res.status(500).json({ error: 'Encryption error: ' + e.message });
     }
 });
 
