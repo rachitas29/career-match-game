@@ -14,19 +14,20 @@ const PORT = process.env.PORT || 3000;
 // Encryption Configuration
 let ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY;
 if (ENCRYPTION_KEY_RAW) {
-    ENCRYPTION_KEY_RAW = ENCRYPTION_KEY_RAW.trim().replace(/^["'](.+)["']$/, '$1'); // Trim and remove wrapping quotes
+    ENCRYPTION_KEY_RAW = ENCRYPTION_KEY_RAW.trim().replace(/^["'](.+)["']$/, '$1');
 }
 
-if (!ENCRYPTION_KEY_RAW || ENCRYPTION_KEY_RAW.length !== 64) {
+let ENCRYPTION_KEY;
+if (ENCRYPTION_KEY_RAW && ENCRYPTION_KEY_RAW.length === 64) {
+    ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_RAW, 'hex');
+} else if (ENCRYPTION_KEY_RAW && ENCRYPTION_KEY_RAW.length === 44) {
+    ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_RAW, 'base64');
+}
+
+if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
     console.error('CRITICAL ERROR: ENCRYPTION_KEY environment variable is missing or invalid.');
-    console.error(`Raw Length: ${ENCRYPTION_KEY_RAW ? ENCRYPTION_KEY_RAW.length : 0}`);
-    console.error('Please set ENCRYPTION_KEY to a 64-character hex string in your environment variables.');
-    process.exit(1);
-}
-
-const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_RAW, 'hex');
-if (ENCRYPTION_KEY.length !== 32) {
-    console.error('CRITICAL ERROR: ENCRYPTION_KEY must be a valid 32-byte hex string.');
+    console.error(`Received length: ${ENCRYPTION_KEY_RAW ? ENCRYPTION_KEY_RAW.length : 0}`);
+    console.error('The key must be either a 64-character Hex string or a 44-character Base64 string.');
     process.exit(1);
 }
 const ALGORITHM = 'aes-256-gcm';
