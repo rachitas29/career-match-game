@@ -11,7 +11,7 @@ services:
           name: account_management_db
           property: connectionString
       - key: ENCRYPTION_KEY
-        sync: false # User must set this manually in the dashboard
+        # User has manually set this in the dashboard; keeping here for Blueprint consistency.
 
 databases:
   - name: account_management_db
