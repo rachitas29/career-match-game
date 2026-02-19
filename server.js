@@ -11,7 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Encryption Configuration
-const ENCRYPTION_KEY = Buffer.from(process.env.ENCRYPTION_KEY, 'hex'); // 32 bytes
+const ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY;
+if (!ENCRYPTION_KEY_RAW || ENCRYPTION_KEY_RAW.length < 32) {
+    console.error('CRITICAL ERROR: ENCRYPTION_KEY environment variable is missing or too short.');
+    console.error('Please set ENCRYPTION_KEY in your environment variables (must be a 64-character hex string).');
+    process.exit(1);
+}
+
+const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_RAW, 'hex'); // 32 bytes
 const ALGORITHM = 'aes-256-gcm';
 
 function encrypt(text) {
