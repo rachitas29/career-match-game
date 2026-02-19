@@ -172,19 +172,19 @@ app.post('/api/forgot-password', (req, res) => {
             return res.status(500).json({ error: 'Failed to retrieve password. It might be in an old format.' });
         }
 
-        console.log('Creating SMTP transporter for port 587...');
+        console.log('Creating SMTP transporter using Gmail service shortcut...');
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // TLS
+            service: 'gmail',
             auth: {
                 user: senderEmail,
                 pass: senderPassword
             },
-            connectionTimeout: 10000, // 10 seconds
-            greetingTimeout: 10000,
-            socketTimeout: 10000,
-            family: 4 // Force IPv4 to avoid ENETUNREACH on Render
+            connectionTimeout: 15000,
+            greetingTimeout: 15000,
+            socketTimeout: 15000,
+            tls: {
+                rejectUnauthorized: false // Helps avoid handshake blocks on some cloud providers
+            }
         });
 
         const mailOptions = {
