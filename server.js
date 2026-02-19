@@ -12,10 +12,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Encryption Configuration
-const ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY;
+let ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY;
+if (ENCRYPTION_KEY_RAW) {
+    ENCRYPTION_KEY_RAW = ENCRYPTION_KEY_RAW.trim().replace(/^["'](.+)["']$/, '$1'); // Trim and remove wrapping quotes
+}
+
 if (!ENCRYPTION_KEY_RAW || ENCRYPTION_KEY_RAW.length !== 64) {
     console.error('CRITICAL ERROR: ENCRYPTION_KEY environment variable is missing or invalid.');
-    console.error(`Expected 64 characters, got ${ENCRYPTION_KEY_RAW ? ENCRYPTION_KEY_RAW.length : 0}.`);
+    console.error(`Raw Length: ${ENCRYPTION_KEY_RAW ? ENCRYPTION_KEY_RAW.length : 0}`);
     console.error('Please set ENCRYPTION_KEY to a 64-character hex string in your environment variables.');
     process.exit(1);
 }
