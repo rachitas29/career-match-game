@@ -11,7 +11,11 @@ services:
           name: account_management_db
           property: connectionString
       - key: ENCRYPTION_KEY
-        # User has manually set this in the dashboard; keeping here for Blueprint consistency.
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
 
 databases:
   - name: account_management_db
