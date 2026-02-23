@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const db = require('./database');
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 
 const app = express();
@@ -31,6 +31,11 @@ if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
     process.exit(1);
 }
 const ALGORITHM = 'aes-256-gcm';
+
+// SendGrid Configuration
+if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 function encrypt(text) {
     try {
@@ -172,24 +177,14 @@ app.post('/api/forgot-password', (req, res) => {
             return res.status(500).json({ error: 'Failed to retrieve password. It might be in an old format.' });
         }
 
-        console.log('Creating SMTP transporter using Gmail service shortcut...');
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: senderEmail,
-                pass: senderPassword
-            },
-            connectionTimeout: 15000,
-            greetingTimeout: 15000,
-            socketTimeout: 15000,
-            tls: {
-                rejectUnauthorized: false // Helps avoid handshake blocks on some cloud providers
-            }
-        });
+        if (!process.env.SENDGRID_API_KEY) {
+            console.error('SMTP Error: SendGrid API Key is missing on the server.');
+            return res.status(500).json({ error: 'Email service not configured. Please contact the administrator.' });
+        }
 
-        const mailOptions = {
-            from: `"Account Flow Recovery" <${senderEmail}>`,
+        const msg = {
             to: targetEmail,
+            from: process.env.FROM_EMAIL || senderEmail, // Use environment variable or fallback to provided sender
             subject: 'Your Password Recovery - Account Flow',
             text: `Hello,\n\nYou requested your password for Account Flow. Your original password is: ${originalPassword}\n\nRegards,\nAccount Flow Team`,
             html: `
@@ -208,12 +203,13 @@ app.post('/api/forgot-password', (req, res) => {
         };
 
         try {
-            console.log(`Starting email send process to ${targetEmail} via ${senderEmail}...`);
-            await transporter.sendMail(mailOptions);
+            console.log(`Sending recovery email to ${targetEmail} via SendGrid...`);
+            await sgMail.send(msg);
             res.json({ message: 'Password recovery email sent successfully!' });
         } catch (sendErr) {
-            console.error('SMTP Error:', sendErr);
-            res.status(500).json({ error: `SMTP Error: ${sendErr.message}. Please verify your App Password.` });
+            console.error('SendGrid Error:', sendErr.response ? sendErr.response.body : sendErr.message);
+            const errorDetail = sendErr.response ? sendErr.response.body.errors[0].message : sendErr.message;
+            res.status(500).json({ error: `Email Error: ${errorDetail}` });
         }
     });
 });
