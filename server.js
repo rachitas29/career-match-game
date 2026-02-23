@@ -160,9 +160,9 @@ app.put('/api/change-password', (req, res) => {
 });
 
 app.post('/api/forgot-password', (req, res) => {
-    const { targetEmail, senderEmail, senderPassword } = req.body;
-    if (!targetEmail || !senderEmail || !senderPassword) {
-        return res.status(400).json({ error: 'Target Email, Sender Email, and Sender Password are required' });
+    const { targetEmail } = req.body;
+    if (!targetEmail) {
+        return res.status(400).json({ error: 'Target Email is required' });
     }
 
     db.get("SELECT * FROM users WHERE email = ?", [targetEmail], async (err, user) => {
