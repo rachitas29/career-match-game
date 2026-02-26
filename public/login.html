@@ -196,7 +196,7 @@
                     submitBtn.style.opacity = '1';
                     submitBtn.disabled = false;
                 } else {
-                    api.saveUser(result.user);
+                    api.saveUser(result.user, result.token);
                     // Add a small delay for better UX
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';

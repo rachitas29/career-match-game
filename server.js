@@ -1,4 +1,4 @@
-// Trigger Re-deploy: HSN & GST Updates
+// Trigger Re-deploy: Security Fortification
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -7,6 +7,9 @@ const path = require('path');
 const db = require('./database');
 const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +34,14 @@ if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
     process.exit(1);
 }
 const ALGORITHM = 'aes-256-gcm';
+
+// JWT Configuration
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error('CRITICAL ERROR: JWT_SECRET environment variable is missing.');
+    console.error('Please add a strong, random JWT_SECRET to your .env file.');
+    process.exit(1);
+}
 
 // SendGrid Configuration
 if (process.env.SENDGRID_API_KEY) {
@@ -66,6 +77,10 @@ function decrypt(jsonStr) {
 }
 
 // Middleware
+app.use(helmet({
+    contentSecurityPolicy: false, // Disabled to allow inline scripts in existing HTML pages
+    crossOriginEmbedderPolicy: false
+}));
 app.use(cors());
 app.use(bodyParser.json());
 app.use((req, res, next) => {
@@ -74,9 +89,36 @@ app.use((req, res, next) => {
 });
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes - Auth
-// Register
-app.post('/api/register', (req, res) => {
+// Rate Limiter for Auth Endpoints
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,
+    message: { error: 'Too many attempts from this IP. Please try again in 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) {
+        return res.status(401).json({ error: 'Authentication required. Please log in.' });
+    }
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({ error: 'Session expired. Please log in again.' });
+            }
+            return res.status(401).json({ error: 'Invalid token. Please log in again.' });
+        }
+        req.user = { userId: decoded.userId, email: decoded.email };
+        next();
+    });
+};
+
+// Routes - Auth (Public — no JWT required)
+app.post('/api/register', authLimiter, (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -101,8 +143,7 @@ app.post('/api/register', (req, res) => {
     }
 });
 
-// Login
-app.post('/api/login', (req, res) => {
+app.post('/api/login', authLimiter, (req, res) => {
     const { email, password } = req.body;
     console.log('Login Attempt:', email);
 
@@ -123,7 +164,12 @@ app.post('/api/login', (req, res) => {
         const decrypted = decrypt(user.password);
         if (decrypted === password) {
             console.log('Password Match. Login Success.');
-            res.json({ message: 'Login successful', user: { id: user.id, email: user.email, name: user.name, phone: user.phone } });
+            const token = jwt.sign(
+                { userId: user.id, email: user.email },
+                JWT_SECRET,
+                { expiresIn: '8h' }
+            );
+            res.json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.name, phone: user.phone } });
         } else {
             console.log('Password Mismatch.');
             res.status(401).json({ error: 'Invalid email or password' });
@@ -131,26 +177,37 @@ app.post('/api/login', (req, res) => {
     });
 });
 
+// All routes below require a valid JWT
+app.use('/api', (req, res, next) => {
+    // Skip auth for public endpoints already registered above
+    const publicPaths = ['/api/register', '/api/login', '/api/forgot-password'];
+    if (publicPaths.some(p => req.path === p.replace('/api', ''))) {
+        return next();
+    }
+    return authenticateToken(req, res, next);
+});
+
 // User Settings
 app.put('/api/user', (req, res) => {
-    const { id, name, email, phone } = req.body;
-    if (!id) return res.status(400).json({ error: 'User ID required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { name, email, phone } = req.body;
 
     const sql = `UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?`;
-    db.run(sql, [name, email, phone, id], function (err) {
+    db.run(sql, [name, email, phone, userId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Profile updated' });
     });
 });
 
 app.put('/api/change-password', (req, res) => {
-    const { id, new_password } = req.body;
-    if (!id || !new_password) return res.status(400).json({ error: 'User ID and New Password required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { new_password } = req.body;
+    if (!new_password) return res.status(400).json({ error: 'New Password required' });
 
     try {
         const encryptedPassword = encrypt(new_password);
         const sql = `UPDATE users SET password = ? WHERE id = ?`;
-        db.run(sql, [encryptedPassword, id], function (err) {
+        db.run(sql, [encryptedPassword, userId], function (err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ message: 'Password updated successfully' });
         });
@@ -216,17 +273,17 @@ app.post('/api/forgot-password', (req, res) => {
 
 // Routes - Customers
 app.post('/api/customers', (req, res) => {
-    const { user_id, unique_client_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes } = req.body;
-    console.log('POST /api/customers:', req.body);
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { unique_client_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes } = req.body;
 
-    if (!customer_name || !user_id || !unique_client_id) {
-        return res.status(400).json({ error: 'Customer Name, User ID, and Unique Client ID are required' });
+    if (!customer_name || !unique_client_id) {
+        return res.status(400).json({ error: 'Customer Name and Unique Client ID are required' });
     }
 
     const sql = `INSERT INTO customers (user_id, unique_client_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    const params = [user_id, unique_client_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes];
+    const params = [userId, unique_client_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes];
 
     db.run(sql, params, function (err) {
         if (err) {
@@ -240,9 +297,7 @@ app.post('/api/customers', (req, res) => {
 });
 
 app.get('/api/customers', (req, res) => {
-    const userId = req.query.user_id;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
-
+    const userId = req.user.userId; // From JWT — IDOR-safe
     db.all("SELECT * FROM customers WHERE user_id = ?", [userId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ customers: rows });
@@ -251,10 +306,7 @@ app.get('/api/customers', (req, res) => {
 
 app.get('/api/customers/:id', (req, res) => {
     const { id } = req.params;
-    const userId = req.query.user_id;
-
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
-
+    const userId = req.user.userId; // From JWT — IDOR-safe
     db.get("SELECT * FROM customers WHERE id = ? AND user_id = ?", [id, userId], (err, customer) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!customer) return res.status(404).json({ error: 'Account not found' });
@@ -264,16 +316,15 @@ app.get('/api/customers/:id', (req, res) => {
 
 app.put('/api/customers/:id', (req, res) => {
     const { id } = req.params;
-    const { user_id, customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes } = req.body;
-
-    if (!user_id) return res.status(400).json({ error: 'User ID required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes } = req.body;
 
     const sql = `UPDATE customers SET 
         customer_name = ?, short_name = ?, msme_status = ?, address = ?, gst_number = ?, 
         pan_number = ?, org_type = ?, contact_person = ?, contact_number = ?, email_id = ?, notes = ?
         WHERE id = ? AND user_id = ?`;
 
-    const params = [customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes, id, user_id];
+    const params = [customer_name, short_name, msme_status, address, gst_number, pan_number, org_type, contact_person, contact_number, email_id, notes, id, userId];
 
     db.run(sql, params, function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -284,21 +335,20 @@ app.put('/api/customers/:id', (req, res) => {
 
 // Routes - Contacts
 app.post('/api/contacts', (req, res) => {
-    const { user_id, account_id, name, email, phone, role } = req.body;
-    if (!name || !user_id) return res.status(400).json({ error: 'Name and User ID are required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { account_id, name, email, phone, role } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
 
     const sql = `INSERT INTO contacts (user_id, account_id, name, email, phone, role) VALUES (?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, account_id, name, email, phone, role], function (err) {
+    db.run(sql, [userId, account_id, name, email, phone, role], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Contact created', contactId: this.lastID });
     });
 });
 
 app.get('/api/contacts', (req, res) => {
-    const userId = req.query.user_id;
+    const userId = req.user.userId; // From JWT — IDOR-safe
     const accountId = req.query.account_id;
-
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     let sql = `
         SELECT contacts.*, customers.customer_name as account_name 
@@ -326,9 +376,7 @@ app.get('/api/contacts', (req, res) => {
 
 app.get('/api/contacts/:id', (req, res) => {
     const { id } = req.params;
-    const userId = req.query.user_id;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
-
+    const userId = req.user.userId; // From JWT — IDOR-safe
     db.get("SELECT * FROM contacts WHERE id = ? AND user_id = ?", [id, userId], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: 'Contact not found' });
@@ -338,12 +386,13 @@ app.get('/api/contacts/:id', (req, res) => {
 
 app.put('/api/contacts/:id', (req, res) => {
     const { id } = req.params;
-    const { user_id, account_id, name, email, phone, role } = req.body;
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { account_id, name, email, phone, role } = req.body;
 
-    if (!name || !user_id) return res.status(400).json({ error: 'Name and User ID are required' });
+    if (!name) return res.status(400).json({ error: 'Name is required' });
 
     const sql = `UPDATE contacts SET account_id = ?, name = ?, email = ?, phone = ?, role = ? WHERE id = ? AND user_id = ?`;
-    db.run(sql, [account_id, name, email, phone, role, id, user_id], function (err) {
+    db.run(sql, [account_id, name, email, phone, role, id, userId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: 'Contact not found or no changes made' });
         res.json({ message: 'Contact updated successfully' });
@@ -352,20 +401,19 @@ app.put('/api/contacts/:id', (req, res) => {
 
 // Routes - Leads
 app.post('/api/leads', (req, res) => {
-    const { user_id, name, company_name, email, status, value } = req.body;
-    if (!name || !user_id) return res.status(400).json({ error: 'Name and User ID are required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { name, company_name, email, status, value } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
 
     const sql = `INSERT INTO leads (user_id, name, company_name, email, status, value) VALUES (?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, name, company_name, email, status, value], function (err) {
+    db.run(sql, [userId, name, company_name, email, status, value], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Lead created', leadId: this.lastID });
     });
 });
 
 app.get('/api/leads', (req, res) => {
-    const userId = req.query.user_id;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
-
+    const userId = req.user.userId; // From JWT — IDOR-safe
     db.all("SELECT * FROM leads WHERE user_id = ?", [userId], (err, rows) => {
         if (err) {
             if (err.message.includes('relation "leads" does not exist')) {
@@ -379,20 +427,20 @@ app.get('/api/leads', (req, res) => {
 
 // Routes - Tasks
 app.post('/api/tasks', (req, res) => {
-    const { user_id, account_id, title, type, description, due_date, status } = req.body;
-    if (!title || !user_id) return res.status(400).json({ error: 'Title and User ID are required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { account_id, title, type, description, due_date, status } = req.body;
+    if (!title) return res.status(400).json({ error: 'Title is required' });
 
     const sql = `INSERT INTO tasks (user_id, account_id, title, type, description, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, account_id, title, type, description, due_date, status], function (err) {
+    db.run(sql, [userId, account_id, title, type, description, due_date, status], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Task created', taskId: this.lastID });
     });
 });
 
 app.get('/api/tasks', (req, res) => {
-    const userId = req.query.user_id;
+    const userId = req.user.userId; // From JWT — IDOR-safe
     const accountId = req.query.account_id;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     let sql = `
         SELECT tasks.*, customers.customer_name as account_name 
@@ -419,8 +467,9 @@ app.get('/api/tasks', (req, res) => {
 
 app.put('/api/tasks/:id', (req, res) => {
     const { id } = req.params;
+    const userId = req.user.userId; // From JWT — IDOR-safe
     const { status } = req.body;
-    db.run("UPDATE tasks SET status = ? WHERE id = ?", [status, id], function (err) {
+    db.run("UPDATE tasks SET status = ? WHERE id = ? AND user_id = ?", [status, id, userId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Task updated' });
     });
@@ -428,20 +477,19 @@ app.put('/api/tasks/:id', (req, res) => {
 
 // Routes - Products
 app.post('/api/products', (req, res) => {
-    const { user_id, name, sku, price, description } = req.body;
-    if (!name || !user_id) return res.status(400).json({ error: 'Product Name and User ID are required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { name, sku, price, description } = req.body;
+    if (!name) return res.status(400).json({ error: 'Product Name is required' });
 
     const sql = `INSERT INTO products (user_id, name, sku, price, description) VALUES (?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, name, sku, price, description], function (err) {
+    db.run(sql, [userId, name, sku, price, description], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Product created', productId: this.lastID });
     });
 });
 
 app.get('/api/products', (req, res) => {
-    const userId = req.query.user_id;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
-
+    const userId = req.user.userId; // From JWT — IDOR-safe
     db.all("SELECT * FROM products WHERE user_id = ?", [userId], (err, rows) => {
         if (err) {
             if (err.message.includes('relation "products" does not exist')) {
@@ -455,20 +503,20 @@ app.get('/api/products', (req, res) => {
 
 // Routes - Interactions
 app.post('/api/interactions', (req, res) => {
-    const { user_id, account_id, type, details, date } = req.body;
-    if (!type || !user_id) return res.status(400).json({ error: 'Type and User ID are required' });
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { account_id, type, details, date } = req.body;
+    if (!type) return res.status(400).json({ error: 'Type is required' });
 
     const sql = `INSERT INTO interactions (user_id, account_id, type, details, date) VALUES (?, ?, ?, ?, ?)`;
-    db.run(sql, [user_id, account_id, type, details, date || new Date().toISOString()], function (err) {
+    db.run(sql, [userId, account_id, type, details, date || new Date().toISOString()], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: 'Interaction logged', interactionId: this.lastID });
     });
 });
 
 app.get('/api/interactions', (req, res) => {
-    const userId = req.query.user_id;
+    const userId = req.user.userId; // From JWT — IDOR-safe
     const accountId = req.query.account_id;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     let sql = `
         SELECT interactions.*, customers.customer_name as account_name 
@@ -496,16 +544,17 @@ app.get('/api/interactions', (req, res) => {
 
 // Purchase Orders Routes
 app.post('/api/purchase-orders', (req, res) => {
-    const { user_id, account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name } = req.body;
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    const { account_id, client_id, po_number, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name } = req.body;
 
-    if (!po_number || !user_id) {
-        return res.status(400).json({ error: 'PO Number and User ID are required' });
+    if (!po_number) {
+        return res.status(400).json({ error: 'PO Number is required' });
     }
 
     const sql = `INSERT INTO purchase_orders (po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    const params = [po_number, user_id, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name];
+    const params = [po_number, userId, account_id, client_id, po_date, po_value, bank_guarantee, bill_to, ship_to, notes, bg_number, bg_expiry_date, bg_bank_name, bg_amount, contact_id, project_name];
 
     db.run(sql, params, function (err) {
         if (err) {
@@ -520,7 +569,8 @@ app.post('/api/purchase-orders', (req, res) => {
 
 app.get('/api/purchase-orders/:po_number', (req, res) => {
     const { po_number } = req.params;
-    db.get("SELECT * FROM purchase_orders WHERE po_number = ?", [po_number], (err, row) => {
+    const userId = req.user.userId; // From JWT — IDOR-safe
+    db.get("SELECT * FROM purchase_orders WHERE po_number = ? AND user_id = ?", [po_number, userId], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: 'Purchase Order not found' });
         res.json({ purchase_order: row });
@@ -528,10 +578,8 @@ app.get('/api/purchase-orders/:po_number', (req, res) => {
 });
 
 app.get('/api/purchase-orders', (req, res) => {
-    const userId = req.query.user_id;
+    const userId = req.user.userId; // From JWT — IDOR-safe
     const account_id = req.query.account_id;
-
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     let sql = `SELECT purchase_orders.*, customers.customer_name 
                FROM purchase_orders 
@@ -554,9 +602,7 @@ app.get('/api/purchase-orders', (req, res) => {
 app.put('/api/purchase-orders/:po_number', (req, res) => {
     const { po_number } = req.params;
     const body = req.body;
-    const user_id = body.user_id || req.query.user_id; // Try both body and query
-
-    if (!user_id) return res.status(400).json({ error: 'User ID is required' });
+    const user_id = req.user.userId; // From JWT — IDOR-safe
 
     // Fields that can be updated
     const allowedFields = [
@@ -592,8 +638,9 @@ app.put('/api/purchase-orders/:po_number', (req, res) => {
 // DELETE Purchase Order (cascades to line items and milestones)
 app.delete('/api/purchase-orders/:po_number', (req, res) => {
     const { po_number } = req.params;
+    const userId = req.user.userId; // From JWT — IDOR-safe
 
-    db.run('DELETE FROM purchase_orders WHERE po_number = ?', [po_number], function (err) {
+    db.run('DELETE FROM purchase_orders WHERE po_number = ? AND user_id = ?', [po_number, userId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: 'Purchase Order not found' });
         res.json({ message: 'Purchase Order and all associated data deleted successfully' });

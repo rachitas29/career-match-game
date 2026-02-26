@@ -32,10 +32,10 @@ const api = {
         return userStr ? JSON.parse(userStr) : null;
     },
 
-    saveUser: (user) => {
+    saveUser: (user, token) => {
         localStorage.setItem('user', JSON.stringify(user));
-        // Mock token for now since backend doesn't return one yet
-        localStorage.setItem('token', 'mock-session-token-' + Date.now());
+        // Store the real JWT returned from the server
+        localStorage.setItem('token', token);
     },
 
     // HTTP Methods
