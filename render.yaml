@@ -18,6 +18,8 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: ADMIN_RESET_KEY
+        sync: false
 
 databases:
   - name: account_management_db

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Password Reset</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #1e293b;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4f46e5, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 0.4rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            border: 1px solid #fcd34d;
+            margin-top: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #475569;
+            margin-bottom: 0.4rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #f8fafc;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            background: #fff;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #resultBox {
+            margin-top: 1.25rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 1.5rem 0;
+        }
+
+        .warning-note {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 1.25rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="header">
+            <h1>Account Flow</h1>
+            <p>Admin — Password Reset Tool</p>
+            <span class="badge">⚠️ Admin Only</span>
+        </div>
+
+        <form id="resetForm">
+            <div class="form-group">
+                <label for="adminKey">Admin Reset Key</label>
+                <input type="password" id="adminKey" placeholder="Enter the admin secret key" required>
+            </div>
+            <hr class="divider">
+            <div class="form-group">
+                <label for="email">User Email</label>
+                <input type="email" id="email" placeholder="user@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password" required>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Reset Password</button>
+        </form>
+
+        <div id="resultBox"></div>
+        <p class="warning-note">This page should be removed after use. Do not share the URL.</p>
+    </div>
+
+    <script>
+        const form = document.getElementById('resetForm');
+        const resultBox = document.getElementById('resultBox');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const key = document.getElementById('adminKey').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            resultBox.style.display = 'none';
+
+            if (newPassword !== confirmPassword) {
+                resultBox.textContent = '❌ Passwords do not match.';
+                resultBox.className = 'error';
+                resultBox.style.display = 'block';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Resetting…';
+
+            try {
+                const params = new URLSearchParams({ key, email, password: newPassword });
+                const res = await fetch(`/api/admin-reset-password?${params}`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    resultBox.textContent = `✅ ${data.message}`;
+                    resultBox.className = 'success';
+                    form.reset();
+                } else {
+                    resultBox.textContent = `❌ ${data.error}`;
+                    resultBox.className = 'error';
+                }
+            } catch (err) {
+                resultBox.textContent = '❌ Network error. Please try again.';
+                resultBox.className = 'error';
+            }
+
+            resultBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Reset Password';
+        });
+    </script>
+</body>
+
+</html>

@@ -271,6 +271,30 @@ app.post('/api/forgot-password', (req, res) => {
     });
 });
 
+// *** TEMPORARY Admin Password Reset (remove after use) ***
+// Protected by ADMIN_RESET_KEY — call via browser or curl:
+// GET /api/admin-reset-password?key=<ADMIN_RESET_KEY>&email=<email>&password=<newpassword>
+app.get('/api/admin-reset-password', (req, res) => {
+    const { key, email, password } = req.query;
+    const ADMIN_KEY = process.env.ADMIN_RESET_KEY;
+    if (!ADMIN_KEY || key !== ADMIN_KEY) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (!email || !password) {
+        return res.status(400).json({ error: 'email and password query params required' });
+    }
+    try {
+        const encryptedPassword = encrypt(password);
+        db.run('UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)', [encryptedPassword, email], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            if (this.changes === 0) return res.status(404).json({ error: `No user found with email: ${email}` });
+            res.json({ message: `Password reset successfully for ${email}. Please remove this endpoint.` });
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Encryption error: ' + e.message });
+    }
+});
+
 // Routes - Customers
 app.post('/api/customers', (req, res) => {
     const userId = req.user.userId; // From JWT — IDOR-safe
