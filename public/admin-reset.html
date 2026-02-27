@@ -380,7 +380,6 @@
             el.textContent = message;
             el.className = `alert alert-${type}`;
             el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 5000);
         }
 
         async function authenticate() {

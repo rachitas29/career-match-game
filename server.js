@@ -180,7 +180,7 @@ app.post('/api/login', authLimiter, (req, res) => {
 // All routes below require a valid JWT
 app.use('/api', (req, res, next) => {
     // Skip auth for public endpoints already registered above
-    const publicPaths = ['/api/register', '/api/login', '/api/forgot-password'];
+    const publicPaths = ['/api/register', '/api/login', '/api/forgot-password', '/api/admin-reset-password', '/api/admin/users'];
     if (publicPaths.some(p => req.path === p.replace('/api', ''))) {
         return next();
     }
