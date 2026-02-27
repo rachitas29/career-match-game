@@ -271,9 +271,8 @@ app.post('/api/forgot-password', (req, res) => {
     });
 });
 
-// *** TEMPORARY Admin Password Reset (remove after use) ***
-// Protected by ADMIN_RESET_KEY — call via browser or curl:
-// GET /api/admin-reset-password?key=<ADMIN_RESET_KEY>&email=<email>&password=<newpassword>
+// Admin Password Reset Endpoint (protected by ADMIN_RESET_KEY)
+// UI: /admin-reset.html
 app.get('/api/admin-reset-password', (req, res) => {
     const { key, email, password } = req.query;
     const ADMIN_KEY = process.env.ADMIN_RESET_KEY;
@@ -288,11 +287,31 @@ app.get('/api/admin-reset-password', (req, res) => {
         db.run('UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)', [encryptedPassword, email], function (err) {
             if (err) return res.status(500).json({ error: err.message });
             if (this.changes === 0) return res.status(404).json({ error: `No user found with email: ${email}` });
-            res.json({ message: `Password reset successfully for ${email}. Please remove this endpoint.` });
+            res.json({ message: `Password reset successfully for ${email}.` });
         });
     } catch (e) {
         res.status(500).json({ error: 'Encryption error: ' + e.message });
     }
+});
+
+// Admin — List all users (protected by ADMIN_RESET_KEY)
+app.get('/api/admin/users', (req, res) => {
+    const { key } = req.query;
+    const ADMIN_KEY = process.env.ADMIN_RESET_KEY;
+    if (!ADMIN_KEY || key !== ADMIN_KEY) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    db.all('SELECT id, email, name, phone, password FROM users ORDER BY id ASC', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const users = rows.map(u => ({
+            id: u.id,
+            email: u.email,
+            name: u.name,
+            phone: u.phone,
+            pw_format: (u.password && u.password.startsWith('{')) ? 'aes' : 'legacy'
+        }));
+        res.json({ users });
+    });
 });
 
 // Routes - Customers

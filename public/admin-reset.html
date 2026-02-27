@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin — Password Reset</title>
+    <title>Admin Panel — Account Flow</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,29 +17,50 @@
         body {
             font-family: 'Outfit', sans-serif;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: #1e293b;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a5b4fc, #f9a8d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-header p {
+            color: #94a3b8;
+            margin-top: 0.4rem;
         }
 
         .card {
             background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            animation: slideUp 0.5s ease-out;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.4s ease-out;
         }
 
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(16px);
             }
 
             to {
@@ -48,212 +69,424 @@
             }
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .header h1 {
-            font-size: 1.6rem;
+        .card-title {
+            font-size: 1.15rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #4f46e5, #ec4899);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #1e293b;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .header p {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-top: 0.4rem;
+        .card-title span {
+            font-size: 1.3rem;
         }
 
-        .badge {
-            display: inline-block;
-            background: #fef3c7;
-            color: #92400e;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.25rem 0.75rem;
-            border-radius: 99px;
-            border: 1px solid #fcd34d;
-            margin-top: 0.75rem;
+        /* Auth Gate */
+        #authGate {
+            max-width: 420px;
+            margin: 4rem auto;
+        }
+
+        #authGate .card-title {
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        /* Form styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
 
         label {
             display: block;
-            font-weight: 500;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
+            font-weight: 600;
             color: #475569;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
-        input {
+        input,
+        select {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.7rem 0.9rem;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 0.95rem;
             font-family: inherit;
-            transition: border-color 0.2s, box-shadow 0.2s;
             background: #f8fafc;
+            color: #1e293b;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
         }
 
-        input:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
             background: #fff;
         }
 
         .btn {
-            width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, #4f46e5, #4338ca);
-            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
             font-family: inherit;
             transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
-            margin-top: 0.5rem;
         }
 
-        .btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: white;
+        }
+
+        .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .btn-full {
+            width: 100%;
+            padding: 0.875rem;
         }
 
         .btn:disabled {
-            opacity: 0.6;
+            opacity: 0.55;
             cursor: not-allowed;
-            transform: none;
+            transform: none !important;
         }
 
-        #resultBox {
-            margin-top: 1.25rem;
-            padding: 0.875rem 1rem;
+        /* Alert boxes */
+        .alert {
+            padding: 0.75rem 1rem;
             border-radius: 10px;
             font-size: 0.9rem;
+            margin-top: 1rem;
             display: none;
         }
 
-        .success {
+        .alert-success {
             background: #f0fdf4;
             color: #166534;
             border: 1px solid #bbf7d0;
         }
 
-        .error {
+        .alert-error {
             background: #fef2f2;
             color: #dc2626;
             border: 1px solid #fee2e2;
         }
 
-        .divider {
-            border: none;
-            border-top: 1px solid #e2e8f0;
-            margin: 1.5rem 0;
+        /* User table */
+        .user-table-wrap {
+            overflow-x: auto;
+            margin-top: 0.5rem;
         }
 
-        .warning-note {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            text-align: center;
-            margin-top: 1.25rem;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+            padding: 0.6rem 1rem;
+            text-align: left;
+        }
+
+        td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-aes {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .tag-old {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .reset-link {
+            color: #6366f1;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            background: none;
+            border: none;
+            font-family: inherit;
+            text-decoration: underline;
+        }
+
+        .reset-link:hover {
+            color: #4f46e5;
+        }
+
+        #mainPanel {
+            display: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <div class="header">
-            <h1>Account Flow</h1>
-            <p>Admin — Password Reset Tool</p>
-            <span class="badge">⚠️ Admin Only</span>
+    <div class="container">
+        <div class="page-header">
+            <h1>⚙️ Admin Panel</h1>
+            <p>Account Flow — User Management</p>
         </div>
 
-        <form id="resetForm">
-            <div class="form-group">
-                <label for="adminKey">Admin Reset Key</label>
-                <input type="password" id="adminKey" placeholder="Enter the admin secret key" required>
+        <!-- Auth Gate -->
+        <div id="authGate">
+            <div class="card">
+                <div class="card-title">🔐 Admin Login</div>
+                <div class="form-group">
+                    <label for="adminKeyInput">Admin Reset Key</label>
+                    <input type="password" id="adminKeyInput" placeholder="Enter admin secret key">
+                </div>
+                <button class="btn btn-primary btn-full" onclick="authenticate()">Unlock Admin Panel</button>
+                <div class="alert alert-error" id="authError"></div>
             </div>
-            <hr class="divider">
-            <div class="form-group">
-                <label for="email">User Email</label>
-                <input type="email" id="email" placeholder="user@example.com" required>
-            </div>
-            <div class="form-group">
-                <label for="newPassword">New Password</label>
-                <input type="password" id="newPassword" placeholder="Enter new password" required>
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="Confirm new password" required>
-            </div>
-            <button type="submit" class="btn" id="submitBtn">Reset Password</button>
-        </form>
+        </div>
 
-        <div id="resultBox"></div>
-        <p class="warning-note">This page should be removed after use. Do not share the URL.</p>
+        <!-- Main Panel -->
+        <div id="mainPanel">
+
+            <!-- User List -->
+            <div class="card">
+                <div class="card-title"><span>👥</span> Registered Users
+                    <button class="btn btn-primary" style="margin-left:auto;padding:0.4rem 1rem;font-size:0.85rem;"
+                        onclick="loadUsers()">↻ Refresh</button>
+                </div>
+                <div class="user-table-wrap">
+                    <table id="userTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Password Format</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;color:#94a3b8;">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid">
+                <!-- Reset Any User's Password -->
+                <div class="card">
+                    <div class="card-title"><span>🔑</span> Reset User Password</div>
+                    <form id="resetForm" onsubmit="resetPassword(event)">
+                        <div class="form-group">
+                            <label for="resetEmail">User Email</label>
+                            <input type="email" id="resetEmail" placeholder="user@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resetNew">New Password</label>
+                            <input type="password" id="resetNew" placeholder="New password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resetConfirm">Confirm Password</label>
+                            <input type="password" id="resetConfirm" placeholder="Confirm password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full" id="resetBtn">Reset Password</button>
+                        <div class="alert" id="resetAlert"></div>
+                    </form>
+                </div>
+
+                <!-- Register New User -->
+                <div class="card">
+                    <div class="card-title"><span>➕</span> Register New User</div>
+                    <form id="registerForm" onsubmit="registerUser(event)">
+                        <div class="form-group">
+                            <label for="regEmail">Email</label>
+                            <input type="email" id="regEmail" placeholder="user@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">Password</label>
+                            <input type="password" id="regPassword" placeholder="Initial password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full" id="regBtn">Create Account</button>
+                        <div class="alert" id="regAlert"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const form = document.getElementById('resetForm');
-        const resultBox = document.getElementById('resultBox');
-        const submitBtn = document.getElementById('submitBtn');
+        let ADMIN_KEY = '';
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const key = document.getElementById('adminKey').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+        function showAlert(id, message, type) {
+            const el = document.getElementById(id);
+            el.textContent = message;
+            el.className = `alert alert-${type}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
 
-            resultBox.style.display = 'none';
+        async function authenticate() {
+            const key = document.getElementById('adminKeyInput').value.trim();
+            if (!key) return;
 
-            if (newPassword !== confirmPassword) {
-                resultBox.textContent = '❌ Passwords do not match.';
-                resultBox.className = 'error';
-                resultBox.style.display = 'block';
+            // Validate key by calling the users endpoint
+            const res = await fetch(`/api/admin/users?key=${encodeURIComponent(key)}`);
+            if (res.ok) {
+                ADMIN_KEY = key;
+                document.getElementById('authGate').style.display = 'none';
+                document.getElementById('mainPanel').style.display = 'block';
+                renderUsers((await res.json()).users);
+            } else {
+                showAlert('authError', '❌ Invalid admin key. Please try again.', 'error');
+            }
+        }
+
+        document.getElementById('adminKeyInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') authenticate();
+        });
+
+        async function loadUsers() {
+            const res = await fetch(`/api/admin/users?key=${encodeURIComponent(ADMIN_KEY)}`);
+            const data = await res.json();
+            renderUsers(data.users || []);
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No users found.</td></tr>';
                 return;
             }
+            tbody.innerHTML = users.map(u => {
+                const isAES = u.pw_format === 'aes';
+                const tag = isAES
+                    ? `<span class="tag tag-aes">AES-256</span>`
+                    : `<span class="tag tag-old">Legacy</span>`;
+                return `<tr>
+                <td>${u.id}</td>
+                <td>${u.email}</td>
+                <td>${u.name || '<span style="color:#94a3b8">—</span>'}</td>
+                <td>${tag}</td>
+                <td><button class="reset-link" onclick="prefillReset('${u.email}')">Reset Password</button></td>
+            </tr>`;
+            }).join('');
+        }
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Resetting…';
+        function prefillReset(email) {
+            document.getElementById('resetEmail').value = email;
+            document.getElementById('resetNew').focus();
+            document.getElementById('resetNew').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
-            try {
-                const params = new URLSearchParams({ key, email, password: newPassword });
-                const res = await fetch(`/api/admin-reset-password?${params}`);
-                const data = await res.json();
+        async function resetPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value.trim();
+            const newPw = document.getElementById('resetNew').value;
+            const confPw = document.getElementById('resetConfirm').value;
 
-                if (res.ok) {
-                    resultBox.textContent = `✅ ${data.message}`;
-                    resultBox.className = 'success';
-                    form.reset();
-                } else {
-                    resultBox.textContent = `❌ ${data.error}`;
-                    resultBox.className = 'error';
-                }
-            } catch (err) {
-                resultBox.textContent = '❌ Network error. Please try again.';
-                resultBox.className = 'error';
+            if (newPw !== confPw) {
+                showAlert('resetAlert', '❌ Passwords do not match.', 'error');
+                return;
             }
+            const btn = document.getElementById('resetBtn');
+            btn.disabled = true; btn.textContent = 'Resetting…';
 
-            resultBox.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Reset Password';
-        });
+            const params = new URLSearchParams({ key: ADMIN_KEY, email, password: newPw });
+            const res = await fetch(`/api/admin-reset-password?${params}`);
+            const data = await res.json();
+
+            if (res.ok) {
+                showAlert('resetAlert', `✅ ${data.message}`, 'success');
+                document.getElementById('resetForm').reset();
+                loadUsers();
+            } else {
+                showAlert('resetAlert', `❌ ${data.error}`, 'error');
+            }
+            btn.disabled = false; btn.textContent = 'Reset Password';
+        }
+
+        async function registerUser(e) {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            const btn = document.getElementById('regBtn');
+            btn.disabled = true; btn.textContent = 'Creating…';
+
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                showAlert('regAlert', `✅ Account created for ${email}`, 'success');
+                document.getElementById('registerForm').reset();
+                loadUsers();
+            } else {
+                showAlert('regAlert', `❌ ${data.error}`, 'error');
+            }
+            btn.disabled = false; btn.textContent = 'Create Account';
+        }
     </script>
 </body>
 
