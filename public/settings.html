@@ -65,12 +65,23 @@
 
                     <div class="col-span-12">
                         <div class="card">
-                            <h3 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Security</h3>
+                            <h3 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Security — Change Password
+                            </h3>
                             <form id="passwordForm" style="display: grid; gap: 1rem;">
+                                <div>
+                                    <label>Current Password</label>
+                                    <input type="password" id="old_password" placeholder="Enter your current password"
+                                        required>
+                                </div>
                                 <div>
                                     <label>New Password</label>
                                     <input type="password" id="password" placeholder="Min. 8 characters" required
                                         minlength="8">
+                                </div>
+                                <div>
+                                    <label>Confirm New Password</label>
+                                    <input type="password" id="confirm_password" placeholder="Repeat new password"
+                                        required minlength="8">
                                 </div>
                                 <div>
                                     <button type="submit" class="btn btn-secondary" style="width: auto;">Update
@@ -115,7 +126,7 @@
                 phone: getVal('phone')
             };
 
-            const result = await api.put('/user', data); // Make sure api.js has put method
+            const result = await api.put('/user', data);
             const msg = document.getElementById('profileMsg');
 
             if (result.error) {
@@ -124,13 +135,11 @@
             } else {
                 msg.textContent = 'Profile updated successfully!';
                 msg.style.color = 'var(--success)';
-                // Update local storage user object if needed
                 user.name = data.name;
                 user.email = data.email;
                 user.phone = data.phone;
                 localStorage.setItem('user', JSON.stringify(user));
             }
-            msg.style.display = 'block';
             msg.style.display = 'block';
         });
 
@@ -142,22 +151,30 @@
             btn.innerText = 'Updating...';
             btn.disabled = true;
 
+            const old_password = document.getElementById('old_password').value;
             const password = document.getElementById('password').value;
+            const confirm_password = document.getElementById('confirm_password').value;
             const msg = document.getElementById('passwordMsg');
 
-            if (!password || password.length < 8) {
-                msg.textContent = 'Password must be at least 8 characters.';
-                msg.style.color = 'var(--danger)'; // Using var(--danger) from styles.css
+            if (password !== confirm_password) {
+                msg.textContent = 'New passwords do not match.';
+                msg.style.color = 'var(--danger)';
                 msg.style.display = 'block';
                 btn.innerText = originalText;
                 btn.disabled = false;
                 return;
             }
 
-            const result = await api.put('/change-password', {
-                id: user.id,
-                new_password: password
-            });
+            if (password.length < 8) {
+                msg.textContent = 'Password must be at least 8 characters.';
+                msg.style.color = 'var(--danger)';
+                msg.style.display = 'block';
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            const result = await api.put('/change-password', { old_password, new_password: password });
 
             if (result.error) {
                 msg.textContent = result.error;
@@ -165,7 +182,7 @@
             } else {
                 msg.textContent = 'Password updated successfully! Please log in again.';
                 msg.style.color = 'var(--success)';
-                document.getElementById('password').value = '';
+                document.getElementById('passwordForm').reset();
                 setTimeout(() => api.logout(), 2000);
             }
             msg.style.display = 'block';

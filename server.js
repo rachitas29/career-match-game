@@ -180,7 +180,7 @@ app.post('/api/login', authLimiter, (req, res) => {
 // All routes below require a valid JWT
 app.use('/api', (req, res, next) => {
     // Skip auth for public endpoints already registered above
-    const publicPaths = ['/api/register', '/api/login', '/api/forgot-password', '/api/admin-reset-password', '/api/admin/users'];
+    const publicPaths = ['/api/register', '/api/login', '/api/forgot-password'];
     if (publicPaths.some(p => req.path === p.replace('/api', ''))) {
         return next();
     }
@@ -201,19 +201,27 @@ app.put('/api/user', (req, res) => {
 
 app.put('/api/change-password', (req, res) => {
     const userId = req.user.userId; // From JWT — IDOR-safe
-    const { new_password } = req.body;
-    if (!new_password) return res.status(400).json({ error: 'New Password required' });
+    const { old_password, new_password } = req.body;
+    if (!old_password || !new_password) return res.status(400).json({ error: 'Current and new password are required' });
 
-    try {
-        const encryptedPassword = encrypt(new_password);
-        const sql = `UPDATE users SET password = ? WHERE id = ?`;
-        db.run(sql, [encryptedPassword, userId], function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: 'Password updated successfully' });
-        });
-    } catch (e) {
-        res.status(500).json({ error: 'Encryption error' });
-    }
+    db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const decrypted = decrypt(user.password);
+        if (decrypted !== old_password) {
+            return res.status(401).json({ error: 'Incorrect current password.' });
+        }
+        try {
+            const encryptedPassword = encrypt(new_password);
+            db.run('UPDATE users SET password = ? WHERE id = ?', [encryptedPassword, userId], function (err2) {
+                if (err2) return res.status(500).json({ error: err2.message });
+                res.json({ message: 'Password updated successfully' });
+            });
+        } catch (e) {
+            res.status(500).json({ error: 'Encryption error' });
+        }
+    });
 });
 
 app.post('/api/forgot-password', (req, res) => {
@@ -271,17 +279,18 @@ app.post('/api/forgot-password', (req, res) => {
     });
 });
 
-// Admin Password Reset Endpoint (protected by ADMIN_RESET_KEY)
-// UI: /admin-reset.html
-app.get('/api/admin-reset-password', (req, res) => {
-    const { key, email, password } = req.query;
-    const ADMIN_KEY = process.env.ADMIN_RESET_KEY;
-    if (!ADMIN_KEY || key !== ADMIN_KEY) {
-        return res.status(403).json({ error: 'Forbidden' });
+// Admin middleware — only rachita@appolosys.com may access
+function requireAdmin(req, res, next) {
+    if (!req.user || req.user.email.toLowerCase() !== 'rachita@appolosys.com') {
+        return res.status(403).json({ error: 'Access denied. Admin only.' });
     }
-    if (!email || !password) {
-        return res.status(400).json({ error: 'email and password query params required' });
-    }
+    next();
+}
+
+// Admin — Reset any user's password (JWT + admin role required)
+app.post('/api/admin/reset-password', requireAdmin, (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
     try {
         const encryptedPassword = encrypt(password);
         db.run('UPDATE users SET password = ? WHERE LOWER(email) = LOWER(?)', [encryptedPassword, email], function (err) {
@@ -294,13 +303,8 @@ app.get('/api/admin-reset-password', (req, res) => {
     }
 });
 
-// Admin — List all users (protected by ADMIN_RESET_KEY)
-app.get('/api/admin/users', (req, res) => {
-    const { key } = req.query;
-    const ADMIN_KEY = process.env.ADMIN_RESET_KEY;
-    if (!ADMIN_KEY || key !== ADMIN_KEY) {
-        return res.status(403).json({ error: 'Forbidden' });
-    }
+// Admin — List all users (JWT + admin role required)
+app.get('/api/admin/users', requireAdmin, (req, res) => {
     db.all('SELECT id, email, name, phone, password FROM users ORDER BY id ASC', [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         const users = rows.map(u => ({

@@ -79,26 +79,26 @@
             gap: 0.5rem;
         }
 
-        .card-title span {
-            font-size: 1.3rem;
+        #accessDenied,
+        #loadingState {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: white;
         }
 
-        /* Auth Gate */
-        #authGate {
-            max-width: 420px;
-            margin: 4rem auto;
+        #accessDenied h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #f87171;
         }
 
-        #authGate .card-title {
-            justify-content: center;
-            font-size: 1.4rem;
+        #accessDenied p {
+            color: #94a3b8;
+            margin-bottom: 1.5rem;
         }
 
-        /* Form styles */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+        #loadingState p {
+            color: #94a3b8;
         }
 
         .form-group {
@@ -125,11 +125,10 @@
             font-family: inherit;
             background: #f8fafc;
             color: #1e293b;
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        input:focus,
-        select:focus {
+        input:focus {
             outline: none;
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
@@ -157,6 +156,12 @@
             box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
         }
 
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
         .btn-full {
             width: 100%;
             padding: 0.875rem;
@@ -168,7 +173,6 @@
             transform: none !important;
         }
 
-        /* Alert boxes */
         .alert {
             padding: 0.75rem 1rem;
             border-radius: 10px;
@@ -189,7 +193,6 @@
             border: 1px solid #fee2e2;
         }
 
-        /* User table */
         .user-table-wrap {
             overflow-x: auto;
             margin-top: 0.5rem;
@@ -255,10 +258,6 @@
             text-decoration: underline;
         }
 
-        .reset-link:hover {
-            color: #4f46e5;
-        }
-
         #mainPanel {
             display: none;
         }
@@ -269,12 +268,32 @@
             gap: 1.5rem;
         }
 
+        .admin-badge {
+            display: inline-block;
+            background: #ede9fe;
+            color: #5b21b6;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            border: 1px solid #c4b5fd;
+            margin-top: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #a5b4fc;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 640px) {
             .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
                 grid-template-columns: 1fr;
             }
         }
@@ -283,35 +302,36 @@
 
 <body>
     <div class="container">
-        <div class="page-header">
-            <h1>⚙️ Admin Panel</h1>
-            <p>Account Flow — User Management</p>
+
+        <!-- Loading state -->
+        <div id="loadingState">
+            <p>Checking access...</p>
         </div>
 
-        <!-- Auth Gate -->
-        <div id="authGate">
-            <div class="card">
-                <div class="card-title">🔐 Admin Login</div>
-                <div class="form-group">
-                    <label for="adminKeyInput">Admin Reset Key</label>
-                    <input type="password" id="adminKeyInput" placeholder="Enter admin secret key">
-                </div>
-                <button class="btn btn-primary btn-full" onclick="authenticate()">Unlock Admin Panel</button>
-                <div class="alert alert-error" id="authError"></div>
-            </div>
+        <!-- Access Denied -->
+        <div id="accessDenied" style="display:none;">
+            <h2>🚫 Access Denied</h2>
+            <p>This page is restricted to administrators only.</p>
+            <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
         </div>
 
-        <!-- Main Panel -->
+        <!-- Main Admin Panel -->
         <div id="mainPanel">
+            <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+            <div class="page-header">
+                <h1>⚙️ Admin Panel</h1>
+                <p>Account Flow — User Management</p>
+                <span class="admin-badge" id="adminBadge">Admin</span>
+            </div>
 
             <!-- User List -->
             <div class="card">
-                <div class="card-title"><span>👥</span> Registered Users
+                <div class="card-title">👥 Registered Users
                     <button class="btn btn-primary" style="margin-left:auto;padding:0.4rem 1rem;font-size:0.85rem;"
                         onclick="loadUsers()">↻ Refresh</button>
                 </div>
                 <div class="user-table-wrap">
-                    <table id="userTable">
+                    <table>
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -323,7 +343,7 @@
                         </thead>
                         <tbody id="userTableBody">
                             <tr>
-                                <td colspan="5" style="text-align:center;color:#94a3b8;">Loading users...</td>
+                                <td colspan="5" style="text-align:center;color:#94a3b8;">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -333,18 +353,18 @@
             <div class="grid">
                 <!-- Reset Any User's Password -->
                 <div class="card">
-                    <div class="card-title"><span>🔑</span> Reset User Password</div>
+                    <div class="card-title">🔑 Reset User Password</div>
                     <form id="resetForm" onsubmit="resetPassword(event)">
                         <div class="form-group">
-                            <label for="resetEmail">User Email</label>
+                            <label>User Email</label>
                             <input type="email" id="resetEmail" placeholder="user@example.com" required>
                         </div>
                         <div class="form-group">
-                            <label for="resetNew">New Password</label>
+                            <label>New Password</label>
                             <input type="password" id="resetNew" placeholder="New password" required>
                         </div>
                         <div class="form-group">
-                            <label for="resetConfirm">Confirm Password</label>
+                            <label>Confirm Password</label>
                             <input type="password" id="resetConfirm" placeholder="Confirm password" required>
                         </div>
                         <button type="submit" class="btn btn-primary btn-full" id="resetBtn">Reset Password</button>
@@ -354,14 +374,14 @@
 
                 <!-- Register New User -->
                 <div class="card">
-                    <div class="card-title"><span>➕</span> Register New User</div>
+                    <div class="card-title">➕ Register New User</div>
                     <form id="registerForm" onsubmit="registerUser(event)">
                         <div class="form-group">
-                            <label for="regEmail">Email</label>
+                            <label>Email</label>
                             <input type="email" id="regEmail" placeholder="user@example.com" required>
                         </div>
                         <div class="form-group">
-                            <label for="regPassword">Password</label>
+                            <label>Password</label>
                             <input type="password" id="regPassword" placeholder="Initial password" required>
                         </div>
                         <button type="submit" class="btn btn-primary btn-full" id="regBtn">Create Account</button>
@@ -373,7 +393,14 @@
     </div>
 
     <script>
-        let ADMIN_KEY = '';
+        const ADMIN_EMAIL = 'rachita@appolosys.com';
+
+        function getToken() { return localStorage.getItem('token'); }
+        function getUser() { const u = localStorage.getItem('user'); return u ? JSON.parse(u) : null; }
+
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+        }
 
         function showAlert(id, message, type) {
             const el = document.getElementById(id);
@@ -382,43 +409,55 @@
             el.style.display = 'block';
         }
 
-        async function authenticate() {
-            const key = document.getElementById('adminKeyInput').value.trim();
-            if (!key) return;
+        async function init() {
+            const token = getToken();
+            const user = getUser();
 
-            // Validate key by calling the users endpoint
-            const res = await fetch(`/api/admin/users?key=${encodeURIComponent(key)}`);
-            if (res.ok) {
-                ADMIN_KEY = key;
-                document.getElementById('authGate').style.display = 'none';
-                document.getElementById('mainPanel').style.display = 'block';
-                renderUsers((await res.json()).users);
-            } else {
-                showAlert('authError', '❌ Invalid admin key. Please try again.', 'error');
+            // Not logged in at all → redirect to login
+            if (!token || !user) {
+                window.location.href = 'login.html';
+                return;
             }
+
+            // Verify with the server (will return 403 if not admin)
+            const res = await fetch('/api/admin/users', { headers: authHeaders() });
+
+            if (res.status === 401) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (res.status === 403) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('accessDenied').style.display = 'block';
+                return;
+            }
+
+            // Authorised admin
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('mainPanel').style.display = 'block';
+            document.getElementById('adminBadge').textContent = user.email;
+
+            const data = await res.json();
+            renderUsers(data.users || []);
         }
 
-        document.getElementById('adminKeyInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') authenticate();
-        });
-
         async function loadUsers() {
-            const res = await fetch(`/api/admin/users?key=${encodeURIComponent(ADMIN_KEY)}`);
+            const res = await fetch('/api/admin/users', { headers: authHeaders() });
             const data = await res.json();
             renderUsers(data.users || []);
         }
 
         function renderUsers(users) {
             const tbody = document.getElementById('userTableBody');
-            if (!users || users.length === 0) {
+            if (!users.length) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No users found.</td></tr>';
                 return;
             }
             tbody.innerHTML = users.map(u => {
-                const isAES = u.pw_format === 'aes';
-                const tag = isAES
-                    ? `<span class="tag tag-aes">AES-256</span>`
-                    : `<span class="tag tag-old">Legacy</span>`;
+                const tag = u.pw_format === 'aes'
+                    ? `<span class="tag tag-aes">AES-256 ✅</span>`
+                    : `<span class="tag tag-old">Legacy ⚠️</span>`;
                 return `<tr>
                 <td>${u.id}</td>
                 <td>${u.email}</td>
@@ -441,15 +480,16 @@
             const newPw = document.getElementById('resetNew').value;
             const confPw = document.getElementById('resetConfirm').value;
 
-            if (newPw !== confPw) {
-                showAlert('resetAlert', '❌ Passwords do not match.', 'error');
-                return;
-            }
+            if (newPw !== confPw) { showAlert('resetAlert', '❌ Passwords do not match.', 'error'); return; }
+
             const btn = document.getElementById('resetBtn');
             btn.disabled = true; btn.textContent = 'Resetting…';
 
-            const params = new URLSearchParams({ key: ADMIN_KEY, email, password: newPw });
-            const res = await fetch(`/api/admin-reset-password?${params}`);
+            const res = await fetch('/api/admin/reset-password', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ email, password: newPw })
+            });
             const data = await res.json();
 
             if (res.ok) {
@@ -486,6 +526,9 @@
             }
             btn.disabled = false; btn.textContent = 'Create Account';
         }
+
+        // Run on load
+        init();
     </script>
 </body>
 
