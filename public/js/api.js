@@ -6,10 +6,25 @@ const api = {
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
         if (!token || !user) {
-            // Clear any partial state
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = 'login.html';
+            return;
+        }
+        // Inject Admin Panel link for rachita@appolosys.com
+        const parsedUser = JSON.parse(user);
+        if (parsedUser.email && parsedUser.email.toLowerCase() === 'rachita@appolosys.com') {
+            document.addEventListener('DOMContentLoaded', () => {
+                const nav = document.querySelector('.sidebar-nav');
+                if (nav && !nav.querySelector('.admin-nav-link')) {
+                    const link = document.createElement('a');
+                    link.href = 'admin-reset.html';
+                    link.className = 'nav-item admin-nav-link';
+                    link.style.cssText = 'color: #a78bfa; font-weight: 600;';
+                    link.textContent = '⚙️ Admin Panel';
+                    nav.appendChild(link);
+                }
+            });
         }
     },
 
