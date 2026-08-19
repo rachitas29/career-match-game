@@ -831,22 +831,23 @@
     /* Cipher / Strategy Pattern Match */
     .cipher-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      max-width: 380px;
-      margin: 16px auto;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 480px;
+      margin: 14px auto;
     }
     .cipher-card {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 16px;
-      font-size: 14px;
+      padding: 12px 8px;
+      font-size: 12.5px;
       font-weight: 700;
       color: #fff;
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
+      user-select: none;
     }
     .cipher-card:hover {
       border-color: var(--purple);
@@ -862,6 +863,11 @@
       background: var(--green);
       border-color: #fff;
       box-shadow: 0 0 20px var(--green);
+    }
+    .cipher-card.error {
+      background: var(--red) !important;
+      border-color: #fff !important;
+      box-shadow: 0 0 20px var(--red) !important;
     }
 
     /* Results Grid */
@@ -2272,31 +2278,40 @@
       }
     }
 
-    // Puzzle 4: Strategy Cipher Match
-    let cipherSequence = [1, 3, 2, 4];
+    // Puzzle 4: Strategy Cipher Match (6 Cards)
+    let cipherSequence = [];
     let cipherUserSeq = [];
+
+    function generateCipherPattern() {
+      // Pick 5 random card steps out of 1..6 for a challenging, dynamic pattern!
+      let cards = [1, 2, 3, 4, 5, 6];
+      cipherSequence = shuffle(cards).slice(0, 5);
+    }
 
     function renderCipher(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
+      generateCipherPattern();
       cipherUserSeq = [];
       
       box.innerHTML = `
         <div class="puzzle-wrap theme-cipher" style="padding:14px;">
-          <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:8px;">Memorize & click the glowing 4-step commercial strategy pattern:</p>
+          <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:8px;">Memorize & repeat the glowing 5-step strategy pattern across 6 cards:</p>
           <div style="margin-bottom: 8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-            <button class="btn dark" id="playCipherBtn" style="padding:4px 10px;font-size:11px;" onclick="playCipherPattern()">▶️ Play Pattern Sequence</button>
+            <button class="btn dark" id="playCipherBtn" style="padding:4px 12px;font-size:11.5px;font-weight:700;" onclick="playCipherPattern()">▶️ Play Pattern Sequence</button>
           </div>
           <div class="cipher-grid">
-            <div class="cipher-card" id="card-1" onclick="handleCipherClick(1)">1. 🎯 ICP Targeting</div>
-            <div class="cipher-card" id="card-2" onclick="handleCipherClick(2)">2. 💡 Value Proposition</div>
-            <div class="cipher-card" id="card-3" onclick="handleCipherClick(3)">3. 🤝 Trade & Negotiate</div>
-            <div class="cipher-card" id="card-4" onclick="handleCipherClick(4)">4. 🚀 Enterprise Scale</div>
+            <div class="cipher-card" id="card-1" onclick="handleCipherClick(1)">1. 🎯 ICP Target</div>
+            <div class="cipher-card" id="card-2" onclick="handleCipherClick(2)">2. 💬 Discovery Call</div>
+            <div class="cipher-card" id="card-3" onclick="handleCipherClick(3)">3. 💡 Value Prop</div>
+            <div class="cipher-card" id="card-4" onclick="handleCipherClick(4)">4. 📊 ROI Case</div>
+            <div class="cipher-card" id="card-5" onclick="handleCipherClick(5)">5. 🤝 Trade Terms</div>
+            <div class="cipher-card" id="card-6" onclick="handleCipherClick(6)">6. 🚀 Close & Scale</div>
           </div>
           <p id="cipherStatus" style="font-size:12px;color:var(--muted);margin-top:8px;">Click 'Play Pattern Sequence' or tap cards!</p>
         </div>
       `;
-      setTimeout(playCipherPattern, 500);
+      setTimeout(playCipherPattern, 400);
     }
 
     function playCipherPattern() {
@@ -2304,22 +2319,30 @@
       if (btn) btn.disabled = true;
       cipherUserSeq = [];
       let status = document.getElementById("cipherStatus");
-      if (status) status.textContent = "👀 Watch the pattern...";
+      if (status) {
+        status.style.color = "var(--gold)";
+        status.textContent = "👀 Watch the 5-card pattern closely...";
+      }
       
+      document.querySelectorAll(".cipher-card").forEach(c => c.classList.remove("lit", "success", "error"));
+
       cipherSequence.forEach((cardId, index) => {
         setTimeout(() => {
           let card = document.getElementById(`card-${cardId}`);
           if (card) {
             card.classList.add("lit");
-            setTimeout(() => card.classList.remove("lit"), 400);
+            setTimeout(() => card.classList.remove("lit"), 350);
           }
           if (index === cipherSequence.length - 1) {
             setTimeout(() => {
-              if (status) status.textContent = "👉 Your Turn: Click cards in exact pattern!";
+              if (status) {
+                status.style.color = "var(--blue)";
+                status.textContent = "👉 Your Turn: Repeat the exact 5-card pattern!";
+              }
               if (btn) btn.disabled = false;
-            }, 500);
+            }, 450);
           }
-        }, index * 600);
+        }, index * 550);
       });
     }
 
@@ -2331,26 +2354,40 @@
       
       cipherUserSeq.push(id);
       let card = document.getElementById(`card-${id}`);
+      let expectedCardId = cipherSequence[cipherUserSeq.length - 1];
+
+      if (id !== expectedCardId) {
+        if (card) {
+          card.classList.add("error");
+          setTimeout(() => card.classList.remove("error"), 400);
+        }
+        let status = document.getElementById("cipherStatus");
+        if (status) {
+          status.style.color = "var(--red)";
+          status.textContent = "⚠️ Pattern Mismatch! Click 'Play Pattern Sequence' to try again!";
+        }
+        cipherUserSeq = [];
+        return;
+      }
+
       if (card) {
         card.classList.add("lit");
         setTimeout(() => card.classList.remove("lit"), 300);
       }
       
-      let expectedIndex = cipherUserSeq.length - 1;
-      if (cipherUserSeq[expectedIndex] !== cipherSequence[expectedIndex]) {
-        let status = document.getElementById("cipherStatus");
-        status.style.color = "var(--red)";
-        status.textContent = "⚠️ Wrong pattern! Try again or click 'Next Question →'.";
-        cipherUserSeq = [];
-        return;
+      let status = document.getElementById("cipherStatus");
+      if (status) {
+        status.style.color = "var(--green)";
+        status.textContent = `Correct! (${cipherUserSeq.length}/${cipherSequence.length} matched)`;
       }
-      
+
       if (cipherUserSeq.length === cipherSequence.length) {
         document.querySelectorAll(".cipher-card").forEach(c => c.classList.add("success"));
-        let status = document.getElementById("cipherStatus");
-        status.style.color = "var(--green)";
-        status.textContent = "🎉 Strategy Cipher Unlocked!";
-        let fakeOption = ["CIPHER", "Commercial Strategy Cipher", 9, "Flawless execution! You decoded the commercial strategy sequence and earned board approval!", "LOW"];
+        if (status) {
+          status.style.color = "var(--green)";
+          status.textContent = "🎉 5-Step Strategy Cipher Unlocked!";
+        }
+        let fakeOption = ["CIPHER", "Commercial Strategy Cipher", 9, "Flawless Memory & Strategy! You decoded the 5-step commercial sequence across 6 enterprise cards!", "LOW"];
         choose(fakeOption, card);
       }
     }
