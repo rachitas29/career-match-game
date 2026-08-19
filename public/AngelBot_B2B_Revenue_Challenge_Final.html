@@ -999,6 +999,92 @@
     }
 
     /* ==========================================================================
+       Animated Cheering Celebration Popup for Solved Puzzles
+       ========================================================================== */
+    @keyframes cheerPop {
+      0% {
+        transform: scale(0.6) translateY(50px);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(1.04) translateY(-6px);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .cheer-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(4, 9, 20, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 16px;
+    }
+
+    .cheer-modal-overlay.active {
+      display: flex;
+    }
+
+    .cheer-card {
+      background: linear-gradient(135deg, #0e243c 0%, #061120 100%);
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 50px rgba(251, 191, 36, 0.45), inset 0 0 25px rgba(251, 191, 36, 0.15);
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: cheerPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .cheer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, rgba(251, 191, 36, 0.2), rgba(16, 185, 129, 0.2));
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .cheer-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .cheer-benefit-box {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 78, 54, 0.22));
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: left;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+    }
+
+    /* ==========================================================================
        Comprehensive Multi-Gadget Responsive System
        (Computers, Laptops, iPads/Tablets, Smartphones, Foldables)
        ========================================================================== */
@@ -1383,6 +1469,30 @@
     </div>
   </div>
 
+  <!-- Animated Cheering Popup Modal for Puzzle Completion -->
+  <div id="cheerModal" class="cheer-modal-overlay">
+    <div class="cheer-card">
+      <div style="font-size:46px;margin-bottom:6px;">🎉 🏆 ✨</div>
+      <div class="cheer-badge">🏆 INTERMISSION PUZZLE SOLVED!</div>
+      <h2 class="cheer-title" id="cheerTitle">Masterful Strategy Move!</h2>
+      <p style="font-size:13.5px;color:#e2eaf4;line-height:1.5;" id="cheerInsight">You successfully solved this commercial brainteaser!</p>
+      
+      <div class="cheer-benefit-box">
+        <div style="font-size:11.5px;font-weight:800;color:var(--green);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+          <span>🔓 BENEFIT UNLOCKED: RETRY CREDIT EARNED</span>
+        </div>
+        <div style="font-size:13px;color:#f0fdf4;line-height:1.45;">
+          <b>Why Puzzles Matter:</b> Completing all 4 intermission puzzles unlocks <b>2 Bonus Retries</b> at the end of the game to fix any missed questions and boost your score to <b>100/100</b>!
+        </div>
+        <div style="margin-top:8px;font-size:11.5px;color:var(--gold);font-weight:700;" id="cheerPuzzleCount">
+          Progress: [ 1 / 4 ] Puzzles Completed 🎯
+        </div>
+      </div>
+
+      <button class="btn green" style="width:100%;justify-content:center;padding:12px 20px;font-size:15px;font-weight:800;" onclick="closeCheerModalAndContinue()">CONTINUE CHALLENGE ➔</button>
+    </div>
+  </div>
+
   <script>
     const qs = [
       {
@@ -1638,6 +1748,7 @@
       
       if (isPuz) {
         f.innerHTML = `<b>🧩 Intermission Puzzle Completed!</b><br>${o[3]}<br><br><b>Bonus Retry Credit Earned!</b> (Attempting puzzles unlocks retries for incorrect scenarios)`;
+        triggerCheerPopup(currQ.t, o[3]);
       } else {
         f.innerHTML = `<b>${pts >= 8 ? "🔥 Smart commercial move" : "⚠️ Risky commercial move"}</b><br>${o[3]}<br><br><b>+${pts} points</b>`;
       }
@@ -1647,6 +1758,27 @@
       document.getElementById("confidence").textContent = confidence + "%"; 
       if (fb) fb.style.display = "flex";
       document.getElementById("nextBtn").style.display = "inline-flex";
+    }
+
+    function triggerCheerPopup(title, insight) {
+      let modal = document.getElementById("cheerModal");
+      let titleEl = document.getElementById("cheerTitle");
+      let insightEl = document.getElementById("cheerInsight");
+      let countEl = document.getElementById("cheerPuzzleCount");
+
+      let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
+      let totalPuzzles = 4;
+
+      if (titleEl) titleEl.textContent = title || "Intermission Puzzle Solved!";
+      if (insightEl) insightEl.innerHTML = insight || "Great commercial strategy execution!";
+      if (countEl) countEl.textContent = `Progress: [ ${attemptedPuzzles} / ${totalPuzzles} ] Puzzles Completed 🎯`;
+
+      if (modal) modal.classList.add("active");
+    }
+
+    function closeCheerModalAndContinue() {
+      let modal = document.getElementById("cheerModal");
+      if (modal) modal.classList.remove("active");
     }
 
     function timeout() { 
