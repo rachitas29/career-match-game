@@ -1352,7 +1352,7 @@
         </div>
         <div class="hero-cta-side">
           <button class="btn primary hero-play-btn" onclick="start()">⚡ ACCEPT THE CHALLENGE →</button>
-          <p class="fine" style="margin-top:14px;text-align:center">15 Rounds (11 Hardest Scenarios + 4 Interactive Puzzles)<br>Attempting 4 Puzzles Unlocks 2 Bonus Retries for Incorrect Questions!</p>
+          <p class="fine" style="margin-top:14px;text-align:center">12 Rounds (8 Hardest Scenarios + 4 Interactive Puzzles)<br>Sequence: 1 Puzzle ➔ 2 Scenarios ➔ 1 Puzzle ➔ 2 Scenarios...<br>Attempting 4 Puzzles Unlocks 2 Bonus Retries for Incorrect Questions!</p>
         </div>
       </div>
     </section>
@@ -1528,52 +1528,36 @@
           ["D", "“Unlike legacy competitor systems that struggle with multi-folder indexing, our solution indexes data 10x faster without manual tagging.”", 1, "Focusing on competitors during early discovery distracts from the customer's problem.", "HIGH"]]
       },
       {
-        id: "positioning",
-        l: "5 · THE POSITIONING", t: "Sell the outcome, not the technology", s: "A Chief Financial Officer (CFO) asks: “Why should I care about your AI?” Which positioning is strongest?", o: [
-          ["A", "“Our enterprise platform leverages state-of-the-art neural networks, autonomous AI agents and real-time natural language processing algorithms.”", 3, "Technical specifications and AI buzzwords do not prove financial value to a CFO.", "MED"],
-          ["B", "“Over 75% of leading global enterprises are rapidly adopting AI tools this year to stay competitive in the digital economy.”", 2, "Industry trend pressure and FOMO do not build a solid economic business case.", "MED"],
-          ["C", "“Because our key market competitors are charging twice as much for similar automation capabilities across enterprise workflows.”", 1, "Positioning against competitor pricing rather than client value is weak positioning.", "HIGH"],
-          ["D", "“Let's calculate the exact hours and operational risks lost in your current process, then compare that against the cost of solving them.”", 9, "Brilliant! You turned a technical product conversation into a financial ROI discussion.", "LOW"]]
-      },
-      {
         id: "nrr",
         l: "6 · NRR MATH", t: "Net Revenue Retention & Growth", s: "You start the year with ₹5 Crore Annual Recurring Revenue (ARR). During the year, existing accounts expand by ₹1 Crore, but ₹50 Lakh churns out. What is your Net Revenue Retention (NRR)?", q: "💡 Hint: NRR (Net Revenue Retention) = (Starting Annual Revenue + Expansion - Churn) ÷ Starting Annual Revenue.", o: [
-          ["A", "110% NRR (Strong Growth Expansion)", 9, "Correct! Ending revenue from existing base = ₹5.5 Cr (₹5Cr + ₹1Cr - ₹0.5Cr). NRR = 5.5 / 5 = 110%.", "LOW"],
-          ["B", "90% NRR (Revenue Contraction)", 2, "Math error: Net account addition is +₹50 Lakh, resulting in growth above 100%.", "MED"],
-          ["C", "100% NRR (Flat Retention)", 4, "Flat retention ignores the ₹1 Crore expansion revenue from existing clients.", "MED"],
-          ["D", "125% NRR (Overcalculated Expansion)", 1, "Overestimated the net contribution of expansion revenue.", "HIGH"]]
+          ["A", "110% (Strong Expansion)", 9, "Correct! NRR = (₹5Cr + ₹1Cr - ₹0.5Cr) ÷ ₹5Cr = ₹5.5Cr ÷ ₹5Cr = 110%.", "LOW"],
+          ["B", "100% (Flat Retention)", 2, "Incorrect calculation: You forgot to add the ₹1 Crore expansion revenue.", "MED"],
+          ["C", "90% (Net Contraction)", 1, "Incorrect calculation: Subtracted expansion instead of adding it.", "HIGH"],
+          ["D", "120% (Overestimated Expansion)", 3, "Overcalculated expansion impact.", "MED"]]
       },
       {
-        id: "roi",
-        l: "7 · PRODUCTIVITY ROI MATH", t: "Can you find the money?", s: "A 200-person team loses 1.5 hours/week per employee to a manual information process. At ₹1,000/hour, what is the approximate annual productivity loss?", q: "💡 Hint: Multiply 200 employees × 1.5 hrs/week × ₹1,000/hr × 52 weeks.", o: [
-          ["A", "₹1.56 crore annual productivity loss", 9, "Correct! 200 employees × 1.5 hrs × ₹1,000 × 52 weeks = ₹1.56 Crore annual impact.", "LOW"],
-          ["B", "₹15.6 lakh annual productivity loss", 4, "Math error: You missed a zero in the calculation.", "MED"],
-          ["C", "₹15.6 crore annual productivity loss", 2, "Math error: You added an extra zero to the calculation.", "HIGH"],
-          ["D", "₹78.0 lakh annual productivity loss", 1, "Undercalculated: You forgot to account for the full 52-week annual work period.", "MED"]]
+        id: "productivity",
+        l: "7 · PRODUCTIVITY ROI MATH", t: "Quantifying Operational Savings", s: "A company of 500 knowledge workers loses 3 hours per employee per week searching for fragmented document information. If average hourly cost is ₹1,000, what is the annual productivity loss?", q: "💡 Hint: Weekly Loss = 500 workers × 3 hrs × ₹1,000 = ₹15 Lakh/week. Multiply by 50 working weeks per year.", o: [
+          ["A", "₹7.5 Crore per Year", 9, "Spot on! 500 × 3 hrs × ₹1,000 = ₹15 Lakh/week × 50 weeks = ₹7.5 Crore annual waste.", "LOW"],
+          ["B", "₹1.5 Crore per Year", 3, "Math error: Forgot to multiply weekly waste by 50 working weeks.", "MED"],
+          ["C", "₹15 Crore per Year", 2, "Overcalculated annual working weeks.", "HIGH"],
+          ["D", "₹50 Lakh per Year", 1, "Underestimated employee scale.", "HIGH"]]
       },
       {
-        id: "redflag",
-        l: "8 · THE RED FLAG", t: "When should you walk away?", s: "Which sales opportunity should you deprioritize even though the company brand name is world-famous?", o: [
-          ["A", "A famous Fortune 100 brand requesting extensive customized demos and free consulting, but with no identified pain, no budget owner, and no timeline.", 9, "Spot on! Walking away from famous logos with zero buying intent protects your valuable time and resources.", "LOW"],
-          ["B", "A mid-market company with clear operational friction, an approved budget, an executive sponsor, and a target implementation deadline within 60 days.", 9, "High-priority opportunity! Clear pain + sponsor + urgency = strong deal potential.", "LOW"],
-          ["C", "A enterprise prospect with severe workflow inefficiency, strong user interest, but requiring 3 weeks to complete internal budget approval.", 5, "Valid deal that needs careful stakeholder qualification and timeline alignment.", "MED"],
-          ["D", "A regional business with a verified operational challenge, an active project lead, and a planned procurement cycle next quarter.", 9, "Qualified opportunity worth actively nurturing.", "LOW"]]
+        id: "redflags",
+        l: "8 · THE RED FLAG", t: "Spot the account that will stall", s: "You have 4 active enterprise opportunities. Which one is most dangerous to your quarterly forecast?", o: [
+          ["A", "The project sponsor is enthusiastic, but procurement hasn't approved the master service agreement.", 5, "Procurement friction is common, but workable with legal focus.", "MED"],
+          ["B", "The client team loves your demo, but has no executive economic buyer involved and no budget allocation.", 9, "Red Flag! High user enthusiasm without an executive buyer or allocated budget leads to stalled deals.", "LOW"],
+          ["C", "The IT department is conducting a security review that will take two weeks.", 4, "Security timelines add delay but do not kill deal intent.", "MED"],
+          ["D", "The prospect is comparing your pricing against a smaller regional competitor.", 3, "Competitive evaluation is normal in enterprise sales.", "MED"]]
       },
       {
-        id: "coverage",
-        l: "9 · PIPELINE COVERAGE MATH", t: "Do you have enough target coverage?", s: "Your quarterly revenue target is ₹1 Crore. Your historical success rate from presentation to final agreement is 25%. How much target pipeline value must you build to safely hit your goal?", q: "💡 Hint: Required Target Pipeline = Target / Success Rate (₹1 Crore ÷ 0.25).", o: [
-          ["A", "₹4 Crore pipeline (4x Coverage)", 9, "Correct! At a 25% win rate, you need 4x coverage (₹1 Cr ÷ 0.25 = ₹4 Cr target pipeline) to reach your goal.", "LOW"],
-          ["B", "₹1 Crore pipeline (1x Coverage)", 2, "1x coverage leaves zero margin for lost deals or delayed decisions.", "HIGH"],
-          ["C", "₹2 Crore pipeline (2x Coverage)", 4, "2x coverage is mathematically insufficient when your win rate is 25%.", "MED"],
-          ["D", "₹10 Crore pipeline (10x Coverage)", 3, "Excessive 10x coverage usually indicates poor deal qualification and pipeline bloat.", "MED"]]
-      },
-      {
-        id: "objection",
-        l: "10 · THE OBJECTION", t: "“Your competitor is 30% cheaper.”", s: "The buyer says this after reviewing your initial commercial proposal. What is your best response?", o: [
-          ["A", "“If we can secure executive approval today, I can match their price immediately to earn your business.”", 3, "Discounting right away surrenders margin without discovering what the buyer truly values.", "HIGH"],
-          ["B", "“Our competitors use outdated legacy architecture and lack the enterprise security and scalability that we provide.”", 4, "Baseless competitor criticism damages credibility and sounds defensive.", "MED"],
-          ["C", "“If upfront price is the sole criteria, they may be a fit. Can we compare implementation risk, total cost of ownership and expected outcomes first?”", 9, "Excellent response! You reframed a price objection into a broader discussion about value, risk and ROI.", "LOW"],
-          ["D", "“Given our premium market standing and superior product capabilities, we do not offer price adjustments under any circumstances.”", 1, "Rigid refusal without exploring customer expectations can alienate key buyers.", "HIGH"]]
+        id: "pipeline",
+        l: "9 · PIPELINE COVERAGE MATH", t: "Quota & Pipeline Health", s: "Your quarterly revenue target is ₹1 Crore. If standard enterprise win rate is 25%, how much total pipeline coverage do you need at the start of the quarter to reliably hit quota?", q: "💡 Hint: Required Pipeline = Quota ÷ Win Rate (₹1 Crore ÷ 0.25 = 4x Coverage).", o: [
+          ["A", "₹4 Crore (4x Pipeline Coverage)", 9, "Correct! At a 25% win rate, you need 4x pipeline coverage (₹1Cr ÷ 0.25 = ₹4Cr).", "LOW"],
+          ["B", "₹2 Crore (2x Pipeline Coverage)", 3, "Too low: 2x pipeline at 25% win rate only yields ₹50 Lakh (half your target).", "HIGH"],
+          ["C", "₹1 Crore (1x Target Coverage)", 1, "Dangerous: Assuming 100% win rate causes severe quota misses.", "HIGH"],
+          ["D", "₹10 Crore (10x Excess Coverage)", 2, "Unrealistic pipeline requirement.", "MED"]]
       },
       {
         id: "negotiation",
@@ -1598,9 +1582,23 @@
     let retryQueue = [];
     let currentRetryItem = null;
 
+    function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+
     function buildFullGameSequence() {
-      // Randomly shuffle the 11 scenario questions on every attempt/retry/refresh
-      let shuffledQs = shuffle(qs).map(q => {
+      // 8 Hardest Questions (4 Mathematical + 4 Commercial Strategy)
+      let selectedQs = [
+        qs.find(q => q.id === "hunt"),        // Strategy: Prospect Qualification
+        qs.find(q => q.id === "hook"),        // Strategy: Executive CIO Hook
+        qs.find(q => q.id === "cac"),         // Math: CAC & LTV Math
+        qs.find(q => q.id === "discovery"),   // Strategy: Quantifying Pain
+        qs.find(q => q.id === "nrr"),         // Math: Net Revenue Retention Math
+        qs.find(q => q.id === "productivity"),// Math: Productivity ROI Math
+        qs.find(q => q.id === "pipeline"),    // Math: Pipeline Coverage Math
+        qs.find(q => q.id === "negotiation")  // Strategy: Value Trading & Negotiation
+      ];
+
+      // Randomly shuffle the 8 scenario questions on every attempt/retry/refresh
+      let shuffledQs = shuffle(selectedQs).map(q => {
         let shuffledOpts = shuffle(q.o);
         return {
           ...q,
@@ -1611,26 +1609,23 @@
       // Randomly shuffle intermission puzzles
       let shuffledPuzzles = shuffle(puzzles);
 
-      // 15 Rounds Total: 3 Questions -> 1 Puzzle -> 3 Questions -> 1 Puzzle -> 3 Questions -> 1 Puzzle -> 2 Questions -> 1 Puzzle
+      // Exact Sequence requested: 1P - 2Q - 1P - 2Q - 1P - 2Q - 1P - 2Q (12 Rounds Total)
       return [
-        shuffledQs[0],        // Q1
-        shuffledQs[1],        // Q2
-        shuffledQs[2],        // Q3
-        shuffledPuzzles[0],   // Intermission 1
+        shuffledPuzzles[0],   // Round 1: Puzzle 1 (1P)
+        shuffledQs[0],        // Round 2: Question 1 (2Q)
+        shuffledQs[1],        // Round 3: Question 2
 
-        shuffledQs[3],        // Q4
-        shuffledQs[4],        // Q5
-        shuffledQs[5],        // Q6
-        shuffledPuzzles[1],   // Intermission 2
+        shuffledPuzzles[1],   // Round 4: Puzzle 2 (1P)
+        shuffledQs[2],        // Round 5: Question 3 (2Q)
+        shuffledQs[3],        // Round 6: Question 4
 
-        shuffledQs[6],        // Q7
-        shuffledQs[7],        // Q8
-        shuffledQs[8],        // Q9
-        shuffledPuzzles[2],   // Intermission 3
+        shuffledPuzzles[2],   // Round 7: Puzzle 3 (1P)
+        shuffledQs[4],        // Round 8: Question 5 (2Q)
+        shuffledQs[5],        // Round 9: Question 6
 
-        shuffledQs[9],        // Q10
-        shuffledQs[10],       // Q11
-        shuffledPuzzles[3]    // Intermission 4
+        shuffledPuzzles[3],   // Round 10: Puzzle 4 (1P)
+        shuffledQs[6],        // Round 11: Question 7 (2Q)
+        shuffledQs[7]         // Round 12: Question 8
       ];
     }
 
@@ -1928,8 +1923,8 @@
     }
 
     function renderFinalResults() {
-      // Max score is 11 scenarios * 9 pts = 99 pts (puzzles do not add marks)
-      let final = Math.round((raw / (11 * 9)) * 100);
+      // Max score is 8 scenarios * 9 pts = 72 pts (puzzles do not add marks)
+      let final = Math.round((raw / (8 * 9)) * 100);
       final = Math.max(0, Math.min(100, final));
       show("result");
       document.getElementById("final").textContent = final;
@@ -1941,10 +1936,10 @@
       let report = document.getElementById("report");
       report.innerHTML = "";
 
-      let msg = "🎮 <b>15-Round Enterprise Challenge Completed!</b> You tackled the 11 hardest enterprise scenarios and solved 4 interactive intermission puzzles to test your B2B commercial leadership.";
+      let msg = "🎮 <b>12-Round Enterprise Challenge Completed!</b> You tackled 8 of the hardest enterprise scenarios (Math + Commercial Strategy) and solved 4 interactive intermission puzzles to test your B2B commercial leadership.";
 
       [
-        `<b>Final Commercial Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Scenarios Solved:</b> ${goodScenarios}/11`,
+        `<b>Final Commercial Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Scenarios Solved:</b> ${goodScenarios}/8`,
         `<b>Puzzles Attempted:</b> <span style="color:var(--purple)">${attemptedPuzzles}/4</span> (${attemptedPuzzles === 4 ? "Unlocked 2 Bonus Retries" : (attemptedPuzzles > 0 ? "Unlocked 1 Bonus Retry" : "0 Retries Unlocked")})`,
         `<div style="margin-top:6px;line-height:1.45;color:#e2eeea;">${msg}</div>`
       ].forEach(x => {
