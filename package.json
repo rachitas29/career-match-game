@@ -4,6 +4,12 @@
   "description": "Authentication and Customer Management App",
   "main": "server.js",
   "scripts": {
+    "test": "npx playwright test",
+    "test:automation": "cd DMS_TestAutomation && npm run test",
+
+    "test:headed": "npx playwright test --headed",
+    "test:chromium": "npx playwright test --project=chromium",
+    "report": "npx playwright show-report",
     "start": "node server.js",
     "dev": "node server.js"
   },
@@ -29,5 +35,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.5.0"
+  }
 }
