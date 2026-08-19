@@ -1582,7 +1582,16 @@
     let retryQueue = [];
     let currentRetryItem = null;
 
-    function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+    function shuffle(array) {
+      let arr = [...array];
+      for (let idx = arr.length - 1; idx > 0; idx--) {
+        const j = Math.floor(Math.random() * (idx + 1));
+        const temp = arr[idx];
+        arr[idx] = arr[j];
+        arr[j] = temp;
+      }
+      return arr;
+    }
 
     function buildFullGameSequence() {
       // 8 Hardest Questions (4 Mathematical + 4 Commercial Strategy)
@@ -1597,7 +1606,7 @@
         qs.find(q => q.id === "negotiation")  // Strategy: Value Trading & Negotiation
       ];
 
-      // Randomly shuffle the 8 scenario questions on every attempt/retry/refresh
+      // Shuffle scenario questions among scenario questions & shuffle options within each question
       let shuffledQs = shuffle(selectedQs).map(q => {
         let shuffledOpts = shuffle(q.o);
         return {
@@ -1606,10 +1615,10 @@
         };
       });
 
-      // Randomly shuffle intermission puzzles
+      // Shuffle puzzles among puzzles
       let shuffledPuzzles = shuffle(puzzles);
 
-      // Exact Sequence requested: 1P - 2Q - 1P - 2Q - 1P - 2Q - 1P - 2Q (12 Rounds Total)
+      // Exact Sequence: 1P - 2Q - 1P - 2Q - 1P - 2Q - 1P - 2Q (12 Rounds Total)
       return [
         shuffledPuzzles[0],   // Round 1: Puzzle 1 (1P)
         shuffledQs[0],        // Round 2: Question 1 (2Q)
