@@ -1653,7 +1653,7 @@
 
     function buildFullGameSequence() {
       // 8 Hardest Questions (4 Mathematical + 4 Commercial Strategy)
-      let selectedQs = [
+      let selectedQs = JSON.parse(JSON.stringify([
         qs.find(q => q.id === "hunt"),        // Strategy: Prospect Qualification
         qs.find(q => q.id === "hook"),        // Strategy: Executive CIO Hook
         qs.find(q => q.id === "cac"),         // Math: CAC & LTV Math
@@ -1662,7 +1662,7 @@
         qs.find(q => q.id === "productivity"),// Math: Productivity ROI Math
         qs.find(q => q.id === "pipeline"),    // Math: Pipeline Coverage Math
         qs.find(q => q.id === "negotiation")  // Strategy: Value Trading & Negotiation
-      ];
+      ]));
 
       // Shuffle scenario questions among scenario questions & shuffle options within each question
       let shuffledQs = shuffle(selectedQs).map(q => {
@@ -2109,16 +2109,19 @@
         </div>
       `;
       let optsBox = document.getElementById("sudokuOpts");
-      let options = [
-        ["A", "❓ = 3  |  ⭐ = 1", 9, "Spot on! ❓ must be 3 to complete Row 3 [4, 1, 3, 2], and ⭐ must be 1 to complete Row 4 [3, 2, 4, 1] without row/col duplicates!", "LOW"],
-        ["B", "❓ = 1  |  ⭐ = 3", 2, "Incorrect: Number 1 already exists in Column 3!", "MED"],
-        ["C", "❓ = 2  |  ⭐ = 4", 1, "Incorrect: Number 4 already exists in Row 4!", "MED"],
-        ["D", "❓ = 4  |  ⭐ = 2", 0, "Incorrect: Number 4 already exists in Column 3 and Row 3!", "HIGH"]
+      let rawOptions = [
+        ["", "❓ = 3  |  ⭐ = 1", 9, "Spot on! ❓ must be 3 to complete Row 3 [4, 1, 3, 2], and ⭐ must be 1 to complete Row 4 [3, 2, 4, 1] without row/col duplicates!", "LOW"],
+        ["", "❓ = 1  |  ⭐ = 3", 2, "Incorrect: Number 1 already exists in Column 3!", "MED"],
+        ["", "❓ = 2  |  ⭐ = 4", 1, "Incorrect: Number 4 already exists in Row 4!", "MED"],
+        ["", "❓ = 4  |  ⭐ = 2", 0, "Incorrect: Number 4 already exists in Column 3 and Row 3!", "HIGH"]
       ];
-      options.forEach(o => {
+      let options = shuffle(rawOptions);
+      options.forEach((o, idx) => {
         let b = document.createElement("button");
         b.className = "option";
-        b.innerHTML = `<b>${o[0]}.</b> ${o[1]}`;
+        let letter = String.fromCharCode(65 + idx);
+        o[0] = letter;
+        b.innerHTML = `<b>${letter}.</b> ${o[1]}`;
         b.onclick = () => {
           choose(o, b);
           let fb = document.getElementById("feedbackBar");
@@ -2178,18 +2181,21 @@
       }
 
       let optsBox = document.getElementById("chessOpts");
-      let options = [
-        ["A", "Queen to h7# (Qxh7#)", 9, "Spot on! Queen captures on h7 supported by Rook to deliver instant Checkmate & close the deal!", "LOW"],
-        ["B", "Rook to e8+ (Re8+)", 3, "Rook move is blocked by Black's defensive Rook on e8.", "MED"],
-        ["C", "Knight to f7+ (Nf7+)", 2, "Knight move is captured by Black's Pawn on g7.", "MED"],
-        ["D", "Pawn to h4 (h4)", 1, "Pawn move is too slow, allowing the CIO to escape.", "HIGH"]
+      let rawOptions = [
+        ["", "Queen to h7# (Qxh7#)", 9, "Spot on! Queen captures on h7 supported by Rook to deliver instant Checkmate & close the deal!", "LOW"],
+        ["", "Rook to e8+ (Re8+)", 3, "Rook move is blocked by Black's defensive Rook on e8.", "MED"],
+        ["", "Knight to f7+ (Nf7+)", 2, "Knight move is captured by Black's Pawn on g7.", "MED"],
+        ["", "Pawn to h4 (h4)", 1, "Pawn move is too slow, allowing the CIO to escape.", "HIGH"]
       ];
-      options.forEach(o => {
+      let options = shuffle(rawOptions);
+      options.forEach((o, idx) => {
         let b = document.createElement("button");
         b.className = "option";
-        b.innerHTML = `<b>${o[0]}.</b> ${o[1]}`;
+        let letter = String.fromCharCode(65 + idx);
+        o[0] = letter;
+        b.innerHTML = `<b>${letter}.</b> ${o[1]}`;
         b.onclick = () => {
-          if (o[0] === "A") {
+          if (o[2] >= 8) {
             let queenSquare = document.getElementById("square-3-7");
             let targetSquare = document.getElementById("square-1-7");
             if (queenSquare) queenSquare.textContent = "";
