@@ -36,22 +36,24 @@
 
     html {
       width: 100%;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       padding: 0;
-      overflow: hidden !important;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     body {
       margin: 0;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden !important;
+      min-height: 100vh;
+      width: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
       background: var(--bg);
       background-image: var(--bg-gradient);
       color: var(--text);
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
-      padding: 10px;
+      padding: 12px 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -62,8 +64,7 @@
     .app {
       width: 100%;
       max-width: 1020px;
-      max-height: 100vh;
-      margin: 0 auto;
+      margin: auto;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -1331,66 +1332,103 @@
       }
     }
 
+    @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .options {
+        grid-template-columns: 1fr !important;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      .brand-header-bar {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .brand-header-bar div {
+        text-align: center !important;
+      }
+
+      .chessboard-grid {
+        grid-template-columns: repeat(8, 22px) !important;
+        grid-template-rows: repeat(8, 22px) !important;
+      }
+
+      .chess-cell {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 14px !important;
+      }
+    }
+
     @media (max-width: 480px) {
       body {
-        padding: 6px;
+        padding: 4px;
       }
 
       .panel {
-        padding: 16px 12px;
-        border-radius: 16px;
+        padding: 14px 10px;
+        border-radius: 14px;
       }
 
       .brand-header-bar img {
-        height: 40px !important;
+        height: 36px !important;
       }
 
       h1 {
-        font-size: 28px;
+        font-size: 24px;
       }
 
       .lead {
-        font-size: 13.5px;
-        line-height: 1.45;
+        font-size: 12.5px;
+        line-height: 1.4;
       }
 
       .btn {
-        padding: 12px 16px;
-        font-size: 13px;
+        padding: 10px 14px;
+        font-size: 12.5px;
         width: 100%;
         justify-content: center;
       }
 
       .top h2 {
-        font-size: 18px;
+        font-size: 16px;
       }
 
       .round {
-        font-size: 10px;
+        font-size: 9.5px;
       }
 
       .timer {
-        font-size: 12px;
-        padding: 6px 10px;
+        font-size: 11.5px;
+        padding: 4px 8px;
       }
 
       .score {
-        width: 140px;
-        height: 140px;
+        width: 120px;
+        height: 120px;
       }
 
       .scoreinner {
-        font-size: 32px;
+        font-size: 28px;
       }
 
       .modal-card {
-        padding: 18px 14px;
+        padding: 16px 12px;
       }
     }
 
     @media (max-width: 340px) {
       .panel {
-        padding: 10px;
+        padding: 8px;
       }
 
       .challenge-line {
@@ -1403,7 +1441,7 @@
       }
 
       .stats {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr !important;
       }
     }
   </style>
@@ -1547,19 +1585,14 @@
         </div>
       </div>
 
-      <button class="btn green" style="width:100%;justify-content:center;padding:12px 20px;font-size:15px;font-weight:800;" onclick="closeCheerModalAndContinue()">CONTINUE CHALLENGE ➔</button>
-    </div>
-  </div>
-
-  <script>
-    const qs = [
+      <button class="btn green" style="width:100%;justify-content:center;padding:12px 20px;font-size:15px;font-weight:800;" onclick="closeCheerModalA    const qs = [
       {
         id: "hunt",
-        l: "1 · THE HUNT", t: "Pick the account worth your time", s: "You have 20 new accounts and enough capacity for only 3 first calls. Which prospect gets priority?", o: [
+        l: "1 · THE HUNT", t: "Pick the account worth your time", s: "You have 20 new accounts and enough capacity for only 3 first calls. Which prospect gets priority based on Ideal Customer Profile (ICP) criteria?", o: [
           ["A", "A 4,000-employee enterprise with manual workflows, multiple departments and an active AI budget.", 6, "Strong scale, but missing explicit urgency and clear project ownership.", "MED"],
           ["B", "A 60-person company with no clear operational pain but willing to evaluate any cheap AI tool.", 2, "Possible lead, but weak fit and price-first buying behavior create risk.", "MED"],
-          ["C", "A famous Fortune 500 company logo with a large IT team, high market reputation, but no identified business owner.", 4, "Logo value is impressive, but brand fame is not buying intent.", "MED"],
-          ["D", "A mid-size company with clear operational pain, a designated project owner and an approved budget for this quarter.", 9, "Excellent prospect! Clear pain + project owner + quarterly urgency is the winning combination.", "LOW"]]
+          ["C", "A famous Fortune 500 company logo with a large IT (Information Technology) team, high market reputation, but no identified business owner.", 4, "Logo value is impressive, but brand fame is not buying intent.", "MED"],
+          ["D", "A mid-size company with clear operational pain, a designated project owner and an approved budget for this quarter.", 9, "Excellent prospect! Clear pain + project owner + quarterly urgency is the winning Ideal Customer Profile (ICP) combination.", "LOW"]]
       },
       {
         id: "hook",
@@ -1571,31 +1604,31 @@
       },
       {
         id: "cac",
-        l: "3 · CAC & LTV MATH", t: "Customer Acquisition Economics", s: "Your team spent ₹15 Lakh on marketing and customer acquisition expenses this month to acquire 30 new clients. If each customer generates ₹1.5 Lakh in Lifetime Value (LTV) margin, what is your LTV : CAC ratio?", q: "💡 Hint: CAC (Customer Acquisition Cost) = Total Expense / Customers Acquired (₹15L / 30 = ₹50,000). Then divide LTV (Customer Lifetime Value: ₹1.5 Lakh) by CAC (₹50,000).", o: [
-          ["A", "3 : 1 (Healthy Business Benchmark)", 9, "Correct! CAC = ₹15L / 30 = ₹50,000. LTV = ₹1.5L. Ratio = 3:1 (Healthy Unit Economics).", "LOW"],
+        l: "3 · CAC & LTV MATH", t: "Customer Acquisition Economics (CAC & LTV)", s: "Your team spent ₹15 Lakh on marketing and customer acquisition expenses this month to acquire 30 new clients. If each customer generates ₹1.5 Lakh in Customer Lifetime Value (LTV) margin, what is your LTV : CAC (Customer Lifetime Value to Customer Acquisition Cost) ratio?", q: "💡 Hint: CAC (Customer Acquisition Cost) = Total Spend ÷ Customers Acquired (₹15L ÷ 30 = ₹50,000). Then divide LTV (Customer Lifetime Value: ₹1.5 Lakh) by CAC (₹50,000).", o: [
+          ["A", "3 : 1 (Healthy Business Benchmark)", 9, "Correct! CAC (Customer Acquisition Cost) = ₹15L ÷ 30 = ₹50,000. LTV (Customer Lifetime Value) = ₹1.5L. Ratio = 3:1 (Healthy Unit Economics).", "LOW"],
           ["B", "1 : 1 (Breakeven Margin)", 3, "Math error: CAC is ₹50,000 per customer, making LTV (₹1.5L) to CAC (₹50k) a 3:1 ratio.", "MED"],
           ["C", "10 : 1 (Extreme Profit Margin)", 2, "Overestimated margin generated relative to acquisition spend.", "HIGH"],
           ["D", "0.5 : 1 (Unprofitable Acquisition)", 1, "Underestimated the lifetime revenue contribution per client.", "MED"]]
       },
       {
         id: "discovery",
-        l: "4 · THE DISCOVERY", t: "Don't pitch yet", s: "The prospect says: “Our teams waste too much time finding information across fragmented systems.” What is your best next question?", q: "“We already have SharePoint, email, folders and several other systems—but people still can't find what they need.”", o: [
-          ["A", "“How many employees are impacted, how often does this occur, and what is the estimated cost of that delay to your quarterly bottom line?”", 9, "Perfect discovery! Quantifying frequency, scale and financial impact builds a compelling business case.", "LOW"],
+        l: "4 · THE DISCOVERY", t: "Don't pitch yet", s: "The prospect says: “Our teams waste too much time finding information across fragmented systems.” What is your best next discovery question to uncover ROI (Return On Investment) impact?", q: "“We already have SharePoint, email, folders and several other systems—but people still can't find what they need.”", o: [
+          ["A", "“How many employees are impacted, how often does this occur, and what is the estimated cost of that delay to your quarterly bottom line?”", 9, "Perfect discovery! Quantifying frequency, scale and ROI (Return On Investment) financial impact builds a compelling business case.", "LOW"],
           ["B", "“Our unified enterprise AI search platform seamlessly connects with SharePoint, Outlook, custom databases and cloud storage to solve that exact issue instantly.”", 3, "You jumped into product pitching too early before understanding the full problem.", "MED"],
           ["C", "“Would you and your technical leadership team be open to a comprehensive product demonstration with our solutions engineering team tomorrow afternoon?”", 4, "A demo is valuable later, but you haven't earned the right context yet.", "MED"],
           ["D", "“Unlike legacy competitor systems that struggle with multi-folder indexing, our solution indexes data 10x faster without manual tagging.”", 1, "Focusing on competitors during early discovery distracts from the customer's problem.", "HIGH"]]
       },
       {
         id: "nrr",
-        l: "6 · NRR MATH", t: "Net Revenue Retention & Growth", s: "You start the year with ₹5 Crore Annual Recurring Revenue (ARR). During the year, existing accounts expand by ₹1 Crore, but ₹50 Lakh churns out. What is your Net Revenue Retention (NRR)?", q: "💡 Hint: NRR (Net Revenue Retention) = (Starting Annual Revenue + Expansion - Churn) ÷ Starting Annual Revenue.", o: [
-          ["A", "110% (Strong Expansion)", 9, "Correct! NRR = (₹5Cr + ₹1Cr - ₹0.5Cr) ÷ ₹5Cr = ₹5.5Cr ÷ ₹5Cr = 110%.", "LOW"],
+        l: "6 · NRR MATH", t: "Net Revenue Retention (NRR) & ARR Growth", s: "You start the year with ₹5 Crore Annual Recurring Revenue (ARR). During the year, existing accounts expand by ₹1 Crore, but ₹50 Lakh churns out. What is your Net Revenue Retention (NRR) percentage?", q: "💡 Hint: NRR (Net Revenue Retention) = (Starting ARR [Annual Recurring Revenue] + Expansion - Churn) ÷ Starting ARR.", o: [
+          ["A", "110% (Strong Expansion)", 9, "Correct! NRR (Net Revenue Retention) = (₹5Cr + ₹1Cr - ₹0.5Cr) ÷ ₹5Cr = ₹5.5Cr ÷ ₹5Cr = 110%.", "LOW"],
           ["B", "100% (Flat Retention)", 2, "Incorrect calculation: You forgot to add the ₹1 Crore expansion revenue.", "MED"],
           ["C", "90% (Net Contraction)", 1, "Incorrect calculation: Subtracted expansion instead of adding it.", "HIGH"],
           ["D", "120% (Overestimated Expansion)", 3, "Overcalculated expansion impact.", "MED"]]
       },
       {
         id: "productivity",
-        l: "7 · PRODUCTIVITY ROI MATH", t: "Quantifying Operational Savings", s: "A company of 500 knowledge workers loses 3 hours per employee per week searching for fragmented document information. If average hourly cost is ₹1,000, what is the annual productivity loss?", q: "💡 Hint: Weekly Loss = 500 workers × 3 hrs × ₹1,000 = ₹15 Lakh/week. Multiply by 50 working weeks per year.", o: [
+        l: "7 · PRODUCTIVITY ROI MATH", t: "Quantifying ROI (Return On Investment) Savings", s: "A company of 500 knowledge workers loses 3 hours per employee per week searching for fragmented document information. If average hourly cost is ₹1,000, what is the annual productivity loss?", q: "💡 Hint: Weekly Loss = 500 workers × 3 hrs × ₹1,000 = ₹15 Lakh/week. Multiply by 50 working weeks per year.", o: [
           ["A", "₹7.5 Crore per Year", 9, "Spot on! 500 × 3 hrs × ₹1,000 = ₹15 Lakh/week × 50 weeks = ₹7.5 Crore annual waste.", "LOW"],
           ["B", "₹1.5 Crore per Year", 3, "Math error: Forgot to multiply weekly waste by 50 working weeks.", "MED"],
           ["C", "₹15 Crore per Year", 2, "Overcalculated annual working weeks.", "HIGH"],
@@ -1605,13 +1638,13 @@
         id: "redflags",
         l: "8 · THE RED FLAG", t: "Spot the account that will stall", s: "You have 4 active enterprise opportunities. Which one is most dangerous to your quarterly forecast?", o: [
           ["A", "The project sponsor is enthusiastic, but procurement hasn't approved the master service agreement.", 5, "Procurement friction is common, but workable with legal focus.", "MED"],
-          ["B", "The client team loves your demo, but has no executive economic buyer involved and no budget allocation.", 9, "Red Flag! High user enthusiasm without an executive buyer or allocated budget leads to stalled deals.", "LOW"],
-          ["C", "The IT department is conducting a security review that will take two weeks.", 4, "Security timelines add delay but do not kill deal intent.", "MED"],
+          ["B", "The client team loves your demo, but has no executive economic buyer (CIO / CFO) involved and no budget allocation.", 9, "Red Flag! High user enthusiasm without an executive buyer (CIO / CFO) or allocated budget leads to stalled deals.", "LOW"],
+          ["C", "The IT (Information Technology) department is conducting a security review that will take two weeks.", 4, "Security timelines add delay but do not kill deal intent.", "MED"],
           ["D", "The prospect is comparing your pricing against a smaller regional competitor.", 3, "Competitive evaluation is normal in enterprise sales.", "MED"]]
       },
       {
         id: "pipeline",
-        l: "9 · PIPELINE COVERAGE MATH", t: "Quota & Pipeline Health", s: "Your quarterly revenue target is ₹1 Crore. If standard enterprise win rate is 25%, how much total pipeline coverage do you need at the start of the quarter to reliably hit quota?", q: "💡 Hint: Required Pipeline = Quota ÷ Win Rate (₹1 Crore ÷ 0.25 = 4x Coverage).", o: [
+        l: "9 · PIPELINE COVERAGE MATH", t: "Quota & Pipeline Coverage Health", s: "Your quarterly revenue target is ₹1 Crore. If standard enterprise win rate is 25%, how much total pipeline coverage do you need at the start of the quarter to reliably hit quota?", q: "💡 Hint: Required Pipeline = Quota ÷ Win Rate (₹1 Crore ÷ 0.25 = 4x Coverage).", o: [
           ["A", "₹4 Crore (4x Pipeline Coverage)", 9, "Correct! At a 25% win rate, you need 4x pipeline coverage (₹1Cr ÷ 0.25 = ₹4Cr).", "LOW"],
           ["B", "₹2 Crore (2x Pipeline Coverage)", 3, "Too low: 2x pipeline at 25% win rate only yields ₹50 Lakh (half your target).", "HIGH"],
           ["C", "₹1 Crore (1x Target Coverage)", 1, "Dangerous: Assuming 100% win rate causes severe quota misses.", "HIGH"],
@@ -1628,9 +1661,11 @@
     ];
 
     const puzzles = [
-      { isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "INTERMISSION 1 · 6x6 DEAL MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 clearances (🧠 CIO, 💰 CFO, 🛡️ Sec) and reach contract (📜):" },
+      { isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "INTERMISSION 1 · 6x6 DEAL MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 executive clearances (🧠 CIO - Chief Information Officer, 💰 CFO - Chief Financial Officer, 🛡️ Sec - Security Officer) and reach contract (📜):" },
       { isPuzzle: true, type: "sudoku", t: "4x4 Dual-Blank Revenue Sudoku", l: "INTERMISSION 2 · ADVANCED SUDOKU", s: "Solve the 2 missing cells (❓ in Row 3 and ⭐ in Row 4) to complete the 4x4 commercial revenue matrix:" },
-      { isPuzzle: true, type: "chess", t: "B2B Grandmaster Chess Tactics", l: "INTERMISSION 3 · CHESS TACTICS", s: "White (Your Team) to move: Which tactical chess move checkmates the Black King (CIO Buyer) in 1 move to close the deal?" },
+      { isPuzzle: true, type: "chess", t: "B2B Grandmaster Chess Tactics", l: "INTERMISSION 3 · CHESS TACTICS", s: "White (Your Sales Team) to move: Which tactical chess move checkmates the Black King (CIO - Chief Information Officer Buyer) in 1 move to close the deal?" },
+      { isPuzzle: true, type: "sequence", t: "Pick the Right Pipeline Sequence", l: "INTERMISSION 4 · PIPELINE SEQUENCE", s: "Click the 6 B2B (Business-to-Business) sales pipeline stages in exact logical order (Step 1 ➔ Step 6):" }
+    ];lack King (CIO Buyer) in 1 move to close the deal?" },
       { isPuzzle: true, type: "sequence", t: "Pick the Right Pipeline Sequence", l: "INTERMISSION 4 · PIPELINE SEQUENCE", s: "Click the 6 B2B sales pipeline stages in exact logical order (Step 1 ➔ Step 6):" }
     ];
 
