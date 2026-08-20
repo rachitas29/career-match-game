@@ -336,8 +336,28 @@
       border: 2px solid var(--gold);
       color: var(--gold);
       font-weight: 900;
-      animation: pulse 1s infinite alternate;
+    /* Chess Board Styles */
+    .chessboard-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 32px);
+      grid-template-rows: repeat(8, 32px);
+      gap: 0;
+      justify-content: center;
+      margin: 10px auto;
+      border: 3px solid #64748b;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
+    .chess-cell {
+      width: 32px; height: 32px;
+      display: grid; place-items: center;
+      font-size: 20px;
+      user-select: none;
+    }
+    .chess-cell.light { background: #e2e8f0; color: #0f172a; }
+    .chess-cell.dark { background: #334155; color: #f8fafc; }
+    .chess-cell.highlight { background: rgba(244, 189, 77, 0.6) !important; animation: pulse 0.8s infinite alternate; }
 
     .dark {
       background: #1c2d42;
@@ -2047,23 +2067,57 @@
       });
     }
 
-    // Puzzle 3: B2B Grandmaster Chess Tactics
+    // Puzzle 3: B2B Grandmaster Chess Tactics (8x8 Chessboard)
     function renderChess(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
+
+      // 8x8 board representation (row 0 = rank 8, row 7 = rank 1)
+      let initialBoard = [
+        ["", "", "", "", "", "", "🏿", "♚"], // Row 0 (Rank 8): Black King at h8 (col 7)
+        ["", "", "", "", "", "", "♟", "♟"], // Row 1 (Rank 7): Black Pawns at g7, h7
+        ["", "", "", "", "", "", "", ""],   // Row 2 (Rank 6)
+        ["", "", "", "", "", "", "", "♕"], // Row 3 (Rank 5): White Queen at h5 (col 7)
+        ["", "", "", "", "", "", "", ""],   // Row 4 (Rank 4)
+        ["", "", "", "", "", "", "", ""],   // Row 5 (Rank 3)
+        ["", "", "", "", "", "", "", ""],   // Row 6 (Rank 2)
+        ["", "", "", "", "♖", "", "♔", ""]  // Row 7 (Rank 1): White Rook at e1 (col 4), White King at g1 (col 6)
+      ];
+
       box.innerHTML = `
         <div class="puzzle-wrap theme-chess" style="padding:14px;text-align:center;">
-          <div style="background:rgba(13,27,44,0.8);border:1px solid var(--panel-border);border-radius:14px;padding:12px;margin-bottom:12px;">
-            <div style="font-size:13.5px;color:#fff;font-weight:700;">♟️ White (Your Team) vs 🏿 Black (CIO Decision-Maker)</div>
-            <div style="font-size:12.5px;color:var(--gold);margin-top:4px;">White Queen at <b>h5</b> & Rook at <b>e1</b>. Black King is trapped at <b>h8</b> behind Pawn at <b>g7</b>.</div>
+          <div style="background:rgba(13,27,44,0.8);border:1px solid var(--panel-border);border-radius:12px;padding:8px 12px;margin-bottom:8px;">
+            <div style="font-size:12.5px;color:#fff;font-weight:700;">♔ White (Your Sales Team) to Move ➔ Checkmate Black ♚ (CIO Buyer) in 1 Move!</div>
           </div>
-          <p style="font-size:13px;color:#e2eaf4;margin-bottom:10px;">Which Grandmaster move delivers instant Checkmate (Qxh7#) to close the deal?</p>
+          
+          <div class="chessboard-grid" id="chessBoardGrid"></div>
+
+          <p style="font-size:12.5px;color:#e2eaf4;margin:8px 0 10px;">Select White's winning tactical move to deliver instant Checkmate (Qxh7#):</p>
           <div class="options" id="chessOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
         </div>
       `;
+
+      let grid = document.getElementById("chessBoardGrid");
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          let cell = document.createElement("div");
+          let isLight = (r + c) % 2 === 0;
+          cell.className = `chess-cell ${isLight ? "light" : "dark"}`;
+          cell.id = `square-${r}-${c}`;
+          
+          // Highlight target square h7 (row 1, col 7) and queen square h5 (row 3, col 7)
+          if ((r === 1 && c === 7) || (r === 3 && c === 7)) {
+            cell.classList.add("highlight");
+          }
+          
+          cell.textContent = initialBoard[r][c];
+          grid.appendChild(cell);
+        }
+      }
+
       let optsBox = document.getElementById("chessOpts");
       let options = [
-        ["A", "Queen to h7# (Qxh7#)", 9, "Spot on! Queen to h7 supported by Rook delivers instant Checkmate & closes the deal!", "LOW"],
+        ["A", "Queen to h7# (Qxh7#)", 9, "Spot on! Queen captures on h7 supported by Rook to deliver instant Checkmate & close the deal!", "LOW"],
         ["B", "Rook to e8+ (Re8+)", 3, "Rook move is blocked by Black's defensive Rook on e8.", "MED"],
         ["C", "Knight to f7+ (Nf7+)", 2, "Knight move is captured by Black's Pawn on g7.", "MED"],
         ["D", "Pawn to h4 (h4)", 1, "Pawn move is too slow, allowing the CIO to escape.", "HIGH"]
@@ -2073,6 +2127,15 @@
         b.className = "option";
         b.innerHTML = `<b>${o[0]}.</b> ${o[1]}`;
         b.onclick = () => {
+          if (o[0] === "A") {
+            let queenSquare = document.getElementById("square-3-7");
+            let targetSquare = document.getElementById("square-1-7");
+            if (queenSquare) queenSquare.textContent = "";
+            if (targetSquare) {
+              targetSquare.textContent = "♕";
+              targetSquare.style.background = "#20d18b";
+            }
+          }
           choose(o, b);
           let fb = document.getElementById("feedbackBar");
           if (fb) fb.style.display = "flex";
