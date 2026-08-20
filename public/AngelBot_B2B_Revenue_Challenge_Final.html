@@ -1709,6 +1709,16 @@
       render();
     }
 
+    function updateStreakUI() {
+      let el = document.getElementById("streak");
+      if (!el) return;
+      if (streak >= 2) {
+        el.innerHTML = `<span style="color:var(--gold); font-weight:900;">🔥 ${streak}</span>`;
+      } else {
+        el.innerHTML = `${streak}`;
+      }
+    }
+
     function render() {
       answered = false; clearInterval(interval); timer = 40;
       let q = activeQs[i];
@@ -1717,7 +1727,7 @@
       document.getElementById("roundNo").textContent = `${i + 1}/${activeQs.length}`; 
       document.getElementById("bar").style.width = `${(i + 1) / activeQs.length * 100}%`;
       document.getElementById("score").textContent = raw; 
-      document.getElementById("streak").textContent = streak; 
+      updateStreakUI();
       document.getElementById("confidence").textContent = confidence + "%";
       document.getElementById("situation").textContent = q.s;
 
@@ -1821,7 +1831,7 @@
       }
       
       document.getElementById("score").textContent = raw; 
-      document.getElementById("streak").textContent = streak; 
+      updateStreakUI(); 
       document.getElementById("confidence").textContent = confidence + "%"; 
       if (fb) fb.style.display = "flex";
       document.getElementById("nextBtn").style.display = "inline-flex";
@@ -1859,6 +1869,7 @@
       if (answered) return; 
       answered = true; 
       streak = 0; 
+      updateStreakUI();
       confidence = Math.max(10, confidence - 10); 
       document.querySelectorAll(".option").forEach(x => x.disabled = true); 
       let fb = document.getElementById("feedbackBar");
@@ -1888,6 +1899,8 @@
       if (currQ && currQ.isPuzzle) {
         history.push({ t: currQ.t, p: 0, c: "SKIPPED", isPuzzle: true });
       }
+      streak = 0;
+      updateStreakUI();
       next();
     }
 
