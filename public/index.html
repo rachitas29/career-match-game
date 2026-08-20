@@ -2011,12 +2011,9 @@
       let report = document.getElementById("report");
       report.innerHTML = "";
 
-      let msg = "🎮 <b>12-Round Enterprise Challenge Completed!</b> You tackled 8 of the hardest enterprise scenarios (Math + Commercial Strategy) and solved 4 interactive intermission puzzles to test your B2B commercial leadership.";
-
       [
         `<b>Final Commercial Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Scenarios Solved:</b> ${goodScenarios}/8`,
-        `<b>Puzzles Attempted:</b> <span style="color:var(--purple)">${attemptedPuzzles}/4</span> (${attemptedPuzzles === 4 ? "Unlocked 2 Bonus Retries" : (attemptedPuzzles > 0 ? "Unlocked 1 Bonus Retry" : "0 Retries Unlocked")})`,
-        `<div style="margin-top:6px;line-height:1.45;color:#e2eeea;">${msg}</div>`
+        `<b>Puzzles Attempted:</b> <span style="color:var(--purple)">${attemptedPuzzles}/4</span> (${attemptedPuzzles === 4 ? "Unlocked 2 Bonus Retries" : (attemptedPuzzles > 0 ? "Unlocked 1 Bonus Retry" : "0 Retries Unlocked")})`
       ].forEach(x => {
         let d = document.createElement("div");
         d.className = "resultbox";
