@@ -1548,6 +1548,7 @@
           <button class="btn dark" style="padding: 12px 18px; font-size: 13px; background: rgba(234, 67, 53, 0.2); color: #ff8a80; border: 1px solid rgba(255, 138, 128, 0.4);" onclick="submitRoleApplication('gmail')">✉️ Open via Gmail</button>
           <button class="btn dark" style="padding: 12px 16px; font-size: 12px; color: var(--gold); background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.35);" onclick="submitRoleApplication('copy')">📋 Copy Hiring Email</button>
         </div>
+        <div id="applySuccessBox" style="display:none; margin-top: 14px;"></div>
       </div>
 
       <!-- Compact Bottom Summary Card: Performance Report -->
@@ -2082,37 +2083,49 @@
 
     function submitRoleApplication(mode) {
       let selected = document.querySelector('input[name="targetRole"]:checked');
-      let roleVal = selected ? selected.value : "Paid Internship / Marketing Internship / Marketing Survey – International (UK & UAE Markets)";
+      let roleVal = selected ? selected.value : "Paid Internship / Marketing Internship / Marketing Survey – International";
       let email = "info@angelbot.ai";
-      let subject = encodeURIComponent(`Application for Role: ${roleVal}`);
-      let body = encodeURIComponent(`Hello AngelBot AI Hiring Team,\n\nI completed the B2B Revenue Challenge and I am applying for:\nRole: ${roleVal}\n\nPlease find my resume/profile attached.\n\nBest regards,`);
+      let rawSub = `Application for Role: ${roleVal}`;
+      let rawBody = `Hello AngelBot AI Hiring Team,\n\nI completed the B2B Revenue Challenge and I am applying for:\nRole: ${roleVal}\n\nPlease find my resume/profile attached.\n\nBest regards,`;
+      
+      let subject = encodeURIComponent(rawSub);
+      let body = encodeURIComponent(rawBody);
+      let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+      let mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
 
-      // Guarantee email is copied to clipboard for instant pasting if needed
+      // Guarantee email is copied to clipboard
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(email);
         }
       } catch (err) {}
 
-      if (mode === 'gmail') {
-        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`, '_blank');
-      } else if (mode === 'copy') {
-        alert(`📋 Hiring Email (${email}) copied to clipboard!`);
-      } else {
-        // Mode === 'default' (SEND APPLICATION NOW)
-        let mailUrl = `mailto:${email}?subject=${subject}&body=${body}`;
-        
-        // Create an invisible anchor tag to trigger mailto reliably across all browsers
-        let link = document.createElement("a");
-        link.href = mailUrl;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      let box = document.getElementById("applySuccessBox");
+      if (box) {
+        box.style.display = "block";
+        box.innerHTML = `
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--green); border-radius: 14px; padding: 16px 18px; text-align: center; box-shadow: 0 6px 20px rgba(16,185,129,0.2); animation: fadeIn 0.3s ease-out;">
+            <div style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>✅</span> Hiring Email Copied & Ready to Send!
+            </div>
+            <div style="font-size: 12.5px; color: var(--green); font-weight: 700; margin-bottom: 10px;">
+              Target Role: "${roleVal}"
+            </div>
+            <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4;">
+              Send your resume/CV to <b style="color:var(--gold);">info@angelbot.ai</b> using your preferred mail app below:
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+              <a href="${gmailUrl}" target="_blank" class="btn green" style="padding: 10px 18px; font-size: 13px; font-weight: 800; text-decoration: none;">✉️ Compose in Gmail Web →</a>
+              <a href="${mailtoUrl}" class="btn dark" style="padding: 10px 18px; font-size: 13px; font-weight: 700; text-decoration: none; color: #fff; background: rgba(255,255,255,0.08); border: 1px solid var(--border);">📧 Launch Default Mail App</a>
+            </div>
+          </div>
+        `;
+      }
 
-        setTimeout(() => {
-          alert(`📧 Application Email Initiated for:\n"${roleVal}"\n\n(Hiring Email: info@angelbot.ai has also been copied to your clipboard!)`);
-        }, 400);
+      if (mode === 'gmail') {
+        window.open(gmailUrl, '_blank');
+      } else if (mode === 'default') {
+        window.location.href = mailtoUrl;
       }
     }
 
