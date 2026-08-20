@@ -1480,9 +1480,9 @@
       <div style="background: linear-gradient(145deg, rgba(50, 173, 255, 0.08), rgba(32, 209, 139, 0.04)); border: 1px solid var(--panel-border); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 16px;">
           <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(13, 27, 44, 0.7); border: 2px solid var(--green); border-radius: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.15);">
-            <input type="radio" name="targetRole" value="Paid Internship in Marketing / Marketing Executive / Marketing Survey – International (UK & UAE Markets)" checked style="accent-color: var(--green); margin-top: 3px; transform: scale(1.2);">
+            <input type="radio" name="targetRole" value="Paid Internship / Marketing Internship / Marketing Survey – International (UK & UAE Markets)" checked style="accent-color: var(--green); margin-top: 3px; transform: scale(1.2);">
             <div>
-              <b style="color: #fff; display: block; font-size: 13px; line-height: 1.35;">Paid Internship / Marketing Executive <span style="color: var(--green); font-size: 11px; font-weight: 800;">(No Exp Required)</span></b>
+              <b style="color: #fff; display: block; font-size: 13px; line-height: 1.35;">Paid Internship / Marketing Internship / Marketing Survey – International <span style="color: var(--green); font-size: 11px; font-weight: 800;">(No Exp Required)</span></b>
               <small style="color: #cbd5e1; font-size: 11px; line-height: 1.35; display: block; margin-top: 3px;">Product positioning, content & growth strategy across UK & UAE international markets</small>
             </div>
           </label>
@@ -2031,7 +2031,7 @@
 
     function submitRoleApplication(mode) {
       let selected = document.querySelector('input[name="targetRole"]:checked');
-      let roleVal = selected ? selected.value : "Paid Internship in Marketing / Marketing Executive / Marketing Survey – International (UK & UAE Markets)";
+      let roleVal = selected ? selected.value : "Paid Internship / Marketing Internship / Marketing Survey – International (UK & UAE Markets)";
       let email = "info@angelbot.ai";
       let subject = encodeURIComponent(`Application for Role: ${roleVal}`);
       let body = encodeURIComponent(`Hello AngelBot AI Hiring Team,\n\nI completed the B2B Revenue Challenge and I am applying for:\nRole: ${roleVal}\n\nPlease find my resume/profile attached.\n\nBest regards,`);
