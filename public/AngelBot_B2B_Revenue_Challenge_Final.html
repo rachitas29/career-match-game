@@ -336,6 +336,8 @@
       border: 2px solid var(--gold);
       color: var(--gold);
       font-weight: 900;
+    }
+
     /* Chess Board Styles */
     .chessboard-grid {
       display: grid;
@@ -1493,7 +1495,7 @@
   </div>
 
   <!-- Modal for Role Selection -->
-  <div id="roleModal" class="modal-overlay">
+  <div id="roleModal" class="modal-overlay" style="display: none;">
     <div class="modal-card">
       <h3>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2">
@@ -1547,7 +1549,7 @@
   </div>
 
   <!-- Animated Cheering Popup Modal for Puzzle Completion -->
-  <div id="cheerModal" class="cheer-modal-overlay">
+  <div id="cheerModal" class="cheer-modal-overlay" style="display: none;">
     <div class="cheer-card">
       <div style="font-size:46px;margin-bottom:6px;">🎉 🏆 ✨</div>
       <div class="cheer-badge">🏆 INTERMISSION PUZZLE SOLVED!</div>
@@ -1854,12 +1856,18 @@
       if (insightEl) insightEl.innerHTML = insight || "Great commercial strategy execution!";
       if (countEl) countEl.textContent = `Progress: [ ${attemptedPuzzles} / ${totalPuzzles} ] Puzzles Completed 🎯`;
 
-      if (modal) modal.classList.add("active");
+      if (modal) {
+        modal.style.display = "grid";
+        modal.classList.add("active");
+      }
     }
 
     function closeCheerModalAndContinue() {
       let modal = document.getElementById("cheerModal");
-      if (modal) modal.classList.remove("active");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove("active");
+      }
       next();
     }
 
@@ -2042,12 +2050,18 @@
 
     function apply() {
       let modal = document.getElementById("roleModal");
-      if (modal) modal.classList.add("active");
+      if (modal) {
+        modal.style.display = "grid";
+        modal.classList.add("active");
+      }
     }
 
     function closeRoleModal() {
       let modal = document.getElementById("roleModal");
-      if (modal) modal.classList.remove("active");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove("active");
+      }
     }
 
     function submitRoleApplication(mode) {
