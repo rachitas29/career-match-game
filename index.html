@@ -1794,25 +1794,30 @@
       
       let currQ = activeQs[i];
       let isPuz = currQ.isPuzzle;
+      let isCorrect = o[2] >= 8;
       let pts = isPuz ? 0 : o[2]; // Puzzles do NOT add marks directly
 
       if (!isPuz) raw += pts;
-      if (pts >= 8 || isPuz) streak++; else streak = 0; 
-      confidence = Math.max(10, Math.min(99, confidence + ((pts >= 8 || isPuz) ? 5 : -7)));
+      if (isCorrect) streak++; else streak = 0; 
+      confidence = Math.max(10, Math.min(99, confidence + (isCorrect ? 5 : -7)));
       
       history.push({ t: currQ.t, p: o[2], c: o[0], isPuzzle: isPuz }); 
-      if (b && b.classList) b.classList.add((pts >= 8 || isPuz) ? "good" : "bad");
+      if (b && b.classList) b.classList.add(isCorrect ? "good" : "bad");
 
       let fb = document.getElementById("feedbackBar");
       let f = document.getElementById("feedback"); 
-      f.className = "feedback " + ((pts >= 8 || isPuz) ? "good" : "bad"); 
+      f.className = "feedback " + (isCorrect ? "good" : "bad"); 
       f.style.display = "block"; 
       
       if (isPuz) {
-        f.innerHTML = `<b>🧩 Intermission Puzzle Completed!</b><br>${o[3]}<br><br><b>Bonus Retry Credit Earned!</b> (Attempting puzzles unlocks retries for incorrect scenarios)`;
-        triggerCheerPopup(currQ.t, o[3]);
+        if (isCorrect) {
+          f.innerHTML = `<b>🧩 Intermission Puzzle Solved!</b><br>${o[3]}<br><br><b>Bonus Retry Credit Earned!</b> (Attempting puzzles unlocks retries for incorrect scenarios)`;
+          triggerCheerPopup(currQ.t, o[3]);
+        } else {
+          f.innerHTML = `<b>⚠️ Incorrect Tactical Move</b><br>${o[3]}<br><br><small style="color:var(--muted)">Study the board position and try a different tactic next time!</small>`;
+        }
       } else {
-        f.innerHTML = `<b>${pts >= 8 ? "🔥 Smart commercial move" : "⚠️ Risky commercial move"}</b><br>${o[3]}<br><br><b>+${pts} points</b>`;
+        f.innerHTML = `<b>${isCorrect ? "🔥 Smart commercial move" : "⚠️ Risky commercial move"}</b><br>${o[3]}<br><br><b>+${pts} points</b>`;
       }
       
       document.getElementById("score").textContent = raw; 
