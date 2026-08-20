@@ -1959,11 +1959,14 @@
         hc.style.display = "none";
         quote.style.display = "none";
       }
+      let shuffledRetryOpts = shuffle(JSON.parse(JSON.stringify(originalScen.o)));
       box.innerHTML = "";
-      originalScen.o.forEach(o => {
+      shuffledRetryOpts.forEach((o, idx) => {
         let b = document.createElement("button");
         b.className = "option";
-        b.innerHTML = `<b>${o[0]}.</b> ${o[1]}`;
+        let letter = String.fromCharCode(65 + idx);
+        o[0] = letter;
+        b.innerHTML = `<b>${letter}.</b> ${o[1]}`;
         b.onclick = () => chooseRetry(o, b, currentRetryItem);
         box.appendChild(b);
       });
