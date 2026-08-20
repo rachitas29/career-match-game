@@ -1563,8 +1563,6 @@
       </div>
     </section>
   </div>
-    </div>
-  </div>
 
   <!-- Animated Cheering Popup Modal for Puzzle Completion -->
   <div id="cheerModal" class="cheer-modal-overlay" style="display: none;">
@@ -1586,7 +1584,12 @@
         </div>
       </div>
 
-      <button class="btn green" style="width:100%;justify-content:center;padding:12px 20px;font-size:15px;font-weight:800;" onclick="closeCheerModalA    const qs = [
+      <button class="btn green" style="width:100%;justify-content:center;padding:12px 20px;font-size:15px;font-weight:800;" onclick="closeCheerModalAndContinue()">CONTINUE CHALLENGE ➔</button>
+    </div>
+  </div>
+
+  <script>
+    const qs = [
       {
         id: "hunt",
         l: "1 · THE HUNT", t: "Pick the account worth your time", s: "You have 20 new accounts and enough capacity for only 3 first calls. Which prospect gets priority based on Ideal Customer Profile (ICP) criteria?", o: [
