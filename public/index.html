@@ -359,6 +359,42 @@
     .chess-cell.dark { background: #334155; color: #f8fafc; }
     .chess-cell.highlight { background: rgba(244, 189, 77, 0.6) !important; animation: pulse 0.8s infinite alternate; }
 
+    /* Modal Overlay Base Styles */
+    .modal-overlay,
+    .cheer-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(3, 11, 22, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+      place-items: center;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.active,
+    .cheer-modal-overlay.active {
+      display: grid !important;
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    .modal-card,
+    .cheer-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      margin: auto;
+    }
+
     .dark {
       background: #1c2d42;
       color: #fff;
@@ -2002,6 +2038,34 @@
         d.innerHTML = x;
         report.appendChild(d);
       });
+    }
+
+    function apply() {
+      let modal = document.getElementById("roleModal");
+      if (modal) modal.classList.add("active");
+    }
+
+    function closeRoleModal() {
+      let modal = document.getElementById("roleModal");
+      if (modal) modal.classList.remove("active");
+    }
+
+    function submitRoleApplication(mode) {
+      let selected = document.querySelector('input[name="targetRole"]:checked');
+      let roleVal = selected ? selected.value : "Paid Internship in Marketing";
+      let email = "info@angelbot.ai";
+      let subject = encodeURIComponent(`Application for Role: ${roleVal}`);
+      let body = encodeURIComponent(`Hello AngelBot AI Hiring Team,\n\nI am applying for the following opportunity:\nRole: ${roleVal}\n\nPlease find my resume/profile attached.\n\nBest regards,`);
+
+      if (mode === 'gmail') {
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`, '_blank');
+      } else if (mode === 'copy') {
+        navigator.clipboard.writeText(email);
+        alert("Hiring Email (info@angelbot.ai) copied to clipboard!");
+      } else {
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      }
+      closeRoleModal();
     }
 
     /* ----------------------------------------------------
