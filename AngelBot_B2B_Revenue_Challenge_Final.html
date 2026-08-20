@@ -1573,10 +1573,10 @@
     ];
 
     const puzzles = [
-      { isPuzzle: true, type: "riddle", t: "Enterprise AI Riddle", l: "INTERMISSION 1 · REVENUE RIDDLE", s: "Solve this commercial brainteaser (Attempting puzzles unlocks bonus retries for incorrect scenarios!):" },
-      { isPuzzle: true, type: "maze", t: "Navigate the Deal Maze", l: "INTERMISSION 2 · 6x6 DEAL MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 clearances and reach the contract (📜):" },
-      { isPuzzle: true, type: "dots", t: "Connect the Pipeline Dots", l: "INTERMISSION 3 · PIPELINE DOTS", s: "Link the 6 sales pipeline stages in exact logical sequence:" },
-      { isPuzzle: true, type: "cipher", t: "Commercial Strategy Cipher", l: "INTERMISSION 4 · STRATEGY CIPHER", s: "Memorize & repeat the 4-step commercial strategy pattern to win executive approval:" }
+      { isPuzzle: true, type: "maze", mazeId: "executive", t: "Executive Alignment Maze", l: "INTERMISSION 1 · EXECUTIVE MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 clearances and reach contract (📜):" },
+      { isPuzzle: true, type: "maze", mazeId: "procurement", t: "Procurement & Terms Maze", l: "INTERMISSION 2 · TERMS MAZE", s: "Guide your deal avatar (💼) through contract obstacles to collect 3 terms and reach contract (📜):" },
+      { isPuzzle: true, type: "maze", mazeId: "expansion", t: "Account Expansion Maze", l: "INTERMISSION 3 · EXPANSION MAZE", s: "Guide your deal avatar (💼) through account obstacles to collect 3 expansion keys and reach growth (📜):" },
+      { isPuzzle: true, type: "maze", mazeId: "pipeline", t: "Pipeline Velocity Maze", l: "INTERMISSION 4 · PIPELINE MAZE", s: "Guide your deal avatar (💼) through pipeline obstacles to collect 3 milestones and close deal (📜):" }
     ];
 
     let i = 0, raw = 0, streak = 0, confidence = 50, timer = 40, interval = null, answered = false, history = [];
@@ -1675,10 +1675,7 @@
         quote.style.display = "none";
         box.style.display = "none";
         puzzleBox.style.display = "block";
-        if (q.type === "riddle") renderRiddle(q);
-        else if (q.type === "maze") renderMaze(q);
-        else if (q.type === "dots") renderDots(q);
-        else if (q.type === "cipher") renderCipher(q);
+        renderMaze(q);
       } else {
         puzzleBox.style.display = "none";
         box.style.display = "grid";
@@ -2043,23 +2040,104 @@
       { r: 5, c: 1, id: "security", label: "🛡️ Security Signoff" }
     ];
 
+    let mazePos = { r: 0, c: 0 };
+    let mazeGoal = { r: 5, c: 5 };
+    let mazeMovesLeft = 20;
+    let mazeCollectedKeys = {};
+    let activeMazeConfig = null;
+
+    const mazeConfigs = {
+      executive: {
+        title: "Executive Alignment Maze",
+        subtitle: "Navigate 💼 to collect 3 Executive Clearances (🧠 CIO, 💰 CFO, 🛡️ Sec) to unlock Contract (📜):",
+        keys: [
+          { r: 0, c: 5, id: "k1", icon: "🧠", label: "CIO Approval" },
+          { r: 3, c: 1, id: "k2", icon: "💰", label: "CFO ROI" },
+          { r: 5, c: 1, id: "k3", icon: "🛡️", label: "Security Signoff" }
+        ],
+        obstacles: [
+          { r: 1, c: 1, label: "⛔ Procurement Stall", icon: "⛔" },
+          { r: 1, c: 3, label: "📉 Discount Trap", icon: "📉" },
+          { r: 2, c: 4, label: "👻 Ghosting Risk", icon: "👻" },
+          { r: 3, c: 3, label: "🛑 Legal Freeze", icon: "🛑" },
+          { r: 4, c: 1, label: "⛔ Budget Cut", icon: "⛔" }
+        ],
+        solveMessage: "Masterful Executive Strategy! You aligned all 3 executive leaders to close the contract!"
+      },
+      procurement: {
+        title: "Procurement & Terms Maze",
+        subtitle: "Navigate 💼 to collect 3 Commercial Terms (📝 SLA, ⚖️ Compliance, 🏷️ Pricing) to unlock Contract (📜):",
+        keys: [
+          { r: 0, c: 4, id: "k1", icon: "📝", label: "SLA Terms" },
+          { r: 2, c: 1, id: "k2", icon: "⚖️", label: "Legal Compliance" },
+          { r: 4, c: 2, id: "k3", icon: "🏷️", label: "Value Pricing" }
+        ],
+        obstacles: [
+          { r: 1, c: 2, label: "🛑 Term Stall", icon: "🛑" },
+          { r: 2, c: 3, label: "📉 Margin Squeeze", icon: "📉" },
+          { r: 3, c: 4, label: "⛔ Redline Trap", icon: "⛔" },
+          { r: 4, c: 0, label: "👻 Unresponsive Legal", icon: "👻" }
+        ],
+        solveMessage: "Brilliant Procurement Negotiation! You locked in all 3 commercial terms without margin loss!"
+      },
+      expansion: {
+        title: "Account Expansion Maze",
+        subtitle: "Navigate 💼 to collect 3 Expansion Drivers (📈 Upsell, 🤝 Renewal, ⚡ Cross-Sell) to unlock Scale (📜):",
+        keys: [
+          { r: 1, c: 5, id: "k1", icon: "📈", label: "Account Upsell" },
+          { r: 3, c: 2, id: "k2", icon: "🤝", label: "Multi-Year Renewal" },
+          { r: 5, c: 0, id: "k3", icon: "⚡", label: "Cross-Sell Module" }
+        ],
+        obstacles: [
+          { r: 0, c: 3, label: "📉 Churn Risk", icon: "📉" },
+          { r: 2, c: 4, label: "⛔ Account Downsizing", icon: "⛔" },
+          { r: 4, c: 1, label: "👻 Sponsor Departure", icon: "👻" },
+          { r: 3, c: 5, label: "🛑 Re-org Freeze", icon: "🛑" }
+        ],
+        solveMessage: "Outstanding Account Management! You expanded account revenue and secured multi-year renewal!"
+      },
+      pipeline: {
+        title: "Pipeline Velocity Maze",
+        subtitle: "Navigate 💼 to collect 3 Sales Milestones (🎯 ICP Fit, 📊 ROI Case, 🛡️ Tech Audit) to close Deal (📜):",
+        keys: [
+          { r: 0, c: 3, id: "k1", icon: "🎯", label: "ICP Fit" },
+          { r: 2, c: 5, id: "k2", icon: "📊", label: "ROI Case" },
+          { r: 4, c: 1, id: "k3", icon: "🛡️", label: "Tech Audit" }
+        ],
+        obstacles: [
+          { r: 1, c: 1, label: "⛔ Unqualified Lead", icon: "⛔" },
+          { r: 2, c: 3, label: "📉 Spam Filter", icon: "📉" },
+          { r: 3, c: 0, label: "👻 No-Show Demo", icon: "👻" },
+          { r: 4, c: 4, label: "🛑 Competitor Pitch", icon: "🛑" }
+        ],
+        solveMessage: "Flawless Pipeline Execution! You navigated all pipeline stages to win the enterprise deal!"
+      }
+    };
+
     function renderMaze(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
       mazePos = { r: 0, c: 0 };
       mazeMovesLeft = 20;
-      mazeCollectedKeys = { cio: false, cfo: false, security: false };
       
+      let configKey = q.mazeId || "executive";
+      activeMazeConfig = mazeConfigs[configKey] || mazeConfigs.executive;
+      
+      mazeCollectedKeys = {};
+      activeMazeConfig.keys.forEach(k => mazeCollectedKeys[k.id] = false);
+
       box.innerHTML = `
         <div class="puzzle-wrap theme-maze" style="padding:14px;">
           <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:6px;">
-            Navigate 💼 to collect 3 Clearances (🧠 CIO, 💰 CFO, 🛡️ Sec) to unlock Contract (📜)!
+            ${activeMazeConfig.subtitle}
           </p>
 
           <div id="mazeKeyBadges" style="display:flex; justify-content:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; font-size:11px;">
-            <span id="badge-cio" style="padding:3px 8px; border-radius:99px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--muted);">🧠 CIO: ❌</span>
-            <span id="badge-cfo" style="padding:3px 8px; border-radius:99px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--muted);">💰 CFO: ❌</span>
-            <span id="badge-security" style="padding:3px 8px; border-radius:99px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--muted);">🛡️ Sec: ❌</span>
+            ${activeMazeConfig.keys.map(k => `
+              <span id="badge-${k.id}" style="padding:3px 8px; border-radius:99px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--muted);">
+                ${k.icon} ${k.label}: ❌
+              </span>
+            `).join("")}
           </div>
 
           <div class="maze-grid" id="mazeBoard"></div>
@@ -2082,32 +2160,23 @@
 
     function drawMazeBoard() {
       let board = document.getElementById("mazeBoard");
-      if (!board) return;
+      if (!board || !activeMazeConfig) return;
       board.innerHTML = "";
       
-      let bCio = document.getElementById("badge-cio");
-      let bCfo = document.getElementById("badge-cfo");
-      let bSec = document.getElementById("badge-security");
-      if (bCio) {
-        bCio.style.borderColor = mazeCollectedKeys.cio ? "var(--green)" : "var(--border)";
-        bCio.style.color = mazeCollectedKeys.cio ? "var(--green)" : "var(--muted)";
-        bCio.innerHTML = `🧠 CIO: ${mazeCollectedKeys.cio ? "✅ OK" : "❌"}`;
-      }
-      if (bCfo) {
-        bCfo.style.borderColor = mazeCollectedKeys.cfo ? "var(--green)" : "var(--border)";
-        bCfo.style.color = mazeCollectedKeys.cfo ? "var(--green)" : "var(--muted)";
-        bCfo.innerHTML = `💰 CFO: ${mazeCollectedKeys.cfo ? "✅ OK" : "❌"}`;
-      }
-      if (bSec) {
-        bSec.style.borderColor = mazeCollectedKeys.security ? "var(--green)" : "var(--border)";
-        bSec.style.color = mazeCollectedKeys.security ? "var(--green)" : "var(--muted)";
-        bSec.innerHTML = `🛡️ Sec: ${mazeCollectedKeys.security ? "✅ OK" : "❌"}`;
-      }
+      activeMazeConfig.keys.forEach(k => {
+        let badge = document.getElementById(`badge-${k.id}`);
+        let isDone = mazeCollectedKeys[k.id];
+        if (badge) {
+          badge.style.borderColor = isDone ? "var(--green)" : "var(--border)";
+          badge.style.color = isDone ? "var(--green)" : "var(--muted)";
+          badge.innerHTML = `${k.icon} ${k.label}: ${isDone ? "✅ OK" : "❌"}`;
+        }
+      });
 
       let movesEl = document.getElementById("mazeMovesCounter");
       if (movesEl) movesEl.textContent = `Moves: ${mazeMovesLeft}`;
 
-      let allKeysCollected = mazeCollectedKeys.cio && mazeCollectedKeys.cfo && mazeCollectedKeys.security;
+      let allKeysCollected = activeMazeConfig.keys.every(k => mazeCollectedKeys[k.id]);
 
       for (let r = 0; r < 6; r++) {
         for (let c = 0; c < 6; c++) {
@@ -2116,8 +2185,8 @@
           
           let isPlayer = (mazePos.r === r && mazePos.c === c);
           let isGoal = (mazeGoal.r === r && mazeGoal.c === c);
-          let obs = mazeObstacles.find(o => o.r === r && o.c === c);
-          let keyObj = mazeKeys.find(k => k.r === r && k.c === c);
+          let obs = activeMazeConfig.obstacles.find(o => o.r === r && o.c === c);
+          let keyObj = activeMazeConfig.keys.find(k => k.r === r && k.c === c);
           
           if (isPlayer) {
             cell.classList.add("player");
@@ -2128,10 +2197,10 @@
             cell.textContent = allKeysCollected ? "📜" : "🔒";
           } else if (obs) {
             cell.classList.add("obstacle");
-            cell.textContent = (r===1 && c===1)? "⛔" : ((r===1 && c===3)? "📉" : ((r===2 && c===4)? "👻" : ((r===3 && c===3)? "🛑" : "⛔")));
+            cell.textContent = obs.icon || "⛔";
           } else if (keyObj && !mazeCollectedKeys[keyObj.id]) {
             cell.classList.add("key");
-            cell.textContent = keyObj.id === "cio" ? "🧠" : (keyObj.id === "cfo" ? "💰" : "🛡️");
+            cell.textContent = keyObj.icon;
           }
           
           cell.onclick = () => {
@@ -2147,7 +2216,7 @@
     }
 
     function moveMaze(dr, dc) {
-      if (answered) return;
+      if (answered || !activeMazeConfig) return;
       let nr = mazePos.r + dr;
       let nc = mazePos.c + dc;
       if (nr < 0 || nr > 5 || nc < 0 || nc > 5) return;
@@ -2156,7 +2225,7 @@
       if (fb) fb.style.display = "flex";
       document.getElementById("nextBtn").style.display = "inline-flex";
 
-      let obs = mazeObstacles.find(o => o.r === nr && o.c === nc);
+      let obs = activeMazeConfig.obstacles.find(o => o.r === nr && o.c === nc);
       if (obs) {
         let f = document.getElementById("feedback");
         f.className = "feedback bad";
@@ -2177,28 +2246,28 @@
       
       mazePos = { r: nr, c: nc };
 
-      let keyObj = mazeKeys.find(k => k.r === nr && k.c === nc);
+      let keyObj = activeMazeConfig.keys.find(k => k.r === nr && k.c === nc);
       if (keyObj && !mazeCollectedKeys[keyObj.id]) {
         mazeCollectedKeys[keyObj.id] = true;
         let f = document.getElementById("feedback");
         f.className = "feedback good";
         f.style.display = "block";
-        f.innerHTML = `<b>✨ Secured ${keyObj.label}!</b> Keep moving!`;
+        f.innerHTML = `<b>✨ Secured ${keyObj.icon} ${keyObj.label}!</b> Keep moving!`;
       }
       
       drawMazeBoard();
       
-      let allKeysCollected = mazeCollectedKeys.cio && mazeCollectedKeys.cfo && mazeCollectedKeys.security;
+      let allKeysCollected = activeMazeConfig.keys.every(k => mazeCollectedKeys[k.id]);
 
       if (mazePos.r === mazeGoal.r && mazePos.c === mazeGoal.c) {
         if (!allKeysCollected) {
           let f = document.getElementById("feedback");
           f.className = "feedback bad";
           f.style.display = "block";
-          f.innerHTML = "<b>🔒 Contract Locked!</b> You must first collect all 3 clearances (🧠 CIO, 💰 CFO, 🛡️ Sec)!";
+          f.innerHTML = "<b>🔒 Contract Locked!</b> You must first collect all 3 required keys/clearances!";
           return;
         }
-        let fakeOption = ["MAZE", "6x6 Deal Maze Mastered", 9, "Masterful Deal Strategy! You aligned all 3 key stakeholders to close the deal!", "LOW"];
+        let fakeOption = ["MAZE", activeMazeConfig.title + " Mastered", 9, activeMazeConfig.solveMessage, "LOW"];
         choose(fakeOption, document.createElement("div"));
       }
     }
