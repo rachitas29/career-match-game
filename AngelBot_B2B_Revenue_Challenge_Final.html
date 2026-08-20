@@ -322,6 +322,23 @@
       color: #02170f;
     }
 
+    /* Sudoku Cell Styles */
+    .sudoku-cell {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      display: grid; place-items: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+    }
+    .sudoku-cell.missing {
+      background: rgba(244, 189, 77, 0.25);
+      border: 2px solid var(--gold);
+      color: var(--gold);
+      font-weight: 900;
+      animation: pulse 1s infinite alternate;
+    }
+
     .dark {
       background: #1c2d42;
       color: #fff;
@@ -1573,10 +1590,10 @@
     ];
 
     const puzzles = [
-      { isPuzzle: true, type: "maze", mazeId: "executive", t: "Executive Alignment Maze", l: "INTERMISSION 1 · EXECUTIVE MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 clearances and reach contract (📜):" },
-      { isPuzzle: true, type: "maze", mazeId: "procurement", t: "Procurement & Terms Maze", l: "INTERMISSION 2 · TERMS MAZE", s: "Guide your deal avatar (💼) through contract obstacles to collect 3 terms and reach contract (📜):" },
-      { isPuzzle: true, type: "maze", mazeId: "expansion", t: "Account Expansion Maze", l: "INTERMISSION 3 · EXPANSION MAZE", s: "Guide your deal avatar (💼) through account obstacles to collect 3 expansion keys and reach growth (📜):" },
-      { isPuzzle: true, type: "maze", mazeId: "pipeline", t: "Pipeline Velocity Maze", l: "INTERMISSION 4 · PIPELINE MAZE", s: "Guide your deal avatar (💼) through pipeline obstacles to collect 3 milestones and close deal (📜):" }
+      { isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "INTERMISSION 1 · 6x6 DEAL MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 clearances (🧠 CIO, 💰 CFO, 🛡️ Sec) and reach contract (📜):" },
+      { isPuzzle: true, type: "sudoku", t: "4x4 Revenue Sudoku", l: "INTERMISSION 2 · COMMERCIAL SUDOKU", s: "Find the missing number (❓) in Row 4 to complete the 4x4 commercial revenue matrix without repeating numbers in any row, column or 2x2 box:" },
+      { isPuzzle: true, type: "chess", t: "B2B Grandmaster Chess Tactics", l: "INTERMISSION 3 · CHESS TACTICS", s: "White (Your Team) to move: Which tactical chess move checkmates the Black King (CIO Buyer) in 1 move to close the deal?" },
+      { isPuzzle: true, type: "sequence", t: "Pick the Right Pipeline Sequence", l: "INTERMISSION 4 · PIPELINE SEQUENCE", s: "Click the 6 B2B sales pipeline stages in exact logical order (Step 1 ➔ Step 6):" }
     ];
 
     let i = 0, raw = 0, streak = 0, confidence = 50, timer = 40, interval = null, answered = false, history = [];
@@ -1675,7 +1692,10 @@
         quote.style.display = "none";
         box.style.display = "none";
         puzzleBox.style.display = "block";
-        renderMaze(q);
+        if (q.type === "maze") renderMaze(q);
+        else if (q.type === "sudoku") renderSudoku(q);
+        else if (q.type === "chess") renderChess(q);
+        else if (q.type === "sequence") renderSequence(q);
       } else {
         puzzleBox.style.display = "none";
         box.style.display = "grid";
@@ -1990,22 +2010,64 @@
       }
     }
 
-    // Puzzle 1: Riddle Game
-    function renderRiddle(q) {
+    // Puzzle 2: 4x4 Commercial Revenue Sudoku
+    function renderSudoku(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
       box.innerHTML = `
-        <div class="puzzle-wrap theme-riddle" style="padding:14px;">
-          <div class="riddle-box">“I am invisible until lost, but when enterprise teams search for me, hours vanish across fragmented tools, folders & emails.<br><br><span style="color:var(--blue);">What am I?</span>”</div>
-          <div class="options" id="riddleOpts" style="display:grid;"></div>
+        <div class="puzzle-wrap theme-sudoku" style="padding:14px;text-align:center;">
+          <p style="font-size:13px;color:#e2eaf4;margin-bottom:8px;">Complete the 4x4 Commercial Revenue Matrix:</p>
+          <div class="sudoku-grid" style="display:grid;grid-template-columns:repeat(4,48px);gap:6px;justify-content:center;margin:12px auto;">
+            <div class="sudoku-cell">1</div><div class="sudoku-cell">2</div><div class="sudoku-cell">3</div><div class="sudoku-cell">4</div>
+            <div class="sudoku-cell">3</div><div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell">2</div>
+            <div class="sudoku-cell">2</div><div class="sudoku-cell">3</div><div class="sudoku-cell">4</div><div class="sudoku-cell">1</div>
+            <div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell missing">❓</div><div class="sudoku-cell">3</div>
+          </div>
+          <div class="options" id="sudokuOpts" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;"></div>
         </div>
       `;
-      let optsBox = document.getElementById("riddleOpts");
+      let optsBox = document.getElementById("sudokuOpts");
       let options = [
-        ["A", "Enterprise Knowledge & Data Silos", 9, "Spot on! Disconnected data costs enterprise teams thousands of wasted hours annually.", "LOW"],
-        ["B", "Expensive Cloud Storage Hardware", 2, "Storage is cheap, but finding relevant information is the real challenge.", "MED"],
-        ["C", "Social Media Followers Count", 0, "Social followers don't impact internal workflow efficiency.", "HIGH"],
-        ["D", "Weekly Coffee & Lunch Breaks", 1, "Breaks are healthy; lost document searching is unproductive friction.", "MED"]
+        ["A", "2", 9, "Correct! Row 4 becomes [4, 1, 2, 3], completing the 4x4 Sudoku matrix without duplicates!", "LOW"],
+        ["B", "1", 2, "Incorrect: Number 1 already exists in Row 4!", "MED"],
+        ["C", "3", 1, "Incorrect: Number 3 already exists in Row 4!", "MED"],
+        ["D", "4", 0, "Incorrect: Number 4 already exists in Row 4!", "HIGH"]
+      ];
+      options.forEach(o => {
+        let b = document.createElement("button");
+        b.className = "option";
+        b.style.justifyContent = "center";
+        b.innerHTML = `<b>${o[0]}.</b> ${o[1]}`;
+        b.onclick = () => {
+          choose(o, b);
+          let fb = document.getElementById("feedbackBar");
+          if (fb) fb.style.display = "flex";
+          document.getElementById("nextBtn").style.display = "inline-flex";
+        };
+        optsBox.appendChild(b);
+      });
+    }
+
+    // Puzzle 3: B2B Grandmaster Chess Tactics
+    function renderChess(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-chess" style="padding:14px;text-align:center;">
+          <div style="background:rgba(13,27,44,0.8);border:1px solid var(--panel-border);border-radius:14px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:13.5px;color:#fff;font-weight:700;">♟️ White (Your Team) vs 🏿 Black (CIO Decision-Maker)</div>
+            <div style="font-size:12.5px;color:var(--gold);margin-top:4px;">White Queen at <b>h5</b> & Rook at <b>e1</b>. Black King is trapped at <b>h8</b> behind Pawn at <b>g7</b>.</div>
+          </div>
+          <p style="font-size:13px;color:#e2eaf4;margin-bottom:10px;">Which Grandmaster move delivers instant Checkmate (Qxh7#) to close the deal?</p>
+          <div class="options" id="chessOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+        </div>
+      `;
+      let optsBox = document.getElementById("chessOpts");
+      let options = [
+        ["A", "Queen to h7# (Qxh7#)", 9, "Spot on! Queen to h7 supported by Rook delivers instant Checkmate & closes the deal!", "LOW"],
+        ["B", "Rook to e8+ (Re8+)", 3, "Rook move is blocked by Black's defensive Rook on e8.", "MED"],
+        ["C", "Knight to f7+ (Nf7+)", 2, "Knight move is captured by Black's Pawn on g7.", "MED"],
+        ["D", "Pawn to h4 (h4)", 1, "Pawn move is too slow, allowing the CIO to escape.", "HIGH"]
       ];
       options.forEach(o => {
         let b = document.createElement("button");
@@ -2019,6 +2081,79 @@
         };
         optsBox.appendChild(b);
       });
+    }
+
+    // Puzzle 4: Picking Right Sequence (Pipeline Sequence)
+    let sequenceTargetSeq = [1, 2, 3, 4, 5, 6];
+    let sequenceCurrentSeq = [];
+
+    function renderSequence(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      sequenceCurrentSeq = [];
+      
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-dots" style="padding:14px;">
+          <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:8px;">Click the 6 pipeline stages in exact logical order (Step 1 ➔ Step 6):</p>
+          <div class="dots-area">
+            <div class="dots-grid" id="seqGrid"></div>
+          </div>
+          <p id="seqStatus" style="font-size:12px;color:var(--gold);font-weight:700;margin-top:6px;">Click Step 1 to begin!</p>
+        </div>
+      `;
+      
+      let nodesData = [
+        { id: 1, label: "1. 🎯 ICP Prospecting" },
+        { id: 2, label: "2. 💬 Discovery & Call" },
+        { id: 3, label: "3. 📊 ROI & Solution Case" },
+        { id: 4, label: "4. 🛡️ Security Audit" },
+        { id: 5, label: "5. 🤝 Trade & Terms" },
+        { id: 6, label: "6. 📜 Close Contract" }
+      ];
+      
+      let shuffledNodes = shuffle(nodesData);
+      let grid = document.getElementById("seqGrid");
+      
+      shuffledNodes.forEach(node => {
+        let d = document.createElement("div");
+        d.className = "dot-node";
+        d.id = `seq-${node.id}`;
+        d.textContent = node.label;
+        d.onclick = () => handleSequenceClick(node.id);
+        grid.appendChild(d);
+      });
+    }
+
+    function handleSequenceClick(id) {
+      if (answered) return;
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      document.getElementById("nextBtn").style.display = "inline-flex";
+      
+      let expected = sequenceTargetSeq[sequenceCurrentSeq.length];
+      let el = document.getElementById(`seq-${id}`);
+      
+      if (id === expected) {
+        sequenceCurrentSeq.push(id);
+        el.classList.add("connected");
+        let status = document.getElementById("seqStatus");
+        if (sequenceCurrentSeq.length === sequenceTargetSeq.length) {
+          status.style.color = "var(--green)";
+          status.textContent = "🎉 Right Sequence Picked! Pipeline Mastered!";
+          let fakeOption = ["SEQUENCE", "Right Pipeline Sequence", 9, "Perfect sequence! Picking the right pipeline sequence accelerates deal velocity!", "LOW"];
+          choose(fakeOption, el);
+        } else {
+          status.textContent = `Great! Next: Click Step ${sequenceCurrentSeq.length + 1}`;
+        }
+      } else {
+        el.classList.add("active");
+        setTimeout(() => el.classList.remove("active"), 400);
+        let status = document.getElementById("seqStatus");
+        status.style.color = "var(--red)";
+        status.textContent = `⚠️ Start with Step 1 through Step 6!`;
+        sequenceCurrentSeq = [];
+        document.querySelectorAll(".dot-node").forEach(n => n.classList.remove("connected"));
+      }
     }
 
     // Upgraded 6x6 B2B Deal Master Maze
