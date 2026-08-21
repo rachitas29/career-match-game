@@ -325,12 +325,12 @@
 
     /* Sudoku Cell Styles */
     .sudoku-cell {
-      width: 48px; height: 48px;
-      border-radius: 10px;
+      width: 38px; height: 38px;
+      border-radius: 8px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border);
       display: grid; place-items: center;
-      font-size: 18px; font-weight: 800; color: #fff;
+      font-size: 15px; font-weight: 800; color: #fff;
     }
     .sudoku-cell.missing {
       background: rgba(244, 189, 77, 0.25);
@@ -523,13 +523,26 @@
     }
 
     /* Game Top & Header */
+    #game {
+      overflow: hidden !important;
+    }
+    #game .stats {
+      margin-bottom: 10px;
+    }
+    #game .progress {
+      margin: 8px 0 12px;
+    }
+    #game .situation {
+      margin: 8px 0;
+      font-size: 16.5px;
+    }
     .top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .round {
@@ -1258,8 +1271,23 @@
         width: 100%;
       }
       .panel {
-        padding: 16px 14px;
+        padding: 14px 12px;
         border-radius: 16px;
+      }
+      #game {
+        padding: 12px 14px !important;
+        overflow: hidden !important;
+      }
+      #game .situation {
+        font-size: 14px !important;
+        margin: 6px 0 !important;
+      }
+      #game .stats {
+        margin-bottom: 6px !important;
+      }
+      #game .option {
+        padding: 9px 10px !important;
+        font-size: 12px !important;
       }
       .hero {
         grid-template-columns: 1fr;
@@ -1462,15 +1490,15 @@
         <div class="hero-main">
           <h1>Can you<br><span style="color:var(--blue)">win the deal?</span><br><span
               style="font-size: 0.7em; color: var(--green);">Let's see.</span></h1>
-          <p class="lead">A 5-minute enterprise revenue simulator testing your B2B commercial instincts.</p>
+          <p class="lead">A quick 5-minute strategy challenge testing your smart business decision skills!</p>
           <div class="challenge-line">
             <span>🎯 Prospecting</span><span>🧠 Positioning</span><span>🧩 Interactive Puzzles</span><span>🔥 Closing</span>
           </div>
         </div>
         <div class="hero-cta-side">
-          <button class="btn primary hero-play-btn" onclick="start()">⚡ ACCEPT THE CHALLENGE →</button>
+          <button type="button" class="btn primary hero-play-btn" onclick="start()">⚡ ACCEPT THE CHALLENGE →</button>
           <p class="fine" style="margin-top:16px;text-align:center;color:var(--gold);font-weight:700;font-size:13.5px;line-height:1.45;">Test your instincts, challenge your friends, see how you score.</p>
-          <p style="margin-top:10px;text-align:center;font-size:11.5px;color:var(--muted);line-height:1.4;">12 Rounds (8 Scenarios + 4 Puzzles in 1P-2Q Sequence)<br>Attempting Puzzles Unlocks Bonus Retries!</p>
+          <p style="margin-top:10px;text-align:center;font-size:11.5px;color:var(--muted);line-height:1.4;">12 Rounds (8 Questions + 4 Puzzles)<br>Attempting Puzzles Unlocks Bonus Retries!</p>
         </div>
       </div>
     </section>
@@ -1544,7 +1572,7 @@
 
         <!-- Primary Action Bar (Sending Application) -->
         <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-          <button class="btn green" style="padding: 12px 28px; font-size: 15px; font-weight: 800; box-shadow: 0 4px 20px rgba(16,185,129,0.3);" onclick="submitRoleApplication('default')">📧 SEND APPLICATION NOW →</button>
+          <div class="btn green" style="padding: 12px 28px; font-size: 15px; font-weight: 800; box-shadow: 0 4px 20px rgba(16,185,129,0.3); cursor: default; user-select: none;">📧 SEND APPLICATION NOW →</div>
           <button class="btn dark" style="padding: 12px 18px; font-size: 13px; background: rgba(234, 67, 53, 0.2); color: #ff8a80; border: 1px solid rgba(255, 138, 128, 0.4);" onclick="submitRoleApplication('gmail')">✉️ Open via Gmail</button>
           <button class="btn dark" style="padding: 12px 16px; font-size: 12px; color: var(--gold); background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.35);" onclick="submitRoleApplication('copy')">📋 Copy Hiring Email</button>
         </div>
@@ -1667,10 +1695,8 @@
     const puzzles = [
       { isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "INTERMISSION 1 · 6x6 DEAL MAZE", s: "Guide your deal avatar (💼) through enterprise obstacles to collect 3 executive clearances (🧠 CIO - Chief Information Officer, 💰 CFO - Chief Financial Officer, 🛡️ Sec - Security Officer) and reach contract (📜):" },
       { isPuzzle: true, type: "sudoku", t: "4x4 Dual-Blank Revenue Sudoku", l: "INTERMISSION 2 · ADVANCED SUDOKU", s: "Solve the 2 missing cells (❓ in Row 3 and ⭐ in Row 4) to complete the 4x4 commercial revenue matrix:" },
-      { isPuzzle: true, type: "chess", t: "B2B Grandmaster Chess Tactics", l: "INTERMISSION 3 · CHESS TACTICS", s: "White (Your Sales Team) to move: Which tactical chess move checkmates the Black King (CIO - Chief Information Officer Buyer) in 1 move to close the deal?" },
-      { isPuzzle: true, type: "sequence", t: "Pick the Right Pipeline Sequence", l: "INTERMISSION 4 · PIPELINE SEQUENCE", s: "Click the 6 B2B (Business-to-Business) sales pipeline stages in exact logical order (Step 1 ➔ Step 6):" }
-    ];lack King (CIO Buyer) in 1 move to close the deal?" },
-      { isPuzzle: true, type: "sequence", t: "Pick the Right Pipeline Sequence", l: "INTERMISSION 4 · PIPELINE SEQUENCE", s: "Click the 6 B2B sales pipeline stages in exact logical order (Step 1 ➔ Step 6):" }
+      { isPuzzle: true, type: "block", t: "King's Deal Tower Climb", l: "INTERMISSION 3 · KING'S BLOCK CLIMB", s: "Adjust the missing step block (❓) so the King avatar (👑) can climb up the block tower to reach the Top Contract (📜):" },
+      { isPuzzle: true, type: "sequence", t: "Water Ring Toss Deal Arcade", l: "INTERMISSION 4 · WATER RING TOSS", s: "Press the Left & Right Water Jet Buttons (💨) to propel floating deal rings (⭕) onto the Target Posts (📌):" }
     ];
 
     let i = 0, raw = 0, streak = 0, confidence = 50, timer = 40, interval = null, answered = false, history = [];
@@ -1715,29 +1741,31 @@
       // Shuffle puzzles among puzzles
       let shuffledPuzzles = shuffle(puzzles);
 
-      // Exact Sequence: 1P - 2Q - 1P - 2Q - 1P - 2Q - 1P - 2Q (12 Rounds Total)
+      // Exact Sequence: 1P - 2Q - 1P - 2Q - 1P - 2Q - 1P - 2Q (12 Rounds Total: 8Q + 4P, Starts with Puzzle)
       return [
-        shuffledPuzzles[0],   // Round 1: Puzzle 1 (1P)
-        shuffledQs[0],        // Round 2: Question 1 (2Q)
+        shuffledPuzzles[0],   // Round 1: Puzzle 1 (First)
+        shuffledQs[0],        // Round 2: Question 1
         shuffledQs[1],        // Round 3: Question 2
 
-        shuffledPuzzles[1],   // Round 4: Puzzle 2 (1P)
-        shuffledQs[2],        // Round 5: Question 3 (2Q)
+        shuffledPuzzles[1],   // Round 4: Puzzle 2
+        shuffledQs[2],        // Round 5: Question 3
         shuffledQs[3],        // Round 6: Question 4
 
-        shuffledPuzzles[2],   // Round 7: Puzzle 3 (1P)
-        shuffledQs[4],        // Round 8: Question 5 (2Q)
+        shuffledPuzzles[2],   // Round 7: Puzzle 3
+        shuffledQs[4],        // Round 8: Question 5
         shuffledQs[5],        // Round 9: Question 6
 
-        shuffledPuzzles[3],   // Round 10: Puzzle 4 (1P)
-        shuffledQs[6],        // Round 11: Question 7 (2Q)
+        shuffledPuzzles[3],   // Round 10: Puzzle 4
+        shuffledQs[6],        // Round 11: Question 7
         shuffledQs[7]         // Round 12: Question 8
       ];
     }
 
     function show(id) {
       document.querySelectorAll(".screen").forEach(x => x.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
+      let el = document.getElementById(id);
+      if (el) el.classList.add("active");
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
     function start() {
@@ -1781,7 +1809,7 @@
         puzzleBox.style.display = "block";
         if (q.type === "maze") renderMaze(q);
         else if (q.type === "sudoku") renderSudoku(q);
-        else if (q.type === "chess") renderChess(q);
+        else if (q.type === "block" || q.type === "chess") renderBlock(q);
         else if (q.type === "sequence") renderSequence(q);
       } else {
         puzzleBox.style.display = "none";
@@ -1910,12 +1938,17 @@
       streak = 0; 
       updateStreakUI();
       confidence = Math.max(10, confidence - 10); 
-      document.querySelectorAll(".option").forEach(x => x.disabled = true); 
+      if (interval) clearInterval(interval);
+      if (typeof waterAnimId !== "undefined" && waterAnimId) {
+        cancelAnimationFrame(waterAnimId);
+        waterAnimId = null;
+      }
+      document.querySelectorAll(".option, #puzzleBox button, #blockDock button, #pumpLeftBtn, #pumpRightBtn").forEach(x => x.disabled = true); 
       let fb = document.getElementById("feedbackBar");
       let f = document.getElementById("feedback"); 
       f.className = "feedback bad"; 
       f.style.display = "block"; 
-      f.innerHTML = "<b>⏰ Time's up!</b><br>In real B2B sales, slow decisions can kill momentum. Make the best call with the information you have."; 
+      f.innerHTML = "<b>⏰ Time's up!</b><br>In real B2B sales, slow decisions can kill momentum. Click Next to move forward!"; 
       if (fb) fb.style.display = "flex";
       document.getElementById("nextBtn").style.display = "inline-flex"; 
     }
@@ -2164,15 +2197,15 @@
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
       box.innerHTML = `
-        <div class="puzzle-wrap theme-sudoku" style="padding:14px;text-align:center;">
-          <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:8px;">Calculate the values for <b>❓</b> (Row 3, Col 3) and <b>⭐</b> (Row 4, Col 4):</p>
-          <div class="sudoku-grid" style="display:grid;grid-template-columns:repeat(4,48px);gap:6px;justify-content:center;margin:10px auto;">
+        <div class="puzzle-wrap theme-sudoku" style="padding:8px 10px;text-align:center;">
+          <p style="font-size:11.5px;color:#e2eaf4;margin-bottom:4px;">Calculate the values for <b>❓</b> (Row 3, Col 3) and <b>⭐</b> (Row 4, Col 4):</p>
+          <div class="sudoku-grid" style="display:grid;grid-template-columns:repeat(4,38px);gap:4px;justify-content:center;margin:6px auto;">
             <div class="sudoku-cell">2</div><div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell">3</div>
-            <div class="sudoku-cell">1</div><div class="sudoku-cell">3</div><div class="sudoku-cell">4</div><div class="sudoku-cell">2</div>
-            <div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell missing">❓</div><div class="sudoku-cell">4</div>
+            <div class="sudoku-cell">1</div><div class="sudoku-cell">3</div><div class="sudoku-cell">2</div><div class="sudoku-cell">4</div>
+            <div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell missing">❓</div><div class="sudoku-cell">2</div>
             <div class="sudoku-cell">3</div><div class="sudoku-cell">2</div><div class="sudoku-cell">4</div><div class="sudoku-cell missing" style="background:rgba(56,189,248,0.25);border-color:#38bdf8;color:#38bdf8;">⭐</div>
           </div>
-          <div class="options" id="sudokuOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;"></div>
+          <div class="options" id="sudokuOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;"></div>
         </div>
       `;
       let optsBox = document.getElementById("sudokuOpts");
@@ -2186,6 +2219,7 @@
       options.forEach((o, idx) => {
         let b = document.createElement("button");
         b.className = "option";
+        b.style.cssText = "padding:6px 10px;font-size:12px;";
         let letter = String.fromCharCode(65 + idx);
         o[0] = letter;
         b.innerHTML = `<b>${letter}.</b> ${o[1]}`;
@@ -2199,157 +2233,330 @@
       });
     }
 
-    // Puzzle 3: B2B Grandmaster Chess Tactics (8x8 Chessboard)
-    function renderChess(q) {
+    // Puzzle 3: King's Deal Tower Climb (Direct Interactive Block Movement)
+    function renderBlock(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
 
-      // 8x8 board representation (row 0 = rank 8, row 7 = rank 1)
-      let initialBoard = [
-        ["", "", "", "", "", "", "🏿", "♚"], // Row 0 (Rank 8): Black King at h8 (col 7)
-        ["", "", "", "", "", "", "♟", "♟"], // Row 1 (Rank 7): Black Pawns at g7, h7
-        ["", "", "", "", "", "", "", ""],   // Row 2 (Rank 6)
-        ["", "", "", "", "", "", "", "♕"], // Row 3 (Rank 5): White Queen at h5 (col 7)
-        ["", "", "", "", "", "", "", ""],   // Row 4 (Rank 4)
-        ["", "", "", "", "", "", "", ""],   // Row 5 (Rank 3)
-        ["", "", "", "", "", "", "", ""],   // Row 6 (Rank 2)
-        ["", "", "", "", "♖", "", "♔", ""]  // Row 7 (Rank 1): White Rook at e1 (col 4), White King at g1 (col 6)
-      ];
-
       box.innerHTML = `
-        <div class="puzzle-wrap theme-chess" style="padding:10px;text-align:center;">
-          <div style="background:rgba(13,27,44,0.8);border:1px solid var(--panel-border);border-radius:10px;padding:6px 10px;margin-bottom:6px;">
-            <div style="font-size:12px;color:#fff;font-weight:700;">♔ White (Your Sales Team) to Move ➔ Checkmate Black ♚ (CIO Buyer) in 1 Move!</div>
+        <div class="puzzle-wrap theme-dots" style="padding:8px 10px;text-align:center;">
+          <div style="background:rgba(13,27,44,0.85);border:1px solid var(--panel-border);border-radius:10px;padding:6px 10px;margin-bottom:6px;">
+            <div style="font-size:12px;color:#fff;font-weight:700;">👑 King's Deal Tower Climb · Move the Block!</div>
+            <p style="font-size:11px;color:var(--muted);margin-top:2px;">Click/Tap the correct block to move it into <b>Step 3 (❓)</b> so King (<b>👑</b>) can climb to Contract (<b>📜</b>):</p>
           </div>
           
-          <div class="chessboard-grid" id="chessBoardGrid"></div>
+          <!-- Tower Staircase Grid -->
+          <div class="tower-staircase" style="display:flex;flex-direction:column;gap:4px;max-width:360px;margin:0 auto 8px;">
+            <!-- Step 4 (Top Goal) -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;">
+              <div style="width:82%;background:rgba(251,191,36,0.2);border:1px solid var(--gold);border-radius:8px;padding:6px 10px;color:#fbbf24;font-weight:800;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;">
+                <span>🏆 STEP 4: ENTERPRISE CONTRACT</span><span id="kingPos4" style="font-size:16px;">📜</span>
+              </div>
+            </div>
 
-          <div class="options" id="chessOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;"></div>
+            <!-- Step 3 (Missing Bridge Block Slot) -->
+            <div style="display:flex;align-items:center;justify-content:center;">
+              <div id="gapBlock" style="width:82%;background:rgba(244,63,94,0.18);border:2px dashed var(--red);border-radius:8px;padding:6px 10px;color:#f43f5e;font-weight:800;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;transition:all 0.4s ease;">
+                <span id="gapBlockText">❓ STEP 3: MOVE BLOCK HERE</span><span id="kingPos3"></span>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="display:flex;align-items:center;justify-content:flex-start;">
+              <div style="width:82%;background:rgba(56,189,248,0.15);border:1px solid var(--blue);border-radius:8px;padding:6px 10px;color:#38bdf8;font-weight:700;font-size:11px;display:flex;justify-content:space-between;align-items:center;">
+                <span>⚡ STEP 2: TECH ARCHITECTURE OK</span><span id="kingPos2"></span>
+              </div>
+            </div>
+
+            <!-- Step 1 (Start) -->
+            <div style="display:flex;align-items:center;justify-content:flex-start;">
+              <div style="width:82%;background:rgba(16,185,129,0.15);border:1px solid var(--green);border-radius:8px;padding:6px 10px;color:#10b981;font-weight:700;font-size:11px;display:flex;justify-content:space-between;align-items:center;">
+                <span>🎯 STEP 1: QUALIFIED DEAL</span><span id="kingPos1" style="font-size:16px;">👑</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Interactive Block Dock -->
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 8px;max-width:380px;margin:0 auto;">
+            <p style="font-size:10.5px;color:var(--gold);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">👇 Moveable Block Dock (Click to Move):</p>
+            <div id="blockDock" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;"></div>
+          </div>
         </div>
       `;
 
-      let grid = document.getElementById("chessBoardGrid");
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          let cell = document.createElement("div");
-          let isLight = (r + c) % 2 === 0;
-          cell.className = `chess-cell ${isLight ? "light" : "dark"}`;
-          cell.id = `square-${r}-${c}`;
-          
-          // Highlight target square h7 (row 1, col 7) and queen square h5 (row 3, col 7)
-          if ((r === 1 && c === 7) || (r === 3 && c === 7)) {
-            cell.classList.add("highlight");
-          }
-          
-          cell.textContent = initialBoard[r][c];
-          grid.appendChild(cell);
-        }
-      }
-
-      let optsBox = document.getElementById("chessOpts");
-      let rawOptions = [
-        ["", "Queen to h7# (Qxh7#)", 9, "Spot on! Queen captures on h7 supported by Rook to deliver instant Checkmate & close the deal!", "LOW"],
-        ["", "Rook to e8+ (Re8+)", 3, "Rook move is blocked by Black's defensive Rook on e8.", "MED"],
-        ["", "Knight to f7+ (Nf7+)", 2, "Knight move is captured by Black's Pawn on g7.", "MED"],
-        ["", "Pawn to h4 (h4)", 1, "Pawn move is too slow, allowing the CIO to escape.", "HIGH"]
+      let dock = document.getElementById("blockDock");
+      let blocks = [
+        { id: "b1", label: "🧱 Budget Block", isCorrect: true, text: "Executive Budget Approved", msg: "Flawless block placement! The Executive Budget Block snaps into Step 3, allowing King 👑 to climb straight to the Top Contract 📜!" },
+        { id: "b2", label: "📉 50% Price Cut", isCorrect: false, text: "Heavy Price Cut Block", msg: "The price cut block collapsed under pressure! Pick the solid Executive Budget block to support the climb." },
+        { id: "b3", label: "👻 Verbal Promise", isCorrect: false, text: "Unapproved Verbal Block", msg: "Unapproved verbal blocks wobble and collapse! Select the solid Executive Budget block." }
       ];
-      let options = shuffle(rawOptions);
-      options.forEach((o, idx) => {
+
+      shuffle(blocks).forEach(item => {
         let b = document.createElement("button");
-        b.className = "option";
-        let letter = String.fromCharCode(65 + idx);
-        o[0] = letter;
-        b.innerHTML = `<b>${letter}.</b> ${o[1]}`;
+        b.className = "btn";
+        b.style.cssText = "padding:6px 4px;font-size:11px;font-weight:700;border-radius:8px;background:rgba(56,189,248,0.12);border:1px solid var(--blue);color:var(--text);cursor:pointer;transition:transform 0.2s, background 0.2s;";
+        b.innerHTML = item.label;
+        
+        b.onmouseenter = () => b.style.transform = "translateY(-2px)";
+        b.onmouseleave = () => b.style.transform = "translateY(0)";
+
         b.onclick = () => {
-          if (o[2] >= 8) {
-            let queenSquare = document.getElementById("square-3-7");
-            let targetSquare = document.getElementById("square-1-7");
-            if (queenSquare) queenSquare.textContent = "";
-            if (targetSquare) {
-              targetSquare.textContent = "♕";
-              targetSquare.style.background = "#20d18b";
+          if (answered) return;
+          if (item.isCorrect) {
+            let gap = document.getElementById("gapBlock");
+            let p1 = document.getElementById("kingPos1");
+            let p2 = document.getElementById("kingPos2");
+
+            if (gap) {
+              gap.style.background = "rgba(16,185,129,0.3)";
+              gap.style.borderColor = "var(--green)";
+              gap.style.color = "var(--green)";
+              gap.style.transform = "scale(1.02)";
+              document.getElementById("gapBlockText").innerHTML = `✅ STEP 3: ${item.text}`;
             }
+
+            dock.querySelectorAll("button").forEach(btn => btn.disabled = true);
+
+            if (p1) p1.textContent = "";
+            if (p2) p2.textContent = "👑";
+
+            setTimeout(() => {
+              let p2_cur = document.getElementById("kingPos2");
+              let p3_cur = document.getElementById("kingPos3");
+              if (p2_cur) p2_cur.textContent = "";
+              if (p3_cur) p3_cur.textContent = "👑";
+
+              setTimeout(() => {
+                let p3_cur2 = document.getElementById("kingPos3");
+                let p4_cur = document.getElementById("kingPos4");
+                if (p3_cur2) p3_cur2.textContent = "";
+                if (p4_cur) {
+                  p4_cur.textContent = "👑 📜";
+                  p4_cur.style.fontSize = "18px";
+                }
+              }, 400);
+            }, 350);
+
+            let fakeOpt = ["", item.label, 9, item.msg, "LOW"];
+            choose(fakeOpt, b);
+          } else {
+            b.style.background = "rgba(244,63,94,0.3)";
+            b.style.borderColor = "var(--red)";
+            dock.querySelectorAll("button").forEach(btn => btn.disabled = true);
+            let fakeWrongOpt = ["", item.label, 1, item.msg, "MED"];
+            choose(fakeWrongOpt, b);
           }
-          choose(o, b);
           let fb = document.getElementById("feedbackBar");
           if (fb) fb.style.display = "flex";
-          document.getElementById("nextBtn").style.display = "inline-flex";
+          let nb = document.getElementById("nextBtn");
+          if (nb) nb.style.display = "inline-flex";
         };
-        optsBox.appendChild(b);
+        dock.appendChild(b);
       });
     }
 
-    // Puzzle 4: Picking Right Sequence (Pipeline Sequence)
-    let sequenceTargetSeq = [1, 2, 3, 4, 5, 6];
-    let sequenceCurrentSeq = [];
+    // Puzzle 4: Classic Nostalgic Water Ring Toss Game 🌊⭕📌
+    let waterRings = [];
+    let waterScore = 0;
+    let waterAnimId = null;
 
     function renderSequence(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
-      sequenceCurrentSeq = [];
-      
+      waterScore = 0;
+
       box.innerHTML = `
-        <div class="puzzle-wrap theme-dots" style="padding:14px;">
-          <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:8px;">Click the 6 pipeline stages in exact logical order (Step 1 ➔ Step 6):</p>
-          <div class="dots-area">
-            <div class="dots-grid" id="seqGrid"></div>
+        <div class="puzzle-wrap theme-dots" style="padding:14px;text-align:center;">
+          <div style="background:rgba(13,27,44,0.85);border:1px solid var(--panel-border);border-radius:12px;padding:8px 12px;margin-bottom:10px;">
+            <div style="font-size:13px;color:#38bdf8;font-weight:700;">🌊 Nostalgic B2B Water Ring Toss Arcade ⭕</div>
+            <p style="font-size:11.5px;color:var(--muted);margin-top:2px;">Pump water jets (<b>💨</b>) to propel floating rings onto <b>📌 DEAL & PROFIT</b> and <b>📌 CLIENT & GROWTH</b> posts!</p>
           </div>
-          <p id="seqStatus" style="font-size:12px;color:var(--gold);font-weight:700;margin-top:6px;">Click Step 1 to begin!</p>
+
+          <!-- Water Tank Chamber -->
+          <div id="waterTank" style="position:relative;width:100%;max-width:360px;height:220px;margin:0 auto 12px;background:linear-gradient(180deg, rgba(14,165,233,0.35) 0%, rgba(3,105,161,0.65) 100%);border:3px solid #38bdf8;border-radius:20px;overflow:hidden;box-shadow:inset 0 0 25px rgba(56,189,248,0.4), 0 8px 24px rgba(0,0,0,0.4);">
+            <!-- Water Bubbles Background -->
+            <div id="bubbleLayer" style="position:absolute;inset:0;pointer-events:none;"></div>
+
+            <!-- Target Pegs / Posts -->
+            <div style="position:absolute;bottom:20px;left:22%;display:flex;flex-direction:column;align-items:center;">
+              <div id="pegLeftRings" style="display:flex;flex-direction:column-reverse;gap:2px;margin-bottom:2px;"></div>
+              <div style="width:10px;height:110px;background:linear-gradient(90deg, #fbbf24, #d97706);border-radius:5px;box-shadow:0 0 8px rgba(251,191,36,0.6);"></div>
+              <div style="font-size:9.5px;color:#fbbf24;font-weight:800;margin-top:4px;white-space:nowrap;">📌 DEAL & PROFIT</div>
+            </div>
+
+            <div style="position:absolute;bottom:20px;right:22%;display:flex;flex-direction:column;align-items:center;">
+              <div id="pegRightRings" style="display:flex;flex-direction:column-reverse;gap:2px;margin-bottom:2px;"></div>
+              <div style="width:10px;height:110px;background:linear-gradient(90deg, #fbbf24, #d97706);border-radius:5px;box-shadow:0 0 8px rgba(251,191,36,0.6);"></div>
+              <div style="font-size:9.5px;color:#fbbf24;font-weight:800;margin-top:4px;white-space:nowrap;">📌 CLIENT & GROWTH</div>
+            </div>
+
+            <!-- Floating Rings Container -->
+            <div id="ringContainer" style="position:absolute;inset:0;pointer-events:none;"></div>
+
+            <!-- Water Nozzles at bottom -->
+            <div style="position:absolute;bottom:4px;left:15%;font-size:16px;">💨</div>
+            <div style="position:absolute;bottom:4px;right:15%;font-size:16px;">💨</div>
+          </div>
+
+          <!-- Score & Progress -->
+          <div style="display:flex;justify-content:space-between;align-items:center;max-width:360px;margin:0 auto 10px;padding:0 8px;">
+            <div style="font-size:12px;color:#fff;font-weight:700;">Rings Landed: <span id="ringCountText" style="color:var(--green);font-size:14px;font-weight:800;">0 / 6</span></div>
+            <div id="waterStatus" style="font-size:11.5px;color:var(--gold);font-weight:700;">Pump water jets to hook all 6 rings!</div>
+          </div>
+
+          <!-- Interactive Pump Control Buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:360px;margin:0 auto;">
+            <button id="pumpLeftBtn" class="btn" style="padding:12px;font-size:13px;font-weight:800;border-radius:14px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:transform 0.1s;">
+              💨 PUMP LEFT JET
+            </button>
+            <button id="pumpRightBtn" class="btn" style="padding:12px;font-size:13px;font-weight:800;border-radius:14px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:transform 0.1s;">
+              💨 PUMP RIGHT JET
+            </button>
+          </div>
         </div>
       `;
-      
-      let nodesData = [
-        { id: 1, label: "1. 🎯 ICP Prospecting" },
-        { id: 2, label: "2. 💬 Discovery & Call" },
-        { id: 3, label: "3. 📊 ROI & Solution Case" },
-        { id: 4, label: "4. 🛡️ Security Audit" },
-        { id: 5, label: "5. 🤝 Trade & Terms" },
-        { id: 6, label: "6. 📜 Close Contract" }
+
+      initWaterRingsGame();
+    }
+
+    function initWaterRingsGame() {
+      let container = document.getElementById("ringContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      document.getElementById("pegLeftRings").innerHTML = "";
+      document.getElementById("pegRightRings").innerHTML = "";
+
+      waterRings = [
+        { id: 1, label: "🔴 Deal", color: "#f43f5e", targetPeg: "left", x: 40, y: 165, vx: 0.4, vy: 0, landed: false },
+        { id: 2, label: "🔵 Profit", color: "#38bdf8", targetPeg: "left", x: 90, y: 175, vx: -0.4, vy: 0, landed: false },
+        { id: 3, label: "🟢 Budget", color: "#10b981", targetPeg: "left", x: 135, y: 170, vx: 0.3, vy: 0, landed: false },
+        { id: 4, label: "🟡 Growth", color: "#fbbf24", targetPeg: "right", x: 205, y: 165, vx: -0.3, vy: 0, landed: false },
+        { id: 5, label: "🟣 Client", color: "#c084fc", targetPeg: "right", x: 245, y: 175, vx: 0.4, vy: 0, landed: false },
+        { id: 6, label: "🟠 Contract", color: "#fb923c", targetPeg: "right", x: 275, y: 160, vx: -0.3, vy: 0, landed: false }
       ];
-      
-      let shuffledNodes = shuffle(nodesData);
-      let grid = document.getElementById("seqGrid");
-      
-      shuffledNodes.forEach(node => {
-        let d = document.createElement("div");
-        d.className = "dot-node";
-        d.id = `seq-${node.id}`;
-        d.textContent = node.label;
-        d.onclick = () => handleSequenceClick(node.id);
-        grid.appendChild(d);
+
+      waterRings.forEach(r => {
+        let el = document.createElement("div");
+        el.id = `ring-${r.id}`;
+        el.style.cssText = `position:absolute;padding:2px 5px;min-width:32px;height:24px;border:3px solid ${r.color};border-radius:12px;box-shadow:0 0 6px ${r.color};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:900;color:#fff;left:${r.x}px;top:${r.y}px;transition:transform 0.1s linear;`;
+        el.textContent = r.label;
+        container.appendChild(el);
+      });
+
+      document.getElementById("pumpLeftBtn").onclick = () => pumpWater("left");
+      document.getElementById("pumpRightBtn").onclick = () => pumpWater("right");
+
+      if (waterAnimId) cancelAnimationFrame(waterAnimId);
+      updateWaterPhysics();
+    }
+
+    function pumpWater(side) {
+      if (answered) return;
+      let layer = document.getElementById("bubbleLayer");
+      if (layer) {
+        let bubble = document.createElement("div");
+        let startX = side === "left" ? 15 + Math.random() * 25 : 65 + Math.random() * 25;
+        bubble.style.cssText = `position:absolute;bottom:10px;left:${startX}%;width:12px;height:12px;background:rgba(255,255,255,0.7);border-radius:50%;animation:bubbleUp 0.8s ease-out forwards;`;
+        layer.appendChild(bubble);
+        setTimeout(() => bubble.remove(), 800);
+      }
+
+      waterRings.forEach(r => {
+        if (r.landed) return;
+        let ringXPercent = (r.x / 360) * 100;
+        if (side === "left" && ringXPercent < 55) {
+          r.vy = -5.8 - Math.random() * 3.2;
+          r.vx += (Math.random() - 0.5) * 3.0;
+        } else if (side === "right" && ringXPercent >= 45) {
+          r.vy = -5.8 - Math.random() * 3.2;
+          r.vx += (Math.random() - 0.5) * 3.0;
+        }
       });
     }
 
-    function handleSequenceClick(id) {
-      if (answered) return;
-      let fb = document.getElementById("feedbackBar");
-      if (fb) fb.style.display = "flex";
-      document.getElementById("nextBtn").style.display = "inline-flex";
-      
-      let expected = sequenceTargetSeq[sequenceCurrentSeq.length];
-      let el = document.getElementById(`seq-${id}`);
-      
-      if (id === expected) {
-        sequenceCurrentSeq.push(id);
-        el.classList.add("connected");
-        let status = document.getElementById("seqStatus");
-        if (sequenceCurrentSeq.length === sequenceTargetSeq.length) {
-          status.style.color = "var(--green)";
-          status.textContent = "🎉 Right Sequence Picked! Pipeline Mastered!";
-          let fakeOption = ["SEQUENCE", "Right Pipeline Sequence", 9, "Perfect sequence! Picking the right pipeline sequence accelerates deal velocity!", "LOW"];
-          choose(fakeOption, el);
-        } else {
-          status.textContent = `Great! Next: Click Step ${sequenceCurrentSeq.length + 1}`;
+    function updateWaterPhysics() {
+      let container = document.getElementById("ringContainer");
+      if (!container) return;
+
+      let landedCount = 0;
+
+      waterRings.forEach(r => {
+        if (r.landed) {
+          landedCount++;
+          return;
         }
-      } else {
-        el.classList.add("active");
-        setTimeout(() => el.classList.remove("active"), 400);
-        let status = document.getElementById("seqStatus");
-        status.style.color = "var(--red)";
-        status.textContent = `⚠️ Start with Step 1 through Step 6!`;
-        sequenceCurrentSeq = [];
-        document.querySelectorAll(".dot-node").forEach(n => n.classList.remove("connected"));
+
+        // Realistic water turbulence & drift
+        r.vx += (Math.random() - 0.5) * 0.3;
+        r.vy += 0.18;
+        r.vy *= 0.96;
+        r.vx *= 0.94;
+
+        r.x += r.vx;
+        r.y += r.vy;
+
+        if (r.x < 15) { r.x = 15; r.vx *= -0.6; }
+        if (r.x > 325) { r.x = 325; r.vx *= -0.6; }
+        if (r.y < 15) { r.y = 15; r.vy *= 0.1; }
+        if (r.y > 180) { r.y = 180; r.vy = 0; }
+
+        let postAX = 100;
+        let postBX = 240;
+
+        let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
+        let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
+
+        // Strict target peg validation: ring ONLY lands on its designated target peg!
+        if (r.y > 65 && r.y < 130 && r.vy > 0) {
+          if (r.targetPeg === "left" && Math.abs(r.x - postAX) < 11 && leftCount < 3) {
+            landRingOnPeg(r, "left");
+          } else if (r.targetPeg === "right" && Math.abs(r.x - postBX) < 11 && rightCount < 3) {
+            landRingOnPeg(r, "right");
+          }
+        }
+
+        let el = document.getElementById(`ring-${r.id}`);
+        if (el) {
+          el.style.left = `${r.x}px`;
+          el.style.top = `${r.y}px`;
+        }
+      });
+
+      if (landedCount === 6 && !answered) {
+        let status = document.getElementById("waterStatus");
+        if (status) {
+          status.style.color = "var(--green)";
+          status.textContent = "🎉 ALL 6 RINGS HOOKED! WATER TOSS MASTERED!";
+        }
+        let fakeOpt = ["WATER_RINGS", "Water Ring Toss Mastered", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
+        let fakeBtn = document.createElement("div");
+        choose(fakeOpt, fakeBtn);
+        let fb = document.getElementById("feedbackBar");
+        if (fb) fb.style.display = "flex";
+        document.getElementById("nextBtn").style.display = "inline-flex";
+        return;
       }
+
+      waterAnimId = requestAnimationFrame(updateWaterPhysics);
+    }
+
+    function landRingOnPeg(ring, pegSide) {
+      ring.landed = true;
+      ring.peg = pegSide;
+      let el = document.getElementById(`ring-${ring.id}`);
+      if (el) el.remove();
+
+      let pegEl = document.getElementById(pegSide === "left" ? "pegLeftRings" : "pegRightRings");
+      if (pegEl) {
+        let landedRing = document.createElement("div");
+        landedRing.style.cssText = `padding:1px 4px;min-width:34px;height:14px;border:2px solid ${ring.color};border-radius:8px;background:rgba(255,255,255,0.2);box-shadow:0 0 6px ${ring.color};display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:900;color:#fff;`;
+        landedRing.textContent = ring.label;
+        pegEl.appendChild(landedRing);
+      }
+
+      waterScore++;
+      let countText = document.getElementById("ringCountText");
+      if (countText) countText.textContent = `${waterScore} / 6`;
     }
 
     // Upgraded 6x6 B2B Deal Master Maze
@@ -2543,7 +2750,7 @@
         let f = document.getElementById("feedback");
         f.className = "feedback bad";
         f.style.display = "block";
-        f.innerHTML = `<b>⚠️ Stalled by ${obs.label}!</b> Try another direction or click 'Next Question →'`;
+        f.innerHTML = `<b>⚠️ Stalled by ${obs.label}!</b> Try another direction or click 'Next Scenario →'`;
         return;
       }
 
@@ -2552,7 +2759,7 @@
         let f = document.getElementById("feedback");
         f.className = "feedback bad";
         f.style.display = "block";
-        f.innerHTML = "<b>⏰ Out of moves!</b> Click 'Next Question →' to continue!";
+        f.innerHTML = "<b>⏰ Out of moves!</b> Click 'Next Scenario →' to continue!";
         document.getElementById("nextBtn").style.display = "inline-flex";
         return;
       }
