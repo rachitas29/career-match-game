@@ -2417,6 +2417,10 @@
       `;
 
       initWaterRingsGame();
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      let nb = document.getElementById("nextBtn");
+      if (nb) nb.style.display = "inline-flex";
     }
 
     function initWaterRingsGame() {
@@ -2452,6 +2456,10 @@
 
     function pumpWater(side) {
       if (answered) return;
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      let nb = document.getElementById("nextBtn");
+      if (nb) nb.style.display = "inline-flex";
       let layer = document.getElementById("bubbleLayer");
       if (layer) {
         let bubble = document.createElement("div");
