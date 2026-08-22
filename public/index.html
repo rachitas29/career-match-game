@@ -1839,8 +1839,15 @@
       f.className = "feedback"; 
       f.style.display = "none"; 
       f.innerHTML = ""; 
-      if (fb) fb.style.display = "none";
-      document.getElementById("nextBtn").style.display = "none";
+      
+      if (q.isPuzzle) {
+        if (fb) fb.style.display = "flex";
+        document.getElementById("nextBtn").style.display = "inline-flex";
+      } else {
+        if (fb) fb.style.display = "none";
+        document.getElementById("nextBtn").style.display = "none";
+      }
+
       document.getElementById("timerBox").classList.remove("hot"); 
       document.getElementById("timer").textContent = timer;
 
