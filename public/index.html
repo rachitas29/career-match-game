@@ -1784,7 +1784,7 @@
       { isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "PUZZLE 2 · 6x6 DEAL MAZE 🧩", s: "🎯 GOAL: Move your briefcase 💼 to collect all 3 leader badges (🧠 Tech, 💰 Finance, 🛡️ Security) before reaching the Contract (📜)!" },
       { isPuzzle: true, type: "sudoku", t: "4x4 Dual-Blank Revenue Sudoku", l: "PUZZLE 3 · ADVANCED SUDOKU 🔢", s: "🎯 GOAL: Fill the missing boxes ❓ and ⭐ so numbers 1 to 4 appear exactly once in each row and column!" },
       { isPuzzle: true, type: "dots", t: "B2B Snakes & Ladders Pipeline Climb", l: "PUZZLE 4 · SNAKES & LADDERS 🎲", s: "🎯 GOAL: Roll the dice (🎲) and tap glowing target boxes to climb ladders (🪜) to Contract (📜 Tile 12) while dodging snakes (🐍)!" },
-      { isPuzzle: true, type: "cipher", t: "Strategy Cipher Memory Match", l: "PUZZLE 5 · STRATEGY CIPHER 🧠", s: "🎯 GOAL: Watch the glowing card sequence, then tap the cards in the exact same order to match the pattern!" },
+      { isPuzzle: true, type: "water", t: "Nostalgic B2B Water Ring Toss Arcade", l: "PUZZLE 5 · WATER RING TOSS ⭕", s: "🎯 GOAL: Press the Left & Right Water Jet Buttons (💨) to propel floating deal rings (⭕) onto the Target Posts (📌)!" },
       { isPuzzle: true, type: "block", t: "King's Deal Tower Climb", l: "PUZZLE 6 · KING'S BLOCK CLIMB 👑", s: "🎯 GOAL: Pick the solid step block for ❓ so the King (👑) can safely climb up the tower to reach the Contract (📜)!" }
     ];
 
@@ -1874,6 +1874,7 @@
         else if (q.type === "maze") renderMaze(q);
         else if (q.type === "sudoku") renderSudoku(q);
         else if (q.type === "dots") renderDots(q);
+        else if (q.type === "water") renderWaterRings(q);
         else if (q.type === "cipher") renderCipher(q);
         else if (q.type === "block" || q.type === "chess") renderBlock(q);
         else if (q.type === "sequence") renderSequence(q);
@@ -2112,6 +2113,7 @@
       else if (originalPuzzle.type === "maze") renderMaze(originalPuzzle);
       else if (originalPuzzle.type === "sudoku") renderSudoku(originalPuzzle);
       else if (originalPuzzle.type === "dots") renderDots(originalPuzzle);
+      else if (originalPuzzle.type === "water") renderWaterRings(originalPuzzle);
       else if (originalPuzzle.type === "cipher") renderCipher(originalPuzzle);
       else if (originalPuzzle.type === "block" || originalPuzzle.type === "chess") renderBlock(originalPuzzle);
       else if (originalPuzzle.type === "sequence") renderSequence(originalPuzzle);
@@ -2865,7 +2867,7 @@
           status.style.color = "var(--green)";
           status.textContent = "🎉 ALL 6 RINGS HOOKED! WATER TOSS MASTERED!";
         }
-        let fakeOpt = ["WATER_RINGS", "Water Ring Toss Mastered", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
+        let fakeOpt = ["WATER_RINGS", "Nostalgic B2B Water Ring Toss Arcade", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
         let fakeBtn = document.createElement("div");
         choose(fakeOpt, fakeBtn);
         let fb = document.getElementById("feedbackBar");
