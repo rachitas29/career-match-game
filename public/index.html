@@ -2151,9 +2151,6 @@
       document.getElementById("final").textContent = final;
       document.getElementById("scoreRing").style.setProperty("--pct", final + "%");
 
-      let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
-      let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
-
       let report = document.getElementById("report");
       report.innerHTML = "";
 
