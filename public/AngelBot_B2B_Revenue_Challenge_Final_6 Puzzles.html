@@ -641,11 +641,25 @@
 
     .situation {
       font-size: 18px;
-      line-height: 1.5;
-      margin: 14px 0;
-      color: #f1f5f9;
-      font-weight: 600;
+      line-height: 1.55;
+      margin: 12px 0;
+      color: #ffffff;
+      font-weight: 700;
       letter-spacing: -0.01em;
+    }
+
+    .situation .goal-banner {
+      background: linear-gradient(135deg, rgba(13, 27, 44, 0.95), rgba(9, 18, 30, 0.95));
+      border: 2px solid var(--gold);
+      border-radius: 14px;
+      padding: 12px 18px;
+      margin-bottom: 12px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.5;
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.25), inset 0 0 10px rgba(251, 191, 36, 0.1);
     }
 
     .quote {
@@ -1608,14 +1622,30 @@
         <div class="stat"><b id="confidence">50%</b><small>Deal Velocity</small></div>
       </div>
       <div id="situation" class="situation"></div>
-      <div id="hintContainer" style="margin: 10px 0; display: none;">
-        <button id="hintBtn" class="btn dark"
-          style="padding: 6px 14px; font-size: 12px; border-radius: 99px; background: rgba(244, 189, 77, 0.15); color: var(--gold); border: 1px solid rgba(244, 189, 77, 0.3);"
-          onclick="toggleHint()">💡 Show Calculation Hint</button>
-        <div id="quote" class="quote" style="display:none; margin-top: 8px;"></div>
+      
+      <!-- Split Layout: Main Puzzle Content (Left) & Puzzle Rules Sidebar (Right) -->
+      <div style="display: grid; grid-template-columns: 1fr 310px; gap: 16px; align-items: start; margin-top: 10px;" id="gameMainGrid">
+        <div>
+          <div id="hintContainer" style="margin: 10px 0; display: none;">
+            <button id="hintBtn" class="btn dark"
+              style="padding: 6px 14px; font-size: 12px; border-radius: 99px; background: rgba(244, 189, 77, 0.15); color: var(--gold); border: 1px solid rgba(244, 189, 77, 0.3);"
+              onclick="toggleHint()">💡 Show Calculation Hint</button>
+            <div id="quote" class="quote" style="display:none; margin-top: 8px;"></div>
+          </div>
+          <div id="options" class="options"></div>
+          <div id="puzzleBox" style="display:none;"></div>
+        </div>
+
+        <!-- Right Side Rules Panel -->
+        <div id="rulesPanel" style="background: linear-gradient(145deg, rgba(13, 27, 44, 0.85), rgba(6, 14, 25, 0.95)); border: 1.5px solid var(--panel-border); border-radius: 18px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+          <div style="font-size: 13px; font-weight: 800; color: var(--gold); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+            <span>📜 PUZZLE RULES & GUIDE</span>
+          </div>
+          <ul id="rulesList" style="margin: 0; padding-left: 18px; font-size: 12px; color: #cbd5e1; line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+          </ul>
+        </div>
       </div>
-      <div id="options" class="options"></div>
-      <div id="puzzleBox" style="display:none;"></div>
+
       <div id="feedbackBar" style="margin-top: 12px; display: none; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
         <div id="feedback" class="feedback" style="flex: 1; margin-top: 0; min-width: 220px;"></div>
         <button id="nextBtn" class="btn green" style="display: none; white-space: nowrap; padding: 12px 24px; font-size: 15px; font-weight: 800; min-width: 170px; justify-content: center;" onclick="next()">Next Scenario →</button>
@@ -1780,12 +1810,67 @@
     ];
 
     const puzzles = [
-      { isPuzzle: true, type: "runner", t: "3D B2B Temple Deal Runner", l: "PUZZLE 1 · TEMPLE DEAL RUNNER 🏃", s: "🎯 GOAL: Dodge obstacles/decoys and collect all 3 approval keys (🧠 Tech, 💰 Finance, 🛡️ Security) to sign the final Contract (📜)!" },
-      { isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "PUZZLE 2 · 6x6 DEAL MAZE 🧩", s: "🎯 GOAL: Move your briefcase 💼 to collect all 3 leader badges (🧠 Tech, 💰 Finance, 🛡️ Security) before reaching the Contract (📜)!" },
-      { isPuzzle: true, type: "sudoku", t: "4x4 Dual-Blank Revenue Sudoku", l: "PUZZLE 3 · ADVANCED SUDOKU 🔢", s: "🎯 GOAL: Fill the missing boxes ❓ and ⭐ so numbers 1 to 4 appear exactly once in each row and column!" },
-      { isPuzzle: true, type: "dots", t: "B2B Snakes & Ladders Pipeline Climb", l: "PUZZLE 4 · SNAKES & LADDERS 🎲", s: "🎯 GOAL: Roll the dice (🎲) and tap glowing target boxes to climb ladders (🪜) to Contract (📜 Tile 12) while dodging snakes (🐍)!" },
-      { isPuzzle: true, type: "water", t: "Nostalgic B2B Water Ring Toss Arcade", l: "PUZZLE 5 · WATER RING TOSS ⭕", s: "🎯 GOAL: Press the Left & Right Water Jet Buttons (💨) to propel floating deal rings (⭕) onto the Target Posts (📌)!" },
-      { isPuzzle: true, type: "block", t: "King's Deal Tower Climb", l: "PUZZLE 6 · KING'S BLOCK CLIMB 👑", s: "🎯 GOAL: Pick the solid step block for ❓ so the King (👑) can safely climb up the tower to reach the Contract (📜)!" }
+      {
+        isPuzzle: true, type: "runner", t: "3D B2B Temple Deal Runner", l: "PUZZLE 1 · TEMPLE DEAL RUNNER 🏃",
+        s: "🎯 GOAL: Dodge obstacles/decoys and collect all 3 approval keys (🧠 Tech, 💰 Finance, 🛡️ Security) to sign the final Contract (📜)!",
+        rules: [
+          "<b>Collect 3 Real Keys:</b> Must get 🧠 Tech, 💰 Finance, and 🛡️ Security.",
+          "<b>Avoid Fake Decoys:</b> Hitting 💣 fake keys costs 1 Heart (❤️).",
+          "<b>Dodge Traps:</b> 🦘 <b>JUMP</b> low walls & 🛹 <b>SLIDE</b> under high beams.",
+          "<b>Finish Line:</b> Cross 📜 Target Contract after collecting all 3 keys to WIN!"
+        ]
+      },
+      {
+        isPuzzle: true, type: "maze", mazeId: "executive", t: "6x6 Executive Deal Maze", l: "PUZZLE 2 · 6x6 DEAL MAZE 🧩",
+        s: "🎯 GOAL: Move your briefcase 💼 to collect all 3 leader badges (🧠 Tech, 💰 Finance, 🛡️ Security) before reaching the Contract (📜)!",
+        rules: [
+          "<b>Briefcase Controls:</b> Use arrow buttons to move 💼 step by step.",
+          "<b>Collect 3 Badges:</b> Pick up 🧠 Tech, 💰 Finance, and 🛡️ Security signoffs.",
+          "<b>Avoid Obstacles:</b> Stay clear of ⛔ Delay, 📉 Price Cut, and 👻 No Reply cells.",
+          "<b>Win Condition:</b> Reach 📜 Contract only AFTER securing all 3 badges!"
+        ]
+      },
+      {
+        isPuzzle: true, type: "sudoku", t: "4x4 Dual-Blank Revenue Sudoku", l: "PUZZLE 3 · ADVANCED SUDOKU 🔢",
+        s: "🎯 GOAL: Fill the missing boxes ❓ and ⭐ so numbers 1 to 4 appear exactly once in each row and column!",
+        rules: [
+          "<b>Sudoku Rules:</b> Numbers 1, 2, 3, and 4 must appear once per row & column.",
+          "<b>Identify ❓:</b> Look at Row 3 [4, 1, ❓, 2] — ❓ must be 3.",
+          "<b>Identify ⭐:</b> Look at Row 4 [3, 2, 4, ⭐] — ⭐ must be 1.",
+          "<b>Win Condition:</b> Select option A (❓ = 3 | ⭐ = 1) to solve the puzzle!"
+        ]
+      },
+      {
+        isPuzzle: true, type: "dots", t: "B2B Snakes & Ladders Pipeline Climb", l: "PUZZLE 4 · SNAKES & LADDERS 🎲",
+        s: "🎯 GOAL: Roll the dice (🎲) and tap glowing target boxes to climb ladders (🪜) to Contract (📜 Tile 12) while dodging snakes (🐍)!",
+        rules: [
+          "<b>Roll Dice:</b> Click 🎲 ROLL DICE to get a move value (1 to 3).",
+          "<b>Tap Target Tile:</b> Click the highlighted gold tile to move your avatar.",
+          "<b>Climb Ladders:</b> Land on 🪜 Fast Lead, Exec Sponsor, or VP Approval to boost UP!",
+          "<b>Dodge Snakes:</b> Avoid 🐍 Budget Cut, Cancel Risk, and Extra Demands traps!",
+          "<b>Win Condition:</b> Reach Tile 12 (📜 Contract) within 6 total rolls!"
+        ]
+      },
+      {
+        isPuzzle: true, type: "water", t: "Nostalgic B2B Water Ring Toss Arcade", l: "PUZZLE 5 · WATER RING TOSS ⭕",
+        s: "🎯 GOAL: Press the Left & Right Water Jet Buttons (💨) to propel floating deal rings (⭕) onto the Target Posts (📌)!",
+        rules: [
+          "<b>Water Jet Controls:</b> Click 💨 PUMP LEFT JET or 💨 PUMP RIGHT JET.",
+          "<b>Left Post (📌 Deal & Profit):</b> Catch 🔴 Deal, 🔵 Profit, and 🟢 Budget rings.",
+          "<b>Right Post (📌 Client & Growth):</b> Catch 🟡 Growth, 🟣 Client, and 🟠 Contract rings.",
+          "<b>Win Condition:</b> Hook all 6 floating deal rings onto their matching posts!"
+        ]
+      },
+      {
+        isPuzzle: true, type: "block", t: "King's Deal Tower Climb", l: "PUZZLE 6 · KING'S BLOCK CLIMB 👑",
+        s: "🎯 GOAL: Pick the solid step block for ❓ so the King (👑) can safely climb up the tower to reach the Contract (📜)!",
+        rules: [
+          "<b>Examine Tower:</b> King 👑 needs a solid step to bridge the gap at ❓.",
+          "<b>Pick Solid Block:</b> Choose 🧱 Executive Budget Block to support the King.",
+          "<b>Avoid Weak Blocks:</b> 📉 Price Cut or 👻 Verbal Promise blocks collapse!",
+          "<b>Win Condition:</b> King safely reaches Tile 4 (📜 Contract) at the top!"
+        ]
+      }
     ];
 
     let i = 0, raw = 0, streak = 0, confidence = 50, timer = 60, interval = null, answered = false, history = [];
@@ -1872,7 +1957,11 @@
       document.getElementById("score").textContent = raw; 
       updateStreakUI();
       document.getElementById("confidence").textContent = confidence + "%";
-      document.getElementById("situation").textContent = q.s;
+      let sitEl = document.getElementById("situation");
+      if (sitEl) {
+        sitEl.style.display = "block";
+        sitEl.innerHTML = `<div class="goal-banner">${q.s}</div>`;
+      }
 
       let hc = document.getElementById("hintContainer"), quote = document.getElementById("quote");
       let box = document.getElementById("options");
@@ -1928,12 +2017,43 @@
         document.getElementById("nextBtn").style.display = "none";
       }
 
-      document.getElementById("timerBox").classList.remove("hot"); 
-      document.getElementById("timer").textContent = timer;
+      // Populate Right-side Rules Sidebar dynamically
+      let rulesListEl = document.getElementById("rulesList");
+      if (rulesListEl) {
+        rulesListEl.innerHTML = "";
+        let puzzleRules = q.rules || [
+          "<b>Read Goal:</b> Review the top goal banner.",
+          "<b>Execute Strategy:</b> Make accurate choices to win.",
+          "<b>Timer:</b> You have 60 seconds per puzzle scenario."
+        ];
+        puzzleRules.forEach(ruleText => {
+          let li = document.createElement("li");
+          li.innerHTML = ruleText;
+          rulesListEl.appendChild(li);
+        });
+      }
 
+      // Timer Display with Manual Start Timer option
+      let timerBox = document.getElementById("timerBox");
+      timerBox.classList.remove("hot"); 
+      timerBox.innerHTML = `⏱️ <span id="timer">${timer}</span>s &nbsp; <button id="startTimerBtn" onclick="startTimerNow()" style="padding:4px 10px;font-size:11px;font-weight:800;border-radius:99px;background:var(--green);color:#02170f;border:none;cursor:pointer;margin-left:4px;box-shadow:0 0 10px rgba(16,185,129,0.4);">▶️ START TIMER</button>`;
+
+      // Start countdown automatically or when user clicks Start Timer
+      startTimerInterval();
+    }
+
+    function startTimerNow() {
+      let btn = document.getElementById("startTimerBtn");
+      if (btn) btn.style.display = "none";
+      startTimerInterval();
+    }
+
+    function startTimerInterval() {
+      clearInterval(interval);
       interval = setInterval(() => { 
         timer--; 
-        document.getElementById("timer").textContent = timer; 
+        let timerEl = document.getElementById("timer");
+        if (timerEl) timerEl.textContent = timer; 
         if (timer <= 8) document.getElementById("timerBox").classList.add("hot"); 
         if (timer <= 0) { clearInterval(interval); timeout(); } 
       }, 1000);
@@ -2277,8 +2397,9 @@
       let sitEl = document.getElementById("situation");
       if (sitEl) {
         sitEl.style.display = "block";
-        sitEl.innerHTML = `<div style="background:rgba(13,27,44,0.9);border:1.5px solid var(--gold);border-radius:10px;padding:8px 12px;margin-bottom:8px;text-align:center;font-size:12.5px;font-weight:600;color:#f1f5f9;line-height:1.4;">
-          <b style="color:var(--green);">🎯 GOAL:</b> Dodge obstacles & collect all 3 approval keys (<b>🧠 Tech</b>, <b>💰 Finance</b>, <b>🛡️ Security</b>) to sign Contract (<b>📜</b>)! &nbsp;|&nbsp; <b style="color:var(--red);">⚠️ TRAPS:</b> <b>🚧 Low Wall:</b> <b>🦘 JUMP</b> &nbsp;|&nbsp; <b>📐 High Beam:</b> <b>🛹 SLIDE</b>
+        sitEl.innerHTML = `<div class="goal-banner" style="font-size:15.5px;">
+          <b style="color:var(--green);font-size:16px;">🎯 GOAL:</b> Dodge obstacles & collect all 3 approval keys (<b>🧠 Tech</b>, <b>💰 Finance</b>, <b>🛡️ Security</b>) to sign Contract (<b>📜</b>)!<br>
+          <span style="font-size:14px;"><b style="color:var(--red);">⚠️ TRAPS:</b> <b>🚧 Low Wall:</b> <b>🦘 JUMP</b> &nbsp;|&nbsp; <b>📐 High Beam:</b> <b>🛹 SLIDE</b></span>
         </div>`;
       }
 
@@ -2999,8 +3120,8 @@
       let sitEl = document.getElementById("situation");
       if (sitEl) {
         sitEl.style.display = "block";
-        sitEl.innerHTML = `<div style="background:rgba(13,27,44,0.9);border:1.5px solid var(--gold);border-radius:10px;padding:8px 12px;margin-bottom:8px;text-align:center;font-size:12.5px;font-weight:600;color:#f1f5f9;line-height:1.4;">
-          <b style="color:var(--green);">🎯 GOAL:</b> Move your briefcase <b>💼</b> to collect all 3 leader badges (<b>🧠 Tech</b>, <b>💰 Finance</b>, <b>🛡️ Security</b>) to unlock Contract (<b>📜</b>)!
+        sitEl.innerHTML = `<div class="goal-banner" style="font-size:15.5px;">
+          <b style="color:var(--green);font-size:16px;">🎯 GOAL:</b> Move your briefcase <b>💼</b> to collect all 3 leader badges (<b>🧠 Tech</b>, <b>💰 Finance</b>, <b>🛡️ Security</b>) to unlock Contract (<b>📜</b>)!
         </div>`;
       }
 
