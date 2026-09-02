@@ -2390,14 +2390,11 @@
       runnerSpeed = 1.35;
       runnerKeysCollected = { cio: false, cfo: false, sec: false };
 
-      // Set goal text above the puzzle canvas inside the situation div
+      // Hide situation div completely
       let sitEl = document.getElementById("situation");
       if (sitEl) {
-        sitEl.style.display = "block";
-        sitEl.innerHTML = `<div class="goal-banner" style="font-size:15.5px;">
-          <b style="color:var(--green);font-size:16px;">🎯 GOAL:</b> Dodge obstacles & collect all 3 approval keys (<b>🧠 Tech</b>, <b>💰 Finance</b>, <b>🛡️ Security</b>) to sign Contract (<b>📜</b>)!<br>
-          <span style="font-size:14px;"><b style="color:var(--red);">⚠️ TRAPS:</b> <b>🚧 Low Wall:</b> <b>🦘 JUMP</b> &nbsp;|&nbsp; <b>📐 High Beam:</b> <b>🛹 SLIDE</b></span>
-        </div>`;
+        sitEl.style.display = "none";
+        sitEl.innerHTML = "";
       }
 
       box.innerHTML = `
@@ -3113,13 +3110,11 @@
       mazeCollectedKeys = {};
       activeMazeConfig.keys.forEach(k => mazeCollectedKeys[k.id] = false);
 
-      // Set goal text above the puzzle canvas inside the situation div
+      // Hide situation div completely
       let sitEl = document.getElementById("situation");
       if (sitEl) {
-        sitEl.style.display = "block";
-        sitEl.innerHTML = `<div class="goal-banner" style="font-size:15.5px;">
-          <b style="color:var(--green);font-size:16px;">🎯 GOAL:</b> Move your briefcase <b>💼</b> to collect all 3 leader badges (<b>🧠 Tech</b>, <b>💰 Finance</b>, <b>🛡️ Security</b>) to unlock Contract (<b>📜</b>)!
-        </div>`;
+        sitEl.style.display = "none";
+        sitEl.innerHTML = "";
       }
 
       box.innerHTML = `
