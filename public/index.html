@@ -1646,9 +1646,9 @@
         </div>
       </div>
 
-      <div id="feedbackBar" style="margin-top: 12px; display: none; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-        <div id="feedback" class="feedback" style="flex: 1; margin-top: 0; min-width: 220px;"></div>
-        <button id="nextBtn" class="btn green" style="display: none; white-space: nowrap; padding: 12px 24px; font-size: 15px; font-weight: 800; min-width: 170px; justify-content: center;" onclick="next()">Next Scenario →</button>
+      <div id="feedbackBar" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div id="feedback" class="feedback" style="flex: 1; margin-top: 0; min-width: 220px; display: none;"></div>
+        <button id="nextBtn" class="btn green" style="display: inline-flex; white-space: nowrap; padding: 12px 24px; font-size: 15px; font-weight: 800; min-width: 170px; justify-content: center;" onclick="next()">Next Puzzle →</button>
       </div>
     </section>
 
@@ -1734,81 +1734,6 @@
   </div>
 
   <script>
-    const qs = [
-      {
-        id: "hunt",
-        l: "1 · THE HUNT", t: "Pick the account worth your time", s: "You have 20 new accounts and enough capacity for only 3 first calls. Which prospect gets priority based on Ideal Customer Profile (ICP) criteria?", o: [
-          ["A", "A 4,000-employee enterprise with manual workflows, multiple departments and an active AI budget.", 6, "Strong scale, but missing explicit urgency and clear project ownership.", "MED"],
-          ["B", "A 60-person company with no clear operational pain but willing to evaluate any cheap AI tool.", 2, "Possible lead, but weak fit and price-first buying behavior create risk.", "MED"],
-          ["C", "A famous Fortune 500 company logo with a large IT (Information Technology) team, high market reputation, but no identified business owner.", 4, "Logo value is impressive, but brand fame is not buying intent.", "MED"],
-          ["D", "A mid-size company with clear operational pain, a designated project owner and an approved budget for this quarter.", 9, "Excellent prospect! Clear pain + project owner + quarterly urgency is the winning Ideal Customer Profile (ICP) combination.", "LOW"]]
-      },
-      {
-        id: "hook",
-        l: "2 · THE HOOK", t: "Your message has one chance", s: "You are reaching a Chief Information Officer (CIO) who has never heard of your company. Which opening is most likely to earn a reply?", o: [
-          ["A", "“We are an industry-leading AI platform powered by autonomous agents, cutting-edge machine learning and 25 enterprise-grade integration modules.”", 2, "Heavy feature pitching and buzzwords rarely earn attention from busy executives.", "MED"],
-          ["B", "“Your teams may be losing hours searching across fragmented enterprise data—how are you currently tackling that operational delay?”", 9, "Spot on! Leading with a sharp business hypothesis and asking an insightful question opens a real dialogue.", "LOW"],
-          ["C", "“Hi there, I noticed your impressive executive profile on LinkedIn and would love to send over our comprehensive 20-page product brochure for your review.”", 1, "Generic compliment followed by a low-curiosity material dump.", "MED"],
-          ["D", "“We are currently offering an exclusive 30% end-of-quarter discount for enterprise clients who book a demonstration call this week.”", 0, "Offering discounts before establishing any value is a weak first impression.", "HIGH"]]
-      },
-      {
-        id: "cac",
-        l: "3 · CAC & LTV MATH", t: "Customer Acquisition Economics (CAC & LTV)", s: "Your team spent ₹15 Lakh on marketing and customer acquisition expenses this month to acquire 30 new clients. If each customer generates ₹1.5 Lakh in Customer Lifetime Value (LTV) margin, what is your LTV : CAC (Customer Lifetime Value to Customer Acquisition Cost) ratio?", q: "💡 Hint: CAC (Customer Acquisition Cost) = Total Spend ÷ Customers Acquired (₹15L ÷ 30 = ₹50,000). Then divide LTV (Customer Lifetime Value: ₹1.5 Lakh) by CAC (₹50,000).", o: [
-          ["A", "3 : 1 (Healthy Business Benchmark)", 9, "Correct! CAC (Customer Acquisition Cost) = ₹15L ÷ 30 = ₹50,000. LTV (Customer Lifetime Value) = ₹1.5L. Ratio = 3:1 (Healthy Unit Economics).", "LOW"],
-          ["B", "1 : 1 (Breakeven Margin)", 3, "Math error: CAC is ₹50,000 per customer, making LTV (₹1.5L) to CAC (₹50k) a 3:1 ratio.", "MED"],
-          ["C", "10 : 1 (Extreme Profit Margin)", 2, "Overestimated margin generated relative to acquisition spend.", "HIGH"],
-          ["D", "0.5 : 1 (Unprofitable Acquisition)", 1, "Underestimated the lifetime revenue contribution per client.", "MED"]]
-      },
-      {
-        id: "discovery",
-        l: "4 · THE DISCOVERY", t: "Don't pitch yet", s: "The prospect says: “Our teams waste too much time finding information across fragmented systems.” What is your best next discovery question to uncover ROI (Return On Investment) impact?", q: "“We already have SharePoint, email, folders and several other systems—but people still can't find what they need.”", o: [
-          ["A", "“How many employees are impacted, how often does this occur, and what is the estimated cost of that delay to your quarterly bottom line?”", 9, "Perfect discovery! Quantifying frequency, scale and ROI (Return On Investment) financial impact builds a compelling business case.", "LOW"],
-          ["B", "“Our unified enterprise AI search platform seamlessly connects with SharePoint, Outlook, custom databases and cloud storage to solve that exact issue instantly.”", 3, "You jumped into product pitching too early before understanding the full problem.", "MED"],
-          ["C", "“Would you and your technical leadership team be open to a comprehensive product demonstration with our solutions engineering team tomorrow afternoon?”", 4, "A demo is valuable later, but you haven't earned the right context yet.", "MED"],
-          ["D", "“Unlike legacy competitor systems that struggle with multi-folder indexing, our solution indexes data 10x faster without manual tagging.”", 1, "Focusing on competitors during early discovery distracts from the customer's problem.", "HIGH"]]
-      },
-      {
-        id: "nrr",
-        l: "6 · NRR MATH", t: "Net Revenue Retention (NRR) & ARR Growth", s: "You start the year with ₹5 Crore Annual Recurring Revenue (ARR). During the year, existing accounts expand by ₹1 Crore, but ₹50 Lakh churns out. What is your Net Revenue Retention (NRR) percentage?", q: "💡 Hint: NRR (Net Revenue Retention) = (Starting ARR [Annual Recurring Revenue] + Expansion - Churn) ÷ Starting ARR.", o: [
-          ["A", "110% (Strong Expansion)", 9, "Correct! NRR (Net Revenue Retention) = (₹5Cr + ₹1Cr - ₹0.5Cr) ÷ ₹5Cr = ₹5.5Cr ÷ ₹5Cr = 110%.", "LOW"],
-          ["B", "100% (Flat Retention)", 2, "Incorrect calculation: You forgot to add the ₹1 Crore expansion revenue.", "MED"],
-          ["C", "90% (Net Contraction)", 1, "Incorrect calculation: Subtracted expansion instead of adding it.", "HIGH"],
-          ["D", "120% (Overestimated Expansion)", 3, "Overcalculated expansion impact.", "MED"]]
-      },
-      {
-        id: "productivity",
-        l: "7 · PRODUCTIVITY ROI MATH", t: "Quantifying ROI (Return On Investment) Savings", s: "A company of 500 knowledge workers loses 3 hours per employee per week searching for fragmented document information. If average hourly cost is ₹1,000, what is the annual productivity loss?", q: "💡 Hint: Weekly Loss = 500 workers × 3 hrs × ₹1,000 = ₹15 Lakh/week. Multiply by 50 working weeks per year.", o: [
-          ["A", "₹7.5 Crore per Year", 9, "Spot on! 500 × 3 hrs × ₹1,000 = ₹15 Lakh/week × 50 weeks = ₹7.5 Crore annual waste.", "LOW"],
-          ["B", "₹1.5 Crore per Year", 3, "Math error: Forgot to multiply weekly waste by 50 working weeks.", "MED"],
-          ["C", "₹15 Crore per Year", 2, "Overcalculated annual working weeks.", "HIGH"],
-          ["D", "₹50 Lakh per Year", 1, "Underestimated employee scale.", "HIGH"]]
-      },
-      {
-        id: "redflags",
-        l: "8 · THE RED FLAG", t: "Spot the account that will stall", s: "You have 4 active enterprise opportunities. Which one is most dangerous to your quarterly forecast?", o: [
-          ["A", "The project sponsor is enthusiastic, but procurement hasn't approved the master service agreement.", 5, "Procurement friction is common, but workable with legal focus.", "MED"],
-          ["B", "The client team loves your demo, but has no executive economic buyer (CIO / CFO) involved and no budget allocation.", 9, "Red Flag! High user enthusiasm without an executive buyer (CIO / CFO) or allocated budget leads to stalled deals.", "LOW"],
-          ["C", "The IT (Information Technology) department is conducting a security review that will take two weeks.", 4, "Security timelines add delay but do not kill deal intent.", "MED"],
-          ["D", "The prospect is comparing your pricing against a smaller regional competitor.", 3, "Competitive evaluation is normal in enterprise sales.", "MED"]]
-      },
-      {
-        id: "pipeline",
-        l: "9 · PIPELINE COVERAGE MATH", t: "Quota & Pipeline Coverage Health", s: "Your quarterly revenue target is ₹1 Crore. If standard enterprise win rate is 25%, how much total pipeline coverage do you need at the start of the quarter to reliably hit quota?", q: "💡 Hint: Required Pipeline = Quota ÷ Win Rate (₹1 Crore ÷ 0.25 = 4x Coverage).", o: [
-          ["A", "₹4 Crore (4x Pipeline Coverage)", 9, "Correct! At a 25% win rate, you need 4x pipeline coverage (₹1Cr ÷ 0.25 = ₹4Cr).", "LOW"],
-          ["B", "₹2 Crore (2x Pipeline Coverage)", 3, "Too low: 2x pipeline at 25% win rate only yields ₹50 Lakh (half your target).", "HIGH"],
-          ["C", "₹1 Crore (1x Target Coverage)", 1, "Dangerous: Assuming 100% win rate causes severe quota misses.", "HIGH"],
-          ["D", "₹10 Crore (10x Excess Coverage)", 2, "Unrealistic pipeline requirement.", "MED"]]
-      },
-      {
-        id: "negotiation",
-        l: "11 · THE NEGOTIATION", t: "Don't negotiate against yourself", s: "A ₹50 lakh enterprise deal is ready to close. The buyer says: “Give me a 25% discount and I'll sign today.” What do you do?", o: [
-          ["A", "Agree to the 25% discount right away to ensure the contract gets signed before the end of the month.", 2, "Unconditional price cuts set a bad precedent and destroy deal profitability.", "HIGH"],
-          ["B", "Offer a 35% discount along with extended payment terms to guarantee an immediate signature before the buyer changes their mind.", 0, "You negotiated aggressively against yourself without receiving any value in return.", "HIGH"],
-          ["C", "Refuse all commercial flexibility and inform the buyer that your pricing structure is fixed across all enterprise accounts.", 4, "Total inflexibility can stall late-stage deals when a fair trade could close the agreement.", "MED"],
-          ["D", "Trade value: “If we structure a longer commitment or upfront annual payment, I can explore a commercial adjustment.”", 9, "Outstanding negotiation! Never give away value without receiving a meaningful trade in return.", "LOW"]]
-      }
-    ];
-
     const puzzles = [
       {
         isPuzzle: true, type: "runner", t: "3D B2B Temple Deal Runner", l: "PUZZLE 1 · TEMPLE DEAL RUNNER 🏃",
@@ -1816,7 +1741,7 @@
         rules: [
           "<b>Collect 3 Real Keys:</b> Must get 🧠 Tech, 💰 Finance, and 🛡️ Security.",
           "<b>Avoid Fake Decoys:</b> Hitting 💣 fake keys costs 1 Heart (❤️).",
-          "<b>Dodge Traps:</b> 🦘 <b>JUMP</b> low walls & 🛹 <b>SLIDE</b> under high beams.",
+          "<b>Dodge Traps:</b> 🦘 <b>JUMP</b> Low Wall (🚧) & 🛹 <b>SLIDE</b> under High Beam (📐).",
           "<b>Finish Line:</b> Cross 📜 Target Contract after collecting all 3 keys to WIN!"
         ]
       },
@@ -1831,13 +1756,13 @@
         ]
       },
       {
-        isPuzzle: true, type: "sudoku", t: "4x4 Dual-Blank Revenue Sudoku", l: "PUZZLE 3 · ADVANCED SUDOKU 🔢",
-        s: "🎯 GOAL: Fill the missing boxes ❓ and ⭐ so numbers 1 to 4 appear exactly once in each row and column!",
+        isPuzzle: true, type: "sudoku", t: "4x4 Multi-Blank Revenue Sudoku", l: "PUZZLE 3 · ADVANCED SUDOKU 🔢",
+        s: "🎯 GOAL: Fill the 4 missing boxes (❓, ⚡, ⭐, 🔷) so numbers 1 to 4 appear exactly once in each row and column!",
         rules: [
           "<b>Sudoku Rules:</b> Numbers 1, 2, 3, and 4 must appear once per row & column.",
-          "<b>Identify ❓:</b> Look at Row 3 [4, 1, ❓, 2] — ❓ must be 3.",
-          "<b>Identify ⭐:</b> Look at Row 4 [3, 2, 4, ⭐] — ⭐ must be 1.",
-          "<b>Win Condition:</b> Select option A (❓ = 3 | ⭐ = 1) to solve the puzzle!"
+          "<b>Analyze Blanks:</b> Solve ❓ (Row 1), ⚡ (Row 2), ⭐ (Row 3), and 🔷 (Row 4).",
+          "<b>Check Columns:</b> Verify no duplicate numbers exist vertically or horizontally.",
+          "<b>Win Condition:</b> Select the correct option combination (❓=4 | ⚡=4 | ⭐=3 | 🔷=3)!"
         ]
       },
       {
@@ -1865,15 +1790,16 @@
         isPuzzle: true, type: "block", t: "King's Deal Tower Climb", l: "PUZZLE 6 · KING'S BLOCK CLIMB 👑",
         s: "🎯 GOAL: Pick the solid step block for ❓ so the King (👑) can safely climb up the tower to reach the Contract (📜)!",
         rules: [
-          "<b>Examine Tower:</b> King 👑 needs a solid step to bridge the gap at ❓.",
-          "<b>Pick Solid Block:</b> Choose 🧱 Executive Budget Block to support the King.",
-          "<b>Avoid Weak Blocks:</b> 📉 Price Cut or 👻 Verbal Promise blocks collapse!",
-          "<b>Win Condition:</b> King safely reaches Tile 4 (📜 Contract) at the top!"
+          "<b>Tower Objective:</b> Step 3 (❓) is missing to complete the staircase.",
+          "<b>Select Block:</b> Pick 1 of the 3 available commercial blocks from below.",
+          "<b>Avoid Weak Steps:</b> Fragile or unapproved blocks will crumble under weight!",
+          "<b>Win Condition:</b> King (👑) safely climbs to Step 4 Contract (📜) at the top!"
         ]
       }
     ];
 
     let i = 0, raw = 0, streak = 0, confidence = 50, timer = 60, interval = null, answered = false, history = [];
+    let isTimerStarted = false;
     let activeQs = [];
     let isRetryPhase = false;
     let retryQueue = [];
@@ -1933,7 +1859,18 @@
     }
 
     function restartSimulator() {
-      start(true);
+      sessionStorage.setItem("angelbot_is_retry", "true");
+      i = 0;
+      raw = 0;
+      streak = 0;
+      confidence = 50;
+      history = [];
+      isRetryPhase = false;
+      retryQueue = [];
+      currentRetryItem = null;
+      activeQs = buildFullGameSequence(true);
+      show("game");
+      render();
     }
 
     function updateStreakUI() {
@@ -1947,7 +1884,9 @@
     }
 
     function render() {
-      answered = false; clearInterval(interval);
+      answered = false;
+      isTimerStarted = false;
+      clearInterval(interval);
       timer = (isRestartingSimulator || sessionStorage.getItem("angelbot_is_retry") === "true") ? 40 : 60;
       let q = activeQs[i];
       document.getElementById("roundLabel").textContent = `${i + 1} / ${activeQs.length} · ${q.l}`;
@@ -2008,14 +1947,8 @@
       f.className = "feedback"; 
       f.style.display = "none"; 
       f.innerHTML = ""; 
-      
-      if (q.isPuzzle) {
-        if (fb) fb.style.display = "flex";
-        document.getElementById("nextBtn").style.display = "inline-flex";
-      } else {
-        if (fb) fb.style.display = "none";
-        document.getElementById("nextBtn").style.display = "none";
-      }
+      if (fb) fb.style.display = "flex";
+      document.getElementById("nextBtn").style.display = "inline-flex";
 
       // Populate Right-side Rules Sidebar dynamically
       let rulesListEl = document.getElementById("rulesList");
@@ -2040,6 +1973,7 @@
     }
 
     function startTimerNow() {
+      isTimerStarted = true;
       let btn = document.getElementById("startTimerBtn");
       if (btn) btn.style.display = "none";
       startTimerInterval();
@@ -2082,6 +2016,8 @@
       if (isCorrect) streak++; else streak = 0; 
       confidence = Math.max(10, Math.min(99, confidence + (isCorrect ? 7 : -5)));
       
+      // Remove any existing entry for this exact puzzle title to prevent duplicate history records
+      history = history.filter(x => x.t !== currQ.t);
       history.push({ t: currQ.t, p: o[2], c: o[0], isPuzzle: isPuz }); 
       if (b && b.classList) b.classList.add(isCorrect ? "good" : "bad");
 
@@ -2163,6 +2099,14 @@
     }
 
     function next() { 
+      if (!answered) {
+        let currQ = activeQs[i];
+        if (currQ && currQ.isPuzzle) {
+          history.push({ t: currQ.t, p: 0, c: "SKIPPED", isPuzzle: true });
+        }
+        streak = 0;
+        updateStreakUI();
+      }
       if (i < activeQs.length - 1) { 
         i++; 
         render(); 
@@ -2182,89 +2126,7 @@
     }
 
     function finish() {
-      if (!isRetryPhase) {
-        let solvedCount = history.filter(x => x.isPuzzle && x.p >= 8).length;
-        let failedPuzzles = history.filter(x => x.isPuzzle && x.p < 8);
-
-        // Unlock retry rules:
-        // - At least 2 or 3 puzzles solved (solvedCount >= 2) required to unlock retries
-        // - If 4 or more puzzles solved: Unlock up to 2 failed puzzles for retry
-        // - If 2 or 3 puzzles solved: Unlock 1 failed puzzle for retry
-        // - If less than 2 puzzles solved (0 or 1): 0 retries unlocked
-        let maxRetriesAllowed = 0;
-        if (solvedCount >= 4) {
-          maxRetriesAllowed = 2;
-        } else if (solvedCount >= 2) {
-          maxRetriesAllowed = 1;
-        }
-        
-        if (failedPuzzles.length > 0 && maxRetriesAllowed > 0) {
-          isRetryPhase = true;
-          retryQueue = failedPuzzles.slice(0, maxRetriesAllowed);
-          renderNextRetry();
-          return;
-        }
-      }
       renderFinalResults();
-    }
-
-    function renderNextRetry() {
-      if (retryQueue.length === 0) {
-        renderFinalResults();
-        return;
-      }
-      currentRetryItem = retryQueue.shift();
-      let originalPuzzle = puzzles.find(q => q.t === currentRetryItem.t);
-      if (!originalPuzzle) {
-        renderNextRetry();
-        return;
-      }
-
-      answered = false; clearInterval(interval); timer = 40; // 40 seconds for puzzle retries
-      document.getElementById("roundLabel").textContent = `🔁 BONUS RETRY (${retryQueue.length + 1} Remaining) · ${originalPuzzle.l}`;
-      document.getElementById("title").textContent = `RETRY: ${originalPuzzle.t}`;
-      document.getElementById("roundNo").textContent = `RETRY`;
-      document.getElementById("bar").style.width = `100%`;
-      document.getElementById("score").textContent = raw;
-      updateStreakUI();
-      document.getElementById("confidence").textContent = confidence + "%";
-      document.getElementById("situation").textContent = originalPuzzle.type === "runner" ? "" : `🔁 Bonus Retry Unlocked! Re-attempt this puzzle in 40 seconds: "${originalPuzzle.s}"`;
-
-      let hc = document.getElementById("hintContainer"), quote = document.getElementById("quote");
-      let box = document.getElementById("options");
-      let puzzleBox = document.getElementById("puzzleBox");
-
-      hc.style.display = "none";
-      quote.style.display = "none";
-      box.style.display = "none";
-      puzzleBox.style.display = "block";
-
-      if (originalPuzzle.type === "runner") renderTempleRunner(originalPuzzle);
-      else if (originalPuzzle.type === "maze") renderMaze(originalPuzzle);
-      else if (originalPuzzle.type === "sudoku") renderSudoku(originalPuzzle);
-      else if (originalPuzzle.type === "dots") renderDots(originalPuzzle);
-      else if (originalPuzzle.type === "water") renderWaterRings(originalPuzzle);
-      else if (originalPuzzle.type === "cipher") renderCipher(originalPuzzle);
-      else if (originalPuzzle.type === "block" || originalPuzzle.type === "chess") renderBlock(originalPuzzle);
-      else if (originalPuzzle.type === "sequence") renderSequence(originalPuzzle);
-
-      let fb = document.getElementById("feedbackBar");
-      let f = document.getElementById("feedback");
-      f.className = "feedback";
-      f.style.display = "none";
-      f.innerHTML = "";
-      if (fb) fb.style.display = "flex";
-      document.getElementById("nextBtn").style.display = "inline-flex";
-
-      document.getElementById("timerBox").classList.remove("hot");
-      document.getElementById("timer").textContent = timer;
-
-      interval = setInterval(() => {
-        timer--;
-        document.getElementById("timer").textContent = timer;
-        if (timer <= 8) document.getElementById("timerBox").classList.add("hot");
-        if (timer <= 0) { clearInterval(interval); timeout(); }
-      }, 1000);
     }
 
     function renderFinalResults() {
@@ -2458,7 +2320,7 @@
     }
 
     function changeRunnerLane(dir) {
-      if (answered) return;
+      if (answered || !isTimerStarted) return;
       runnerLane = Math.max(0, Math.min(2, runnerLane + dir));
       let player = document.getElementById("runnerPlayer");
       if (player) {
@@ -2468,7 +2330,7 @@
     }
 
     function triggerRunnerAction(act) {
-      if (answered || runnerAction !== "normal") return;
+      if (answered || !isTimerStarted || runnerAction !== "normal") return;
       runnerAction = act;
       let player = document.getElementById("runnerPlayer");
       if (player) {
@@ -2523,6 +2385,11 @@
       let layer = document.getElementById("runnerItemsLayer");
       if (!layer) return;
       layer.innerHTML = "";
+
+      if (!isTimerStarted) {
+        if (!answered) runnerAnimId = requestAnimationFrame(updateTempleRunnerLoop);
+        return;
+      }
 
       runnerDistance += 0.25;
       let distText = document.getElementById("runnerDistText");
@@ -2595,16 +2462,21 @@
                 }
 
                 if (runnerLives <= 0) {
+                  let fb = document.getElementById("feedbackBar");
+                  if (fb) fb.style.display = "flex";
                   let f = document.getElementById("feedback");
                   if (f) {
                     f.className = "feedback bad";
                     f.style.display = "block";
                     f.innerHTML = `<b>💥 GAME OVER on Temple Runner!</b> Out of hearts! Auto-advancing to Next Challenge...`;
                   }
-                  let fakeOpt = ["TEMPLE_RUNNER", "Temple Runner Failed", 0, "Wiped out on Temple Runner obstacles! Keep honing your decision accuracy for the next challenge!", "HIGH"];
+                  let currQ = activeQs[i];
+                  let fakeOpt = ["TEMPLE_RUNNER", currQ ? currQ.t : "3D B2B Temple Deal Runner", 0, "Wiped out on Temple Runner obstacles! Keep honing your decision accuracy for the next challenge!", "HIGH"];
                   setTimeout(() => choose(fakeOpt, document.createElement("div")), 800);
                   return;
                 } else {
+                  let fb = document.getElementById("feedbackBar");
+                  if (fb) fb.style.display = "flex";
                   let f = document.getElementById("feedback");
                   if (f) {
                     f.className = "feedback bad";
@@ -2621,6 +2493,8 @@
                   badge.style.color = "var(--green)";
                   badge.innerHTML = `${item.icon} ${labelName}: ✅`;
                 }
+                let fb = document.getElementById("feedbackBar");
+                if (fb) fb.style.display = "flex";
                 let f = document.getElementById("feedback");
                 if (f) {
                   f.className = "feedback good";
@@ -2629,12 +2503,14 @@
                 }
               } else if (item.type === "contract") {
                 let allKeys = runnerKeysCollected.cio && runnerKeysCollected.cfo && runnerKeysCollected.sec;
+                let currQ = activeQs[i];
+                let puzzleTitle = currQ ? currQ.t : "3D B2B Temple Deal Runner";
                 if (allKeys) {
-                  let fakeOpt = ["TEMPLE_RUNNER", "3D B2B Temple Deal Runner", 9, "Masterful B2B Tactical Run! You dodged fake decoys & traps, collected all 3 real executive keys and reached the Target Contract! Progressing to Next Challenge...", "LOW"];
+                  let fakeOpt = ["TEMPLE_RUNNER", puzzleTitle, 9, "Masterful B2B Tactical Run! You dodged fake decoys & traps, collected all 3 real executive keys and reached the Target Contract! Progressing to Next Challenge...", "LOW"];
                   choose(fakeOpt, document.createElement("div"));
                   return;
                 } else {
-                  let fakeOpt = ["TEMPLE_RUNNER", "3D B2B Temple Deal Runner", 0, "Reached the contract post without all 3 executive clearances! Progressing to Next Challenge...", "HIGH"];
+                  let fakeOpt = ["TEMPLE_RUNNER", puzzleTitle, 0, "Reached the contract post without all 3 executive clearances! Progressing to Next Challenge...", "HIGH"];
                   choose(fakeOpt, document.createElement("div"));
                   return;
                 }
@@ -2649,27 +2525,27 @@
       }
     }
 
-    // Puzzle 3: 4x4 Commercial Revenue Sudoku (Challenging 2-Blank)
+    // Puzzle 3: 4x4 Commercial Revenue Sudoku (Challenging 4-Blank Grid)
     function renderSudoku(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
       box.innerHTML = `
         <div class="puzzle-wrap theme-sudoku" style="padding:10px 14px;text-align:center;">
           <div class="sudoku-grid">
-            <div class="sudoku-cell">2</div><div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell">3</div>
-            <div class="sudoku-cell">1</div><div class="sudoku-cell">3</div><div class="sudoku-cell">2</div><div class="sudoku-cell">4</div>
-            <div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell missing">❓</div><div class="sudoku-cell">2</div>
-            <div class="sudoku-cell">3</div><div class="sudoku-cell">2</div><div class="sudoku-cell">4</div><div class="sudoku-cell missing" style="background:rgba(56,189,248,0.25);border-color:#38bdf8;color:#38bdf8;">⭐</div>
+            <div class="sudoku-cell">2</div><div class="sudoku-cell missing" style="background:rgba(251,191,36,0.25);border-color:var(--gold);color:var(--gold);">❓</div><div class="sudoku-cell">1</div><div class="sudoku-cell">3</div>
+            <div class="sudoku-cell">1</div><div class="sudoku-cell">3</div><div class="sudoku-cell">2</div><div class="sudoku-cell missing" style="background:rgba(244,63,94,0.25);border-color:var(--red);color:var(--red);">⚡</div>
+            <div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell missing">⭐</div><div class="sudoku-cell">2</div>
+            <div class="sudoku-cell missing" style="background:rgba(56,189,248,0.25);border-color:#38bdf8;color:#38bdf8;">🔷</div><div class="sudoku-cell">2</div><div class="sudoku-cell">4</div><div class="sudoku-cell">1</div>
           </div>
           <div class="options" id="sudokuOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;"></div>
         </div>
       `;
       let optsBox = document.getElementById("sudokuOpts");
       let rawOptions = [
-        ["", "❓ = 3  |  ⭐ = 1", 9, "Spot on! ❓ must be 3 to complete Row 3 [4, 1, 3, 2], and ⭐ must be 1 to complete Row 4 [3, 2, 4, 1] without row/col duplicates!", "LOW"],
-        ["", "❓ = 1  |  ⭐ = 3", 2, "Incorrect: Number 1 already exists in Column 3!", "MED"],
-        ["", "❓ = 2  |  ⭐ = 4", 1, "Incorrect: Number 4 already exists in Row 4!", "MED"],
-        ["", "❓ = 4  |  ⭐ = 2", 0, "Incorrect: Number 4 already exists in Column 3 and Row 3!", "HIGH"]
+        ["", "❓=4 | ⚡=4 | ⭐=3 | 🔷=3", 9, "Masterful Sudoku Solving! ❓=4 (Row 1), ⚡=4 (Row 2), ⭐=3 (Row 3), and 🔷=3 (Row 4) perfectly satisfy all rows and columns without duplicates!", "LOW"],
+        ["", "❓=2 | ⚡=1 | ⭐=4 | 🔷=2", 2, "Incorrect: Number 2 already exists in Row 1 and Row 4!", "MED"],
+        ["", "❓=3 | ⚡=2 | ⭐=1 | 🔷=4", 1, "Incorrect: Number 1 already exists in Column 3!", "MED"],
+        ["", "❓=1 | ⚡=3 | ⭐=2 | 🔷=1", 0, "Incorrect: Number 1 already exists in Row 1 and Row 2!", "HIGH"]
       ];
       let options = shuffle(rawOptions);
       options.forEach((o, idx) => {
@@ -2689,18 +2565,13 @@
       });
     }
 
-    // Puzzle 3: King's Deal Tower Climb (Direct Interactive Block Movement)
+    // Puzzle 6: King's Deal Tower Climb (Direct Interactive Block Movement)
     function renderBlock(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
 
       box.innerHTML = `
         <div class="puzzle-wrap theme-dots" style="padding:8px 10px;text-align:center;">
-          <div style="background:rgba(13,27,44,0.85);border:1px solid var(--panel-border);border-radius:10px;padding:6px 10px;margin-bottom:6px;">
-            <div style="font-size:12px;color:#fff;font-weight:700;">👑 King's Deal Tower Climb · Move the Block!</div>
-            <p style="font-size:11px;color:var(--muted);margin-top:2px;">Click/Tap the correct block to move it into <b>Step 3 (❓)</b> so King (<b>👑</b>) can climb to Contract (<b>📜</b>):</p>
-          </div>
-          
           <!-- Tower Staircase Grid -->
           <div class="tower-staircase" style="display:flex;flex-direction:column;gap:4px;max-width:360px;margin:0 auto 8px;">
             <!-- Step 4 (Top Goal) -->
@@ -2757,7 +2628,7 @@
         b.onmouseleave = () => b.style.transform = "translateY(0)";
 
         b.onclick = () => {
-          if (answered) return;
+          if (answered || !isTimerStarted) return;
           if (item.isCorrect) {
             let gap = document.getElementById("gapBlock");
             let p1 = document.getElementById("kingPos1");
@@ -2887,12 +2758,12 @@
       document.getElementById("pegRightRings").innerHTML = "";
 
       waterRings = [
-        { id: 1, label: "🔴 Deal", color: "#f43f5e", targetPeg: "left", x: 40, y: 165, vx: 0.4, vy: 0, landed: false },
-        { id: 2, label: "🔵 Profit", color: "#38bdf8", targetPeg: "left", x: 90, y: 175, vx: -0.4, vy: 0, landed: false },
-        { id: 3, label: "🟢 Budget", color: "#10b981", targetPeg: "left", x: 135, y: 170, vx: 0.3, vy: 0, landed: false },
-        { id: 4, label: "🟡 Growth", color: "#fbbf24", targetPeg: "right", x: 205, y: 165, vx: -0.3, vy: 0, landed: false },
-        { id: 5, label: "🟣 Client", color: "#c084fc", targetPeg: "right", x: 245, y: 175, vx: 0.4, vy: 0, landed: false },
-        { id: 6, label: "🟠 Contract", color: "#fb923c", targetPeg: "right", x: 275, y: 160, vx: -0.3, vy: 0, landed: false }
+        { id: 1, label: "🔴 Deal", color: "#f43f5e", targetPeg: "left", x: 25, y: 165, vx: 0.3, vy: 0, landed: false },
+        { id: 2, label: "🔵 Profit", color: "#38bdf8", targetPeg: "left", x: 60, y: 175, vx: -0.3, vy: 0, landed: false },
+        { id: 3, label: "🟢 Budget", color: "#10b981", targetPeg: "left", x: 145, y: 170, vx: 0.3, vy: 0, landed: false },
+        { id: 4, label: "🟡 Growth", color: "#fbbf24", targetPeg: "right", x: 185, y: 165, vx: -0.3, vy: 0, landed: false },
+        { id: 5, label: "🟣 Client", color: "#c084fc", targetPeg: "right", x: 285, y: 175, vx: 0.3, vy: 0, landed: false },
+        { id: 6, label: "🟠 Contract", color: "#fb923c", targetPeg: "right", x: 310, y: 160, vx: -0.3, vy: 0, landed: false }
       ];
 
       waterRings.forEach(r => {
@@ -2911,7 +2782,7 @@
     }
 
     function pumpWater(side) {
-      if (answered) return;
+      if (answered || !isTimerStarted) return;
       let fb = document.getElementById("feedbackBar");
       if (fb) fb.style.display = "flex";
       let nb = document.getElementById("nextBtn");
@@ -2967,14 +2838,23 @@
         let postAX = 100;
         let postBX = 240;
 
+        // Balanced peg alignment: smooth magnetic assist when ring floats near post tip
+        if (!r.landed) {
+          let targetX = r.targetPeg === "left" ? postAX : postBX;
+          let distToPeg = Math.abs(r.x - targetX);
+          if (distToPeg < 24 && r.y > 45 && r.y < 165) {
+            r.vx += (targetX - r.x) * 0.05;
+          }
+        }
+
         let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
         let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
 
-        // Strict target peg validation: ring ONLY lands on its designated target peg!
-        if (r.y > 65 && r.y < 130 && r.vy > 0) {
-          if (r.targetPeg === "left" && Math.abs(r.x - postAX) < 11 && leftCount < 3) {
+        // Catchment check: Ring must be descending (vy > 0) onto target post tip!
+        if (!r.landed && r.y > 60 && r.y < 150 && r.vy > 0) {
+          if (r.targetPeg === "left" && Math.abs(r.x - postAX) < 16 && leftCount < 3) {
             landRingOnPeg(r, "left");
-          } else if (r.targetPeg === "right" && Math.abs(r.x - postBX) < 11 && rightCount < 3) {
+          } else if (r.targetPeg === "right" && Math.abs(r.x - postBX) < 16 && rightCount < 3) {
             landRingOnPeg(r, "right");
           }
         }
@@ -3203,7 +3083,7 @@
     }
 
     function moveMaze(dr, dc) {
-      if (answered || !activeMazeConfig) return;
+      if (answered || !isTimerStarted || !activeMazeConfig) return;
       let nr = mazePos.r + dr;
       let nc = mazePos.c + dc;
       if (nr < 0 || nr > 5 || nc < 0 || nc > 5) return;
@@ -3338,7 +3218,7 @@
     }
 
     function rollSnakeDice() {
-      if (answered || snakeMovesLeft <= 0 || pendingTargetTile !== null) return;
+      if (answered || !isTimerStarted || snakeMovesLeft <= 0 || pendingTargetTile !== null) return;
       let fb = document.getElementById("feedbackBar");
       if (fb) fb.style.display = "flex";
       document.getElementById("nextBtn").style.display = "inline-flex";
