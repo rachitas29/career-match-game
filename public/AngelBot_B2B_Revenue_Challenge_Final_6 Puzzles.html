@@ -2686,10 +2686,14 @@
       });
     }
 
-    // Puzzle 4: Classic Nostalgic Water Ring Toss Game 🌊⭕📌
+    // Puzzle 5: Classic Nostalgic Water Ring Toss Game 🌊⭕📌
     let waterRings = [];
     let waterScore = 0;
     let waterAnimId = null;
+
+    function renderWaterRings(q) {
+      renderSequence(q);
+    }
 
     function renderSequence(q) {
       let box = document.getElementById("puzzleBox");
