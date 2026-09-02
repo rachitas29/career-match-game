@@ -1820,7 +1820,11 @@
     }
 
     function start(isRetry = false) {
-      i = 0; raw = 0; streak = 0; confidence = 50; history = [];
+      window.i = 0;
+      window.raw = 0;
+      window.streak = 0;
+      window.confidence = 50;
+      window.history = [];
       isRetryPhase = false; retryQueue = []; currentRetryItem = null;
       if (isRetry === true) {
         isRestartingSimulator = true;
