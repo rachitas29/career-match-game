@@ -2136,9 +2136,11 @@
     }
 
     function renderFinalResults() {
-      // Max score for 6 puzzles * 9 pts = 54 pts mapped to 100%
-      let final = Math.round((raw / (6 * 9)) * 100);
-      final = Math.max(0, Math.min(100, final));
+      let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
+      let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
+
+      // Score strictly based on Solved (Won) Puzzles (e.g. 6/6 = 100%, 3/6 = 50%, 0/6 = 0%)
+      let final = Math.round((solvedPuzzles / 6) * 100);
       show("result");
       document.getElementById("final").textContent = final;
       document.getElementById("scoreRing").style.setProperty("--pct", final + "%");
