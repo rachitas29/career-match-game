@@ -1979,12 +1979,13 @@
       let insightEl = document.getElementById("cheerInsight");
       let countEl = document.getElementById("cheerPuzzleCount");
 
+      let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
       let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
       let totalPuzzles = 6;
 
       if (titleEl) titleEl.textContent = title || "Arcade Puzzle Mastered!";
       if (insightEl) insightEl.innerHTML = insight || "Great commercial strategy execution!";
-      if (countEl) countEl.textContent = `Progress: [ ${solvedPuzzles} / ${totalPuzzles} ] Puzzles Solved 🎯`;
+      if (countEl) countEl.innerHTML = `<b>Puzzles Attempted:</b> ${attemptedPuzzles}/${totalPuzzles} &nbsp;|&nbsp; <b>Puzzles Solved (Won):</b> <span style="color:var(--green);font-weight:800;">${solvedPuzzles}/${totalPuzzles}</span> 🎯`;
 
       if (modal) {
         modal.style.display = "grid";
@@ -2142,13 +2143,14 @@
       document.getElementById("final").textContent = final;
       document.getElementById("scoreRing").style.setProperty("--pct", final + "%");
 
+      let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
       let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
 
       let report = document.getElementById("report");
       report.innerHTML = "";
 
       [
-        `<b>Final Arcade Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Puzzles Solved:</b> ${solvedPuzzles}/6`,
+        `<b>Final Arcade Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/6 &nbsp;|&nbsp; <b>Solved (Won):</b> <span style="color:var(--green);font-weight:800;">${solvedPuzzles}/6</span>`,
         `<b>Mastery Level:</b> <span style="color:var(--purple)">${final >= 80 ? "🏆 Master B2B Strategist" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>`
       ].forEach(x => {
         let d = document.createElement("div");
