@@ -1805,9 +1805,18 @@
       return arr;
     }
 
-    function buildFullGameSequence() {
-      // 7 Interactive Puzzles Only (No text multiple choice questions)
-      return JSON.parse(JSON.stringify(puzzles));
+    function buildFullGameSequence(isRetry = false) {
+      let seq = JSON.parse(JSON.stringify(puzzles));
+      if (isRetry) {
+        seq = shuffle(seq);
+        // Update label numbers dynamically after shuffling
+        seq.forEach((item, idx) => {
+          let labelParts = item.l.split("·");
+          let cleanTitle = labelParts.length > 1 ? labelParts[1].trim() : item.l;
+          item.l = `PUZZLE ${idx + 1} · ${cleanTitle}`;
+        });
+      }
+      return seq;
     }
 
     let isRestartingSimulator = false;
@@ -1833,7 +1842,7 @@
         isRestartingSimulator = false;
         sessionStorage.removeItem("angelbot_is_retry");
       }
-      activeQs = buildFullGameSequence();
+      activeQs = buildFullGameSequence(isRetry);
       show("game");
       render();
     }
