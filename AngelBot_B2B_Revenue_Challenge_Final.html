@@ -1575,9 +1575,9 @@
 
         <!-- Primary Action Bar (Sending Application) -->
         <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-          <div class="btn green" style="padding: 12px 28px; font-size: 15px; font-weight: 800; box-shadow: 0 4px 20px rgba(16,185,129,0.3); cursor: default; user-select: none;">📧 SEND APPLICATION NOW →</div>
-          <button class="btn dark" style="padding: 12px 18px; font-size: 13px; background: rgba(234, 67, 53, 0.2); color: #ff8a80; border: 1px solid rgba(255, 138, 128, 0.4);" onclick="submitRoleApplication('gmail')">✉️ Open via Gmail</button>
-          <button class="btn dark" style="padding: 12px 16px; font-size: 12px; color: var(--gold); background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.35);" onclick="submitRoleApplication('copy')">📋 Copy Hiring Email</button>
+          <button class="btn green" style="padding: 14px 36px; font-size: 16px; font-weight: 900; box-shadow: 0 4px 24px rgba(16,185,129,0.4); cursor: pointer; border: none; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;" onclick="submitRoleApplication('gmail')">
+            <span>📧</span> SEND APPLICATION NOW →
+          </button>
         </div>
         <div id="applySuccessBox" style="display:none; margin-top: 14px;"></div>
       </div>
@@ -1877,7 +1877,15 @@
       if (answered) return; 
       answered = true; 
       clearInterval(interval); 
-      document.querySelectorAll(".option").forEach(x => x.disabled = true);
+      if (typeof waterAnimId !== "undefined" && waterAnimId) {
+        cancelAnimationFrame(waterAnimId);
+        waterAnimId = null;
+      }
+      document.querySelectorAll(".option, #pumpLeftBtn, #pumpRightBtn, #puzzleBox button, #blockDock button").forEach(x => {
+        x.disabled = true;
+        x.style.opacity = "0.6";
+        x.style.cursor = "not-allowed";
+      });
       
       let currQ = activeQs[i];
       let isPuz = currQ.isPuzzle;
@@ -2137,41 +2145,33 @@
       let subject = encodeURIComponent(rawSub);
       let body = encodeURIComponent(rawBody);
       let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
-      let mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
 
-      // Guarantee email is copied to clipboard
+      // Always copy hiring email to clipboard as backup
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(email);
         }
       } catch (err) {}
 
+      // Open Gmail directly
+      window.open(gmailUrl, '_blank');
+
       let box = document.getElementById("applySuccessBox");
       if (box) {
         box.style.display = "block";
         box.innerHTML = `
-          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--green); border-radius: 14px; padding: 16px 18px; text-align: center; box-shadow: 0 6px 20px rgba(16,185,129,0.2); animation: fadeIn 0.3s ease-out;">
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--green); border-radius: 14px; padding: 14px 18px; text-align: center; box-shadow: 0 6px 20px rgba(16,185,129,0.2); animation: fadeIn 0.3s ease-out;">
             <div style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>✅</span> Hiring Email Copied & Ready to Send!
+              <span>✉️</span> Gmail Opened! Ready to Send Application
             </div>
-            <div style="font-size: 12.5px; color: var(--green); font-weight: 700; margin-bottom: 10px;">
+            <div style="font-size: 12.5px; color: var(--green); font-weight: 700; margin-bottom: 6px;">
               Target Role: "${roleVal}"
             </div>
-            <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4;">
-              Send your resume/CV to <b style="color:var(--gold);">info@angelbot.ai</b> using your preferred mail app below:
+            <p style="font-size: 12px; color: #cbd5e1; margin: 0; line-height: 1.4;">
+              Hiring email <b style="color:var(--gold);">info@angelbot.ai</b> has also been copied to your clipboard.
             </p>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-              <a href="${gmailUrl}" target="_blank" class="btn green" style="padding: 10px 18px; font-size: 13px; font-weight: 800; text-decoration: none;">✉️ Compose in Gmail Web →</a>
-              <a href="${mailtoUrl}" class="btn dark" style="padding: 10px 18px; font-size: 13px; font-weight: 700; text-decoration: none; color: #fff; background: rgba(255,255,255,0.08); border: 1px solid var(--border);">📧 Launch Default Mail App</a>
-            </div>
           </div>
         `;
-      }
-
-      if (mode === 'gmail') {
-        window.open(gmailUrl, '_blank');
-      } else if (mode === 'default') {
-        window.location.href = mailtoUrl;
       }
     }
 
@@ -2494,44 +2494,83 @@
 
     function updateWaterPhysics() {
       let container = document.getElementById("ringContainer");
-      if (!container) return;
+      if (!container || !isTimerStarted || answered) return;
 
-      let landedCount = 0;
+      let tank = document.getElementById("waterTank");
+      let tankW = tank ? tank.clientWidth : 540;
+      let tankH = tank ? tank.clientHeight : 260;
+
+      let leftBar = document.querySelector("#pegLeftRings + div");
+      let rightBar = document.querySelector("#pegRightRings + div");
+      let tankRect = tank?.getBoundingClientRect();
+
+      let lBarR = leftBar && tankRect ? leftBar.getBoundingClientRect() : null;
+      let rBarR = rightBar && tankRect ? rightBar.getBoundingClientRect() : null;
+
+      let postLeftX = lBarR ? (lBarR.left - tankRect.left + lBarR.width / 2) : 174;
+      let postRightX = rBarR ? (rBarR.left - tankRect.left + rBarR.width / 2) : 357;
+      let postTopY = lBarR ? (lBarR.top - tankRect.top) : 85;
+
+      let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
+      let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
 
       waterRings.forEach(r => {
-        if (r.landed) {
-          landedCount++;
-          return;
-        }
+        if (r.landed) return;
 
-        // Realistic water turbulence & drift
-        r.vx += (Math.random() - 0.5) * 0.3;
-        r.vy += 0.18;
-        r.vy *= 0.96;
-        r.vx *= 0.94;
+        // Natural buoyancy and fluid drift
+        r.vx += (Math.sin(Date.now() / 250 + r.id) * 0.06);
+        r.vy += 0.13;
+        r.vy *= 0.965;
+        r.vx *= 0.95;
 
         r.x += r.vx;
         r.y += r.vy;
 
-        if (r.x < 15) { r.x = 15; r.vx *= -0.6; }
-        if (r.x > 325) { r.x = 325; r.vx *= -0.6; }
-        if (r.y < 15) { r.y = 15; r.vy *= 0.1; }
-        if (r.y > 180) { r.y = 180; r.vy = 0; }
+        let ringW = 48;
+        let ringH = 24;
+        let ringCenterX = r.x + ringW / 2;
+        let ringCenterY = r.y + ringH / 2;
 
-        let postAX = 100;
-        let postBX = 240;
+        // Tank boundaries
+        if (r.x < 8) { r.x = 8; r.vx = Math.abs(r.vx) * 0.5; }
+        if (r.x > tankW - ringW - 8) { r.x = tankW - ringW - 8; r.vx = -Math.abs(r.vx) * 0.5; }
+        if (r.y < 8) { r.y = 8; r.vy = Math.abs(r.vy) * 0.2; }
+        if (r.y > 194) { r.y = 194; r.vy = 0; r.vx *= 0.8; }
 
-        let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
-        let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
+        let targetPostX = r.targetPeg === "left" ? postLeftX : postRightX;
+        let currentPegCount = r.targetPeg === "left" ? leftCount : rightCount;
 
-        // Strict target peg validation: ring ONLY lands on its designated target peg!
-        if (r.y > 65 && r.y < 130 && r.vy > 0) {
-          if (r.targetPeg === "left" && Math.abs(r.x - postAX) < 11 && leftCount < 3) {
-            landRingOnPeg(r, "left");
-          } else if (r.targetPeg === "right" && Math.abs(r.x - postBX) < 11 && rightCount < 3) {
-            landRingOnPeg(r, "right");
+        // 1. CATCHMENT FIRST: When ring is on top of post tip and descending
+        if (currentPegCount < 3) {
+          let hDist = Math.abs(ringCenterX - targetPostX);
+          let vDist = ringCenterY - postTopY;
+
+          // Gentle settling assist when hovering over post tip
+          if (hDist < 26 && vDist >= -30 && vDist <= 6 && r.vy > 0) {
+            r.vx += (targetPostX - ringCenterX) * 0.045;
+          }
+
+          // Catchment check
+          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 4.0) {
+            if (hDist <= 20 && vDist >= -12 && vDist <= 26) {
+              landRingOnPeg(r, r.targetPeg);
+              if (r.targetPeg === "left") leftCount++;
+              else rightCount++;
+              return; // Ring has successfully landed!
+            }
           }
         }
+
+        // 2. Shaft bounce: ONLY well below the top tip (below postTopY + 26)
+        [postLeftX, postRightX].forEach(px => {
+          if (ringCenterY > postTopY + 26 && ringCenterY < 235) {
+            let dx = ringCenterX - px;
+            if (Math.abs(dx) < 18) {
+              r.vx = dx < 0 ? -1.3 : 1.3;
+              r.x += r.vx;
+            }
+          }
+        });
 
         let el = document.getElementById(`ring-${r.id}`);
         if (el) {
@@ -2540,18 +2579,11 @@
         }
       });
 
-      if (landedCount === 6 && !answered) {
-        let status = document.getElementById("waterStatus");
-        if (status) {
-          status.style.color = "var(--green)";
-          status.textContent = "🎉 ALL 6 RINGS HOOKED! WATER TOSS MASTERED!";
-        }
-        let fakeOpt = ["WATER_RINGS", "Water Ring Toss Mastered", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
+      let currentLanded = waterRings.filter(w => w.landed).length;
+      if (currentLanded >= 6 && !answered) {
+        let fakeOpt = ["WATER_RINGS", "Nostalgic B2B Water Ring Toss Arcade", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
         let fakeBtn = document.createElement("div");
         choose(fakeOpt, fakeBtn);
-        let fb = document.getElementById("feedbackBar");
-        if (fb) fb.style.display = "flex";
-        document.getElementById("nextBtn").style.display = "inline-flex";
         return;
       }
 

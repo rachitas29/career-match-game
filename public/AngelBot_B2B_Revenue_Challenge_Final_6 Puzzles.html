@@ -1805,9 +1805,9 @@
 
         <!-- Primary Action Bar (Sending Application) -->
         <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-          <div class="btn green" style="padding: 12px 28px; font-size: 15px; font-weight: 800; box-shadow: 0 4px 20px rgba(16,185,129,0.3); cursor: default; user-select: none;">📧 SEND APPLICATION NOW →</div>
-          <button class="btn dark" style="padding: 12px 18px; font-size: 13px; background: rgba(234, 67, 53, 0.2); color: #ff8a80; border: 1px solid rgba(255, 138, 128, 0.4);" onclick="submitRoleApplication('gmail')">✉️ Open via Gmail</button>
-          <button class="btn dark" style="padding: 12px 16px; font-size: 12px; color: var(--gold); background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.35);" onclick="submitRoleApplication('copy')">📋 Copy Hiring Email</button>
+          <button class="btn green" style="padding: 14px 36px; font-size: 16px; font-weight: 900; box-shadow: 0 4px 24px rgba(16,185,129,0.4); cursor: pointer; border: none; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;" onclick="submitRoleApplication('gmail')">
+            <span>📧</span> SEND APPLICATION NOW →
+          </button>
         </div>
         <div id="applySuccessBox" style="display:none; margin-top: 14px;"></div>
       </div>
@@ -1823,6 +1823,35 @@
         <button class="btn dark" style="padding: 8px 14px; font-size: 12px;" onclick="restartSimulator()">🔄 Retry Simulator</button>
       </div>
     </section>
+  </div>
+
+
+  <!-- Animated Bonus Retry Unlocked Modal -->
+  <div id="retryUnlockModal" class="cheer-modal-overlay" style="display: none;">
+    <div class="cheer-card" style="border: 2px solid var(--gold); box-shadow: 0 10px 45px rgba(245, 158, 11, 0.4); max-width: 480px;">
+      <div style="font-size:48px;margin-bottom:6px;">🎉 🔁 🎯</div>
+      <div class="cheer-badge" style="background: rgba(245,158,11,0.2); color: var(--gold); border: 1px solid var(--gold);">
+        🔁 BONUS RETRY UNLOCKED!
+      </div>
+      <h2 class="cheer-title" id="retryModalTitle" style="color: #fff; font-size: 20px; margin: 8px 0;">Extra Chance to Play Failed Puzzles!</h2>
+      <p style="font-size:13.5px;color:#e2eaf4;line-height:1.5; margin-bottom: 12px;" id="retryModalSubtitle">
+        Great effort! You unlocked bonus retry chances to replay your failed puzzles and maximize your final arcade score!
+      </p>
+      
+      <div class="cheer-benefit-box" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); padding: 12px 14px; text-align: left;">
+        <div style="font-size:11.5px;font-weight:900;color:var(--gold);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+          <span>🎯 BONUS CHANCE DETAILS</span>
+        </div>
+        <div style="font-size:13px;color:#fef08a;line-height:1.45;" id="retryModalDesc">
+          You have earned a second chance to clear your failed puzzles and reach 100/100!
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+        <button class="btn green" style="width:100%;justify-content:center;padding:12px 20px;font-size:15px;font-weight:900;background:linear-gradient(135deg, #f59e0b, #d97706);color:#021008;border:none;box-shadow:0 0 16px rgba(245,158,11,0.5);" onclick="startBonusRetryPhase()">PLAY BONUS RETRIES NOW ➔</button>
+        <button class="btn dark" style="width:100%;justify-content:center;padding:8px 14px;font-size:12px;color:var(--muted);" onclick="skipBonusRetryAndFinish()">Skip Retries & View Final Score ➔</button>
+      </div>
+    </div>
   </div>
 
   <!-- Animated Cheering Popup Modal for Puzzle Completion -->
@@ -2007,9 +2036,15 @@
       clearInterval(interval);
       timer = (isRestartingSimulator || sessionStorage.getItem("angelbot_is_retry") === "true") ? 40 : 60;
       let q = activeQs[i];
-      document.getElementById("roundLabel").textContent = `${i + 1} / ${activeQs.length} · ${q.l}`;
-      document.getElementById("title").textContent = q.t;
-      document.getElementById("roundNo").textContent = `${i + 1}/${activeQs.length}`; 
+      if (isRetryPhase) {
+        document.getElementById("roundLabel").textContent = `🔁 BONUS RETRY (${i + 1}/${activeQs.length}) · ${q.l}`;
+        document.getElementById("title").textContent = `🔁 RETRY: ${q.t}`;
+        document.getElementById("roundNo").textContent = `RETRY ${i + 1}/${activeQs.length}`;
+      } else {
+        document.getElementById("roundLabel").textContent = `${i + 1} / ${activeQs.length} · ${q.l}`;
+        document.getElementById("title").textContent = q.t;
+        document.getElementById("roundNo").textContent = `${i + 1}/${activeQs.length}`;
+      } 
       document.getElementById("bar").style.width = `${(i + 1) / activeQs.length * 100}%`;
       document.getElementById("score").textContent = raw; 
       updateStreakUI();
@@ -2094,10 +2129,15 @@
       isTimerStarted = true;
       let btn = document.getElementById("startTimerBtn");
       if (btn) btn.style.display = "none";
-      document.querySelectorAll(".option").forEach(x => x.disabled = false);
+      document.querySelectorAll(".option, #pumpLeftBtn, #pumpRightBtn, #puzzleBox button, #blockDock button").forEach(x => {
+        x.disabled = false;
+        x.style.opacity = "1";
+        x.style.cursor = "pointer";
+      });
       startTimerInterval();
-      if (activeQs[i] && (activeQs[i].type === "sequence" || activeQs[i].type === "water_rings")) {
+      if (activeQs[i] && (activeQs[i].type === "water" || activeQs[i].type === "sequence" || activeQs[i].type === "water_rings")) {
         if (typeof updateWaterPhysics === "function") {
+          if (typeof waterAnimId !== "undefined" && waterAnimId) cancelAnimationFrame(waterAnimId);
           updateWaterPhysics();
         }
       }
@@ -2129,7 +2169,15 @@
       if (answered) return; 
       answered = true; 
       clearInterval(interval); 
-      document.querySelectorAll(".option").forEach(x => x.disabled = true);
+      if (typeof waterAnimId !== "undefined" && waterAnimId) {
+        cancelAnimationFrame(waterAnimId);
+        waterAnimId = null;
+      }
+      document.querySelectorAll(".option, #pumpLeftBtn, #pumpRightBtn, #puzzleBox button, #blockDock button").forEach(x => {
+        x.disabled = true;
+        x.style.opacity = "0.6";
+        x.style.cursor = "not-allowed";
+      });
       
       let currQ = activeQs[i];
       let isPuz = currQ.isPuzzle;
@@ -2216,6 +2264,7 @@
       document.querySelectorAll(".option, #puzzleBox button, #blockDock button, #pumpLeftBtn, #pumpRightBtn").forEach(x => x.disabled = true); 
       let currQ = activeQs[i];
       if (currQ && currQ.isPuzzle) {
+        history = history.filter(x => x.t !== currQ.t);
         history.push({ t: currQ.t, p: 0, c: "TIMEOUT", isPuzzle: true });
       }
       let fb = document.getElementById("feedbackBar");
@@ -2231,6 +2280,7 @@
       if (!answered) {
         let currQ = activeQs[i];
         if (currQ && currQ.isPuzzle) {
+          history = history.filter(x => x.t !== currQ.t);
           history.push({ t: currQ.t, p: 0, c: "SKIPPED", isPuzzle: true });
         }
         streak = 0;
@@ -2247,6 +2297,7 @@
     function skipPuzzleAndContinue() {
       let currQ = activeQs[i];
       if (currQ && currQ.isPuzzle) {
+        history = history.filter(x => x.t !== currQ.t);
         history.push({ t: currQ.t, p: 0, c: "SKIPPED", isPuzzle: true });
       }
       streak = 0;
@@ -2255,15 +2306,94 @@
     }
 
     function finish() {
+      if (!isRetryPhase) {
+        let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
+        let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
+        let failedPuzzles = history.filter(x => x.isPuzzle && x.p < 8);
+
+        // User's Updated Rule:
+        // If user solves 4 or 5 puzzles: get 1 failed puzzle unlocked to play
+        // If user solves 2 or 3 puzzles: get 2 failed puzzles unlocked to play
+        let maxRetries = 0;
+        if (solvedPuzzles === 4 || solvedPuzzles === 5) {
+          maxRetries = 1; // 1 failed puzzle unlocked
+        } else if (solvedPuzzles === 2 || solvedPuzzles === 3) {
+          maxRetries = 2; // 2 failed puzzles unlocked
+        }
+
+        let retriesAvailable = Math.min(maxRetries, failedPuzzles.length);
+
+        if (retriesAvailable > 0) {
+          isRetryPhase = true;
+          let failedTitles = failedPuzzles.slice(0, retriesAvailable).map(x => x.t);
+          let retryPuzzles = puzzles.filter(p => failedTitles.includes(p.t));
+          
+          activeQs = JSON.parse(JSON.stringify(retryPuzzles));
+          activeQs.forEach((item, idx) => {
+            let labelParts = item.l.split("·");
+            let cleanTitle = labelParts.length > 1 ? labelParts[1].trim() : item.l;
+            item.l = `BONUS RETRY ${idx + 1}/${activeQs.length} · ${cleanTitle}`;
+          });
+
+          triggerRetryUnlockModal(solvedPuzzles, retriesAvailable, activeQs);
+          return;
+        }
+      }
+      renderFinalResults();
+    }
+
+    function triggerRetryUnlockModal(solvedPuzzles, retriesAvailable, retryQueue) {
+      let modal = document.getElementById("retryUnlockModal");
+      let titleEl = document.getElementById("retryModalTitle");
+      let subEl = document.getElementById("retryModalSubtitle");
+      let descEl = document.getElementById("retryModalDesc");
+
+      if (titleEl) {
+        titleEl.textContent = retriesAvailable === 2 ? "🎉 2 Bonus Retries Unlocked!" : "🎉 1 Bonus Retry Unlocked!";
+      }
+      if (subEl) {
+        if (solvedPuzzles === 4 || solvedPuzzles === 5) {
+          subEl.innerHTML = `Awesome performance! You solved <b>${solvedPuzzles}/6</b> puzzles.<br>Because you solved ${solvedPuzzles} puzzles, you earned <b>1 Bonus Retry Chance</b> to replay a failed puzzle and boost your score!`;
+        } else if (solvedPuzzles === 2 || solvedPuzzles === 3) {
+          subEl.innerHTML = `Good effort! You solved <b>${solvedPuzzles}/6</b> puzzles.<br>Because you solved ${solvedPuzzles} puzzles, you earned <b>2 Bonus Retry Chances</b> to replay 2 failed puzzles and boost your score!`;
+        }
+      }
+      if (descEl) {
+        let puzNames = retryQueue.map(p => `• <b>${p.t}</b>`).join("<br>");
+        descEl.innerHTML = `Failed puzzles ready to replay:<br>${puzNames}`;
+      }
+
+      if (modal) {
+        modal.style.display = "grid";
+        modal.classList.add("active");
+      }
+    }
+
+    function startBonusRetryPhase() {
+      let modal = document.getElementById("retryUnlockModal");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove("active");
+      }
+      i = 0;
+      render();
+    }
+
+    function skipBonusRetryAndFinish() {
+      let modal = document.getElementById("retryUnlockModal");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove("active");
+      }
       renderFinalResults();
     }
 
     function renderFinalResults() {
-      let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
+      let attemptedPuzzles = 6;
       let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
 
       // Score strictly based on Solved (Won) Puzzles (e.g. 6/6 = 100%, 3/6 = 50%, 0/6 = 0%)
-      let final = Math.round((solvedPuzzles / 6) * 100);
+      let final = Math.min(100, Math.round((solvedPuzzles / 6) * 100));
       show("result");
       document.getElementById("final").textContent = final;
       document.getElementById("scoreRing").style.setProperty("--pct", final + "%");
@@ -2271,8 +2401,10 @@
       let report = document.getElementById("report");
       report.innerHTML = "";
 
+      let retryStatusText = isRetryPhase ? ` &nbsp;|&nbsp; <b>Bonus Retries:</b> <span style="color:var(--gold);font-weight:800;">Applied 🎯</span>` : "";
+
       [
-        `<b>Final Arcade Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/6 &nbsp;|&nbsp; <b>Solved (Won):</b> <span style="color:var(--green);font-weight:800;">${solvedPuzzles}/6</span>`,
+        `<b>Final Arcade Score:</b> <span style="color:var(--green)">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/6 &nbsp;|&nbsp; <b>Solved (Won):</b> <span style="color:var(--green);font-weight:800;">${solvedPuzzles}/6</span>${retryStatusText}`,
         `<b>Mastery Level:</b> <span style="color:var(--purple)">${final >= 80 ? "🏆 Master B2B Strategist" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>`
       ].forEach(x => {
         let d = document.createElement("div");
@@ -2295,41 +2427,33 @@
       let subject = encodeURIComponent(rawSub);
       let body = encodeURIComponent(rawBody);
       let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
-      let mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
 
-      // Guarantee email is copied to clipboard
+      // Always copy hiring email to clipboard as backup
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(email);
         }
       } catch (err) {}
 
+      // Open Gmail directly
+      window.open(gmailUrl, '_blank');
+
       let box = document.getElementById("applySuccessBox");
       if (box) {
         box.style.display = "block";
         box.innerHTML = `
-          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--green); border-radius: 14px; padding: 16px 18px; text-align: center; box-shadow: 0 6px 20px rgba(16,185,129,0.2); animation: fadeIn 0.3s ease-out;">
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--green); border-radius: 14px; padding: 14px 18px; text-align: center; box-shadow: 0 6px 20px rgba(16,185,129,0.2); animation: fadeIn 0.3s ease-out;">
             <div style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>✅</span> Hiring Email Copied & Ready to Send!
+              <span>✉️</span> Gmail Opened! Ready to Send Application
             </div>
-            <div style="font-size: 12.5px; color: var(--green); font-weight: 700; margin-bottom: 10px;">
+            <div style="font-size: 12.5px; color: var(--green); font-weight: 700; margin-bottom: 6px;">
               Target Role: "${roleVal}"
             </div>
-            <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4;">
-              Send your resume/CV to <b style="color:var(--gold);">info@angelbot.ai</b> using your preferred mail app below:
+            <p style="font-size: 12px; color: #cbd5e1; margin: 0; line-height: 1.4;">
+              Hiring email <b style="color:var(--gold);">info@angelbot.ai</b> has also been copied to your clipboard.
             </p>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-              <a href="${gmailUrl}" target="_blank" class="btn green" style="padding: 10px 18px; font-size: 13px; font-weight: 800; text-decoration: none;">✉️ Compose in Gmail Web →</a>
-              <a href="${mailtoUrl}" class="btn dark" style="padding: 10px 18px; font-size: 13px; font-weight: 700; text-decoration: none; color: #fff; background: rgba(255,255,255,0.08); border: 1px solid var(--border);">📧 Launch Default Mail App</a>
-            </div>
           </div>
         `;
-      }
-
-      if (mode === 'gmail') {
-        window.open(gmailUrl, '_blank');
-      } else if (mode === 'default') {
-        window.location.href = mailtoUrl;
       }
     }
 
@@ -2838,13 +2962,13 @@
             <!-- Target Pegs / Posts (Positioned with ample headroom for stacked rings) -->
             <div style="position:absolute;bottom:8px;left:24%;display:flex;flex-direction:column;align-items:center;">
               <div id="pegLeftRings" style="display:flex;flex-direction:column-reverse;gap:2px;margin-bottom:2px;"></div>
-              <div style="width:12px;height:82px;background:linear-gradient(90deg, #fbbf24, #d97706);border-radius:6px;box-shadow:0 0 10px rgba(251,191,36,0.7);border:1px solid #fef08a;"></div>
+              <div style="width:14px;height:150px;background:linear-gradient(90deg, #fef08a, #fbbf24, #d97706);border-radius:7px;box-shadow:0 0 14px rgba(251,191,36,0.7), 0 0 4px #fef08a;border:1px solid #fef08a;"></div>
               <div style="font-size:9.5px;color:#fbbf24;font-weight:900;margin-top:2px;white-space:nowrap;text-shadow:0 0 4px #000;">📌 DEAL & PROFIT</div>
             </div>
 
             <div style="position:absolute;bottom:8px;right:24%;display:flex;flex-direction:column;align-items:center;">
               <div id="pegRightRings" style="display:flex;flex-direction:column-reverse;gap:2px;margin-bottom:2px;"></div>
-              <div style="width:12px;height:82px;background:linear-gradient(90deg, #fbbf24, #d97706);border-radius:6px;box-shadow:0 0 10px rgba(251,191,36,0.7);border:1px solid #fef08a;"></div>
+              <div style="width:14px;height:150px;background:linear-gradient(90deg, #fef08a, #fbbf24, #d97706);border-radius:7px;box-shadow:0 0 14px rgba(251,191,36,0.7), 0 0 4px #fef08a;border:1px solid #fef08a;"></div>
               <div style="font-size:9.5px;color:#fbbf24;font-weight:900;margin-top:2px;white-space:nowrap;text-shadow:0 0 4px #000;">📌 CLIENT & GROWTH</div>
             </div>
 
@@ -2858,10 +2982,10 @@
 
           <!-- Interactive Pump Control Buttons -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:440px;margin:0 auto;">
-            <button id="pumpLeftBtn" class="btn" style="padding:10px 14px;font-size:13.5px;font-weight:800;border-radius:12px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:transform 0.1s;">
+            <button id="pumpLeftBtn" class="btn" disabled style="padding:10px 14px;font-size:13.5px;font-weight:800;border-radius:12px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:not-allowed;opacity:0.6;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:all 0.15s ease;">
               💨 PUMP LEFT JET
             </button>
-            <button id="pumpRightBtn" class="btn" style="padding:10px 14px;font-size:13.5px;font-weight:800;border-radius:12px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:transform 0.1s;">
+            <button id="pumpRightBtn" class="btn" disabled style="padding:10px 14px;font-size:13.5px;font-weight:800;border-radius:12px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:not-allowed;opacity:0.6;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:all 0.15s ease;">
               💨 PUMP RIGHT JET
             </button>
           </div>
@@ -2884,12 +3008,12 @@
 
       // Rings rest horizontally spread out along bottom floor (y: 195px), away from posts, waiting for pump action!
       waterRings = [
-        { id: 1, label: "🔴 Deal", color: "#f43f5e", targetPeg: "left", x: 20, y: 195, vx: 0, vy: 0, landed: false },
-        { id: 2, label: "🔵 Profit", color: "#38bdf8", targetPeg: "left", x: 65, y: 195, vx: 0, vy: 0, landed: false },
-        { id: 3, label: "🟢 Budget", color: "#10b981", targetPeg: "left", x: 185, y: 195, vx: 0, vy: 0, landed: false },
-        { id: 4, label: "🟡 Growth", color: "#fbbf24", targetPeg: "right", x: 250, y: 195, vx: 0, vy: 0, landed: false },
-        { id: 5, label: "🟣 Client", color: "#c084fc", targetPeg: "right", x: 375, y: 195, vx: 0, vy: 0, landed: false },
-        { id: 6, label: "🟠 Contract", color: "#fb923c", targetPeg: "right", x: 420, y: 195, vx: 0, vy: 0, landed: false }
+        { id: 1, label: "🔴 Deal", color: "#f43f5e", targetPeg: "left", x: 18, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 2, label: "🔵 Profit", color: "#38bdf8", targetPeg: "left", x: 62, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 3, label: "🟢 Budget", color: "#10b981", targetPeg: "left", x: 106, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 4, label: "🟡 Growth", color: "#fbbf24", targetPeg: "right", x: 375, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 5, label: "🟣 Client", color: "#c084fc", targetPeg: "right", x: 418, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 6, label: "🟠 Contract", color: "#fb923c", targetPeg: "right", x: 460, y: 195, vx: 0, vy: 0, landed: false }
       ];
 
       waterRings.forEach(r => {
@@ -2900,10 +3024,25 @@
         container.appendChild(el);
       });
 
-      document.getElementById("pumpLeftBtn").onclick = () => pumpWater("left");
-      document.getElementById("pumpRightBtn").onclick = () => pumpWater("right");
+      let pLeft = document.getElementById("pumpLeftBtn");
+      let pRight = document.getElementById("pumpRightBtn");
+      if (pLeft) {
+        pLeft.disabled = !isTimerStarted;
+        pLeft.style.opacity = isTimerStarted ? "1" : "0.6";
+        pLeft.style.cursor = isTimerStarted ? "pointer" : "not-allowed";
+        pLeft.onclick = () => pumpWater("left");
+      }
+      if (pRight) {
+        pRight.disabled = !isTimerStarted;
+        pRight.style.opacity = isTimerStarted ? "1" : "0.6";
+        pRight.style.cursor = isTimerStarted ? "pointer" : "not-allowed";
+        pRight.onclick = () => pumpWater("right");
+      }
 
-      if (waterAnimId) cancelAnimationFrame(waterAnimId);
+      if (waterAnimId) {
+        cancelAnimationFrame(waterAnimId);
+        waterAnimId = null;
+      }
       if (isTimerStarted) {
         updateWaterPhysics();
       }
@@ -2911,84 +3050,129 @@
 
     function pumpWater(side) {
       if (answered || !isTimerStarted) return;
+      if ((typeof waterAnimId === "undefined" || !waterAnimId) && typeof updateWaterPhysics === "function") {
+        updateWaterPhysics();
+      }
+
       let fb = document.getElementById("feedbackBar");
       if (fb) fb.style.display = "flex";
       let nb = document.getElementById("nextBtn");
       if (nb) nb.style.display = "inline-flex";
+
       let layer = document.getElementById("bubbleLayer");
       if (layer) {
-        let bubble = document.createElement("div");
-        let startX = side === "left" ? 15 + Math.random() * 25 : 65 + Math.random() * 25;
-        bubble.style.cssText = `position:absolute;bottom:10px;left:${startX}%;width:12px;height:12px;background:rgba(255,255,255,0.7);border-radius:50%;animation:bubbleUp 0.8s ease-out forwards;`;
-        layer.appendChild(bubble);
-        setTimeout(() => bubble.remove(), 800);
+        for (let b = 0; b < 4; b++) {
+          let bubble = document.createElement("div");
+          let startX = side === "left" ? 12 + Math.random() * 12 : 76 + Math.random() * 12;
+          bubble.style.cssText = `position:absolute;bottom:8px;left:${startX}%;width:${8 + Math.random() * 8}px;height:${8 + Math.random() * 8}px;background:rgba(255,255,255,0.8);border-radius:50%;animation:bubbleUp 0.7s ease-out forwards;pointer-events:none;`;
+          layer.appendChild(bubble);
+          setTimeout(() => bubble.remove(), 700);
+        }
       }
 
+      let tank = document.getElementById("waterTank");
+      let tankW = tank ? tank.clientWidth : 540;
+
+      // Realistic hydrodynamic jet: lifts rings with authentic turbulent water flow
       waterRings.forEach(r => {
         if (r.landed) return;
-        let ringXPercent = (r.x / 360) * 100;
-        if (side === "left" && ringXPercent < 55) {
-          r.vy = -5.8 - Math.random() * 3.2;
-          r.vx += (Math.random() - 0.5) * 3.0;
-        } else if (side === "right" && ringXPercent >= 45) {
-          r.vy = -5.8 - Math.random() * 3.2;
-          r.vx += (Math.random() - 0.5) * 3.0;
+        let ringCenterX = r.x + 24;
+
+        if (side === "left" && ringCenterX < tankW * 0.55) {
+          let nozzleX = tankW * 0.16;
+          let dist = Math.abs(ringCenterX - nozzleX);
+          let power = Math.max(0.3, 1 - (dist / (tankW * 0.42)));
+          r.vy = -7.2 * power - Math.random() * 2.2;
+          r.vx += (Math.random() * 2.2 - 0.6) * power;
+        } else if (side === "right" && ringCenterX > tankW * 0.45) {
+          let nozzleX = tankW * 0.84;
+          let dist = Math.abs(ringCenterX - nozzleX);
+          let power = Math.max(0.3, 1 - (dist / (tankW * 0.42)));
+          r.vy = -7.2 * power - Math.random() * 2.2;
+          r.vx -= (Math.random() * 2.2 - 0.6) * power;
         }
       });
     }
 
     function updateWaterPhysics() {
       let container = document.getElementById("ringContainer");
-      if (!container) return;
+      if (!container || !isTimerStarted || answered) return;
 
-      let landedCount = 0;
+      let tank = document.getElementById("waterTank");
+      let tankW = tank ? tank.clientWidth : 540;
+      let tankH = tank ? tank.clientHeight : 260;
+
+      let leftBar = document.querySelector("#pegLeftRings + div");
+      let rightBar = document.querySelector("#pegRightRings + div");
+      let tankRect = tank?.getBoundingClientRect();
+
+      let lBarR = leftBar && tankRect ? leftBar.getBoundingClientRect() : null;
+      let rBarR = rightBar && tankRect ? rightBar.getBoundingClientRect() : null;
+
+      let postLeftX = lBarR ? (lBarR.left - tankRect.left + lBarR.width / 2) : 174;
+      let postRightX = rBarR ? (rBarR.left - tankRect.left + rBarR.width / 2) : 357;
+      let postTopY = lBarR ? (lBarR.top - tankRect.top) : 85;
+
+      let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
+      let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
 
       waterRings.forEach(r => {
-        if (r.landed) {
-          landedCount++;
-          return;
-        }
+        if (r.landed) return;
 
-        // Realistic water turbulence & drift
-        r.vx += (Math.random() - 0.5) * 0.3;
-        r.vy += 0.18;
-        r.vy *= 0.96;
-        r.vx *= 0.94;
+        // Natural buoyancy and fluid drift
+        r.vx += (Math.sin(Date.now() / 250 + r.id) * 0.06);
+        r.vy += 0.13;
+        r.vy *= 0.965;
+        r.vx *= 0.95;
 
         r.x += r.vx;
         r.y += r.vy;
 
-        if (r.x < 15) { r.x = 15; r.vx *= -0.6; }
-        if (r.x > 325) { r.x = 325; r.vx *= -0.6; }
-        if (r.y < 15) { r.y = 15; r.vy *= 0.1; }
-        if (r.y > 180) { r.y = 180; r.vy = 0; }
+        let ringW = 48;
+        let ringH = 24;
+        let ringCenterX = r.x + ringW / 2;
+        let ringCenterY = r.y + ringH / 2;
 
-        let postAX = 100;
-        let postBX = 240;
+        // Tank boundaries
+        if (r.x < 8) { r.x = 8; r.vx = Math.abs(r.vx) * 0.5; }
+        if (r.x > tankW - ringW - 8) { r.x = tankW - ringW - 8; r.vx = -Math.abs(r.vx) * 0.5; }
+        if (r.y < 8) { r.y = 8; r.vy = Math.abs(r.vy) * 0.2; }
+        if (r.y > 194) { r.y = 194; r.vy = 0; r.vx *= 0.8; }
 
-        let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
-        let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
+        let targetPostX = r.targetPeg === "left" ? postLeftX : postRightX;
+        let currentPegCount = r.targetPeg === "left" ? leftCount : rightCount;
 
-        // Smooth magnetic pull towards matching post (or whichever has free space)
-        if (!r.landed) {
-          let preferredPeg = (r.targetPeg === "left" && leftCount < 3) ? "left" 
-                           : (r.targetPeg === "right" && rightCount < 3) ? "right"
-                           : (leftCount < 3 ? "left" : "right");
-          let targetX = preferredPeg === "left" ? postAX : postBX;
-          let distToPeg = Math.abs(r.x - targetX);
-          if (distToPeg < 36 && r.y > 40 && r.y < 195) {
-            r.vx += (targetX - r.x) * 0.08;
+        // 1. CATCHMENT FIRST: When ring is on top of post tip and descending
+        if (currentPegCount < 3) {
+          let hDist = Math.abs(ringCenterX - targetPostX);
+          let vDist = ringCenterY - postTopY;
+
+          // Gentle settling assist when hovering over post tip
+          if (hDist < 26 && vDist >= -30 && vDist <= 6 && r.vy > 0) {
+            r.vx += (targetPostX - ringCenterX) * 0.045;
+          }
+
+          // Catchment check
+          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 4.0) {
+            if (hDist <= 20 && vDist >= -12 && vDist <= 26) {
+              landRingOnPeg(r, r.targetPeg);
+              if (r.targetPeg === "left") leftCount++;
+              else rightCount++;
+              return; // Ring has successfully landed!
+            }
           }
         }
 
-        // Catchment check: Ring must be descending (vy > 0.4) after being pumped by water jets!
-        if (isTimerStarted && !r.landed && r.y > 60 && r.y < 160 && r.vy > 0.4) {
-          if (Math.abs(r.x - postAX) < 24 && leftCount < 3) {
-            landRingOnPeg(r, "left");
-          } else if (Math.abs(r.x - postBX) < 24 && rightCount < 3) {
-            landRingOnPeg(r, "right");
+        // 2. Shaft bounce: ONLY well below the top tip (below postTopY + 26)
+        [postLeftX, postRightX].forEach(px => {
+          if (ringCenterY > postTopY + 26 && ringCenterY < 235) {
+            let dx = ringCenterX - px;
+            if (Math.abs(dx) < 18) {
+              r.vx = dx < 0 ? -1.3 : 1.3;
+              r.x += r.vx;
+            }
           }
-        }
+        });
 
         let el = document.getElementById(`ring-${r.id}`);
         if (el) {
@@ -3002,9 +3186,6 @@
         let fakeOpt = ["WATER_RINGS", "Nostalgic B2B Water Ring Toss Arcade", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
         let fakeBtn = document.createElement("div");
         choose(fakeOpt, fakeBtn);
-        let fb = document.getElementById("feedbackBar");
-        if (fb) fb.style.display = "flex";
-        document.getElementById("nextBtn").style.display = "inline-flex";
         return;
       }
 
