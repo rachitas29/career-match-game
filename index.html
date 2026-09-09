@@ -3152,9 +3152,9 @@
             r.vx += (targetPostX - ringCenterX) * 0.008;
           }
 
-          // Strict catchment check requiring genuine player alignment
-          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 3.5) {
-            if (hDist <= 11 && vDist >= -8 && vDist <= 20) {
+          // Catchment check requiring player alignment (15px tolerance)
+          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 3.8) {
+            if (hDist <= 15 && vDist >= -10 && vDist <= 22) {
               landRingOnPeg(r, r.targetPeg);
               if (r.targetPeg === "left") leftCount++;
               else rightCount++;
