@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const db = require('./database');
 const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
@@ -80,6 +81,19 @@ app.use((req, res, next) => {
     next();
 });
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
+
+app.get('/', (req, res) => {
+    const publicIndex = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(publicIndex)) {
+        return res.sendFile(publicIndex);
+    }
+    const rootIndex = path.join(__dirname, 'index.html');
+    if (fs.existsSync(rootIndex)) {
+        return res.sendFile(rootIndex);
+    }
+    res.send('AngelBot B2B Revenue Challenge');
+});
 
 // Rate Limiter for Auth Endpoints
 const authLimiter = rateLimit({
