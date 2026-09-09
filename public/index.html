@@ -3082,14 +3082,14 @@
           let nozzleX = tankW * 0.16;
           let dist = Math.abs(ringCenterX - nozzleX);
           let power = Math.max(0.3, 1 - (dist / (tankW * 0.42)));
-          r.vy = -7.2 * power - Math.random() * 2.2;
-          r.vx += (Math.random() * 2.2 - 0.6) * power;
+          r.vy = -7.6 * power - Math.random() * 2.5;
+          r.vx += (Math.random() * 3.4 - 1.5) * power;
         } else if (side === "right" && ringCenterX > tankW * 0.45) {
           let nozzleX = tankW * 0.84;
           let dist = Math.abs(ringCenterX - nozzleX);
           let power = Math.max(0.3, 1 - (dist / (tankW * 0.42)));
-          r.vy = -7.2 * power - Math.random() * 2.2;
-          r.vx -= (Math.random() * 2.2 - 0.6) * power;
+          r.vy = -7.6 * power - Math.random() * 2.5;
+          r.vx -= (Math.random() * 3.4 - 1.5) * power;
         }
       });
     }
@@ -3120,10 +3120,10 @@
         if (r.landed) return;
 
         // Natural buoyancy and fluid drift
-        r.vx += (Math.sin(Date.now() / 250 + r.id) * 0.06);
-        r.vy += 0.13;
+        r.vx += (Math.sin(Date.now() / 200 + r.id) * 0.08);
+        r.vy += 0.14;
         r.vy *= 0.965;
-        r.vx *= 0.95;
+        r.vx *= 0.94;
 
         r.x += r.vx;
         r.y += r.vy;
@@ -3142,19 +3142,19 @@
         let targetPostX = r.targetPeg === "left" ? postLeftX : postRightX;
         let currentPegCount = r.targetPeg === "left" ? leftCount : rightCount;
 
-        // 1. CATCHMENT FIRST: When ring is on top of post tip and descending
+        // 1. CATCHMENT FIRST: Ring must align directly with the target post tip while descending
         if (currentPegCount < 3) {
           let hDist = Math.abs(ringCenterX - targetPostX);
           let vDist = ringCenterY - postTopY;
 
-          // Gentle settling assist when hovering over post tip
-          if (hDist < 26 && vDist >= -30 && vDist <= 6 && r.vy > 0) {
-            r.vx += (targetPostX - ringCenterX) * 0.045;
+          // Subtle natural drift assist over post tip
+          if (hDist < 14 && vDist >= -20 && vDist <= 2 && r.vy > 0) {
+            r.vx += (targetPostX - ringCenterX) * 0.008;
           }
 
-          // Catchment check
-          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 4.0) {
-            if (hDist <= 20 && vDist >= -12 && vDist <= 26) {
+          // Strict catchment check requiring genuine player alignment
+          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 3.5) {
+            if (hDist <= 11 && vDist >= -8 && vDist <= 20) {
               landRingOnPeg(r, r.targetPeg);
               if (r.targetPeg === "left") leftCount++;
               else rightCount++;
