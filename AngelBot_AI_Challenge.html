@@ -3333,7 +3333,7 @@
     }
 
     function moveMaze(dr, dc) {
-      if (answered || !isTimerStarted || !activeMazeConfig) return;
+      if (answered || !isTimerStarted || !activeMazeConfig || mazeMovesLeft <= 0) return;
       let nr = mazePos.r + dr;
       let nc = mazePos.c + dc;
       if (nr < 0 || nr > 5 || nc < 0 || nc > 5) return;
@@ -3384,10 +3384,15 @@
       }
 
       if (mazeMovesLeft <= 0) {
+        answered = true;
+        if (activeQs[i] && activeQs[i].isPuzzle) {
+          history = history.filter(x => x.t !== activeQs[i].t);
+          history.push({ t: activeQs[i].t, p: 0, c: "OUT OF MOVES", isPuzzle: true });
+        }
         let f = document.getElementById("feedback");
         f.className = "feedback bad";
         f.style.display = "block";
-        f.innerHTML = "<b>⏰ Out of moves!</b> Click 'Next Puzzle →' to continue!";
+        f.innerHTML = "<b>⏰ Out of Moves!</b> You ran out of moves before reaching the contract. Click 'Next Puzzle →' to continue!";
         document.getElementById("nextBtn").style.display = "inline-flex";
         return;
       }
