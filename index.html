@@ -2107,9 +2107,21 @@
       }
     }
 
+    function disablePuzzleControls() {
+      answered = true;
+      document.querySelectorAll(".option, #puzzleBox button, .maze-btn, #runnerControls button, #sudokuBox button, #blockDock button, #pumpLeftBtn, #pumpRightBtn, .puzzle-btn").forEach(x => {
+        if (x.id !== "nextBtn") {
+          x.disabled = true;
+          x.style.opacity = "0.45";
+          x.style.cursor = "not-allowed";
+          x.style.pointerEvents = "none";
+        }
+      });
+    }
+
     function choose(o, b) {
-      if (answered) return; 
-      answered = true; 
+      if (answered) return;
+      disablePuzzleControls(); 
       clearInterval(interval); 
       if (typeof waterAnimId !== "undefined" && waterAnimId) {
         cancelAnimationFrame(waterAnimId);
@@ -3384,7 +3396,7 @@
       }
 
       if (mazeMovesLeft <= 0) {
-        answered = true;
+        disablePuzzleControls();
         if (activeQs[i] && activeQs[i].isPuzzle) {
           history = history.filter(x => x.t !== activeQs[i].t);
           history.push({ t: activeQs[i].t, p: 0, c: "OUT OF MOVES", isPuzzle: true });
