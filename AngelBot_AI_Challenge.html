@@ -2373,9 +2373,9 @@
     }
 
     function submitRoleApplication(mode) {
-      let roleVal = "AngelBot AI Challenge Applicant";
+      let roleVal = "IT Presales/ B2B Sales /Paid Internship Marketing";
       let email = "info@angelbot.ai";
-      let rawSub = `Application for Role: ${roleVal}`;
+      let rawSub = "Application for IT Presales/ B2B Sales /Paid Internship Marketing — AngelBot AI (Incubated & Funded by ONGC Startup Fund)";
       let rawBody = `Hello AngelBot AI Hiring Team,\n\nI completed the AngelBot AI Challenge and I am applying for:\nRole: ${roleVal}\n\nPlease find my resume/profile attached.\n\nBest regards,`;
       
       let subject = encodeURIComponent(rawSub);
@@ -3692,7 +3692,7 @@
 
     function submitRoleApplication(mode) {
       let selectedRadio = document.querySelector('input[name="targetRole"]:checked');
-      let selectedRole = selectedRadio ? selectedRadio.value : "IT Marketing / IT B2B Sales / IT Paid Internship";
+      let selectedRole = selectedRadio ? selectedRadio.value : "IT Presales/ B2B Sales /Paid Internship Marketing";
 
       let email = "info@angelbot.ai";
       let subject = `Application for ${selectedRole} — AngelBot AI (Incubated & Funded by ONGC Startup Fund)`;
