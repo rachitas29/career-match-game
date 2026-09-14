@@ -2350,11 +2350,11 @@
       let report = document.getElementById("report");
       report.innerHTML = "";
 
-      let retryStatusText = isRetryPhase ? ` &nbsp;|&nbsp; <b>Bonus Retries:</b> <span style="color:var(--gold);font-weight:800;">Applied 🎯</span>` : "";
+      let retryStatusText = isRetryPhase ? ` &nbsp;|&nbsp; <b>Bonus Retries:</b> <span style="color:var(--gold);font-weight:900;">Applied 🎯</span>` : "";
 
       [
-        `<div style="display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;"><b>Final Arcade Score:</b> <span style="color:var(--green);font-size:17px;font-weight:900;">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/${totalPuz} &nbsp;|&nbsp; <span style="white-space:nowrap;"><b>Solved (Won):</b> <span style="color:var(--green);font-weight:900;font-size:17px;">${solvedPuzzles}/${totalPuz}</span></span>${retryStatusText}</div>`,
-        `<b>Mastery Level:</b> <span style="color:var(--purple);font-size:17px;font-weight:900;">${final >= 80 ? "🏆 Master B2B Strategist" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>`
+        `<b>Final Arcade Score:</b> <span style="color:var(--green);font-size:17px;font-weight:900;">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/${totalPuz} &nbsp;|&nbsp; <b>Solved (Won):</b> <span style="color:var(--green);font-weight:900;font-size:17px;">${solvedPuzzles}/${totalPuz}</span>`,
+        `<b>Mastery Level:</b> <span style="color:var(--purple);font-size:17px;font-weight:900;">${final >= 80 ? "🏆 Master B2B Strategist" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>${retryStatusText}`
       ].forEach(x => {
         let d = document.createElement("div");
         d.className = "resultbox";
