@@ -2180,7 +2180,7 @@
 
       let attemptedPuzzles = history.filter(x => x.isPuzzle).length;
       let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
-      let totalPuzzles = 6;
+      let totalPuzzles = puzzles.length;
 
       if (titleEl) titleEl.textContent = title || "Arcade Puzzle Mastered!";
       if (insightEl) insightEl.innerHTML = insight || "Great commercial strategy execution!";
