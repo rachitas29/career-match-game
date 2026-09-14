@@ -1785,14 +1785,14 @@
         <button class="btn dark" style="padding: 14px 28px; font-size: 16px; font-weight: 900; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border: 1.5px solid var(--panel-border); border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;" onclick="restartSimulator()"><span>🔄</span> RETRY SIMULATOR</button>
       </div>
 
-      <!-- Direct Application Submission Information (No Button) -->
-      <div style="background: rgba(16, 185, 129, 0.12); border: 2px solid var(--green); border-radius: 18px; padding: 18px 24px; text-align: center; box-shadow: 0 8px 25px rgba(16,185,129,0.2); margin-top: 18px;">
-        <div style="font-size: 17px; font-weight: 900; color: #ffffff; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span>✉️</span> Ready to Submit Your Application!
+      <!-- Primary Action: Send Application Now Section (BELOW Marks Section) -->
+      <div style="background: linear-gradient(145deg, rgba(50, 173, 255, 0.08), rgba(32, 209, 139, 0.04)); border: 2px solid var(--green); border-radius: 20px; padding: 22px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(16,185,129,0.25); text-align: center;">
+        <div style="padding: 8px 0 4px; display: flex; justify-content: center; align-items: center;">
+          <button class="btn green" style="padding: 16px 44px; font-size: 18px; font-weight: 900; box-shadow: 0 6px 30px rgba(16,185,129,0.5); cursor: pointer; border: none; border-radius: 14px; display: inline-flex; align-items: center; gap: 10px; transition: transform 0.15s ease;" onclick="submitRoleApplication('gmail')">
+            <span>📧</span> SEND APPLICATION NOW →
+          </button>
         </div>
-        <div style="font-size: 15px; color: #e2e8f0; font-weight: 700; line-height: 1.5;">
-          Please send your resume & profile directly to: <a href="mailto:info@angelbot.ai" style="color: var(--gold); text-decoration: underline; font-size: 17px; font-weight: 900;">info@angelbot.ai</a>
-        </div>
+        <div id="applySuccessBox" style="display:none; margin-top: 14px;"></div>
       </div>
     </section>
   </div>
@@ -2380,68 +2380,1365 @@
       let subject = encodeURIComponent(rawSub);
       let body = encodeURIComponent(rawBody);
       let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
-      let mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
 
-      // Copy email to clipboard
+      // Always copy hiring email to clipboard as backup
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(email);
         }
       } catch (err) {}
 
-      // Try opening Gmail tab
-      let win = null;
-      try {
-        win = window.open(gmailUrl, '_blank');
-      } catch(e) {}
+      // Open Gmail directly
+      window.open(gmailUrl, '_blank');
 
-      // If Gmail popup did not open, try mailto link (Outlook / System Default Mail App)
-      if (!win || win.closed || typeof win.closed === "undefined") {
-        try {
-          window.location.href = mailtoUrl;
-        } catch (e) {}
-      }
-
-      // Display on-screen fallback prompt box with Copy Email button
       let box = document.getElementById("applySuccessBox");
       if (box) {
         box.style.display = "block";
         box.innerHTML = `
-          <div style="background: rgba(16, 185, 129, 0.14); border: 2px solid var(--green); border-radius: 16px; padding: 16px 20px; text-align: center; box-shadow: 0 8px 25px rgba(16,185,129,0.25); animation: fadeIn 0.3s ease-out; margin-top: 14px;">
-            <div style="font-size: 16px; font-weight: 900; color: #ffffff; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>✉️</span> Ready to Submit Your Application!
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--green); border-radius: 14px; padding: 14px 18px; text-align: center; box-shadow: 0 6px 20px rgba(16,185,129,0.2); animation: fadeIn 0.3s ease-out;">
+            <div style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>✉️</span> Gmail Opened! Ready to Send Application
             </div>
-            <div style="font-size: 13.5px; color: #e2e8f0; font-weight: 700; margin-bottom: 8px;">
-              Please send your resume & profile directly to: <b style="color: var(--gold); font-size: 15px;">info@angelbot.ai</b>
+            <div style="font-size: 12.5px; color: var(--green); font-weight: 700; margin-bottom: 6px;">
+              Target Role: "${roleVal}"
             </div>
-            <div style="font-size: 12px; color: #cbd5e1; line-height: 1.45; max-width: 480px; margin: 0 auto 10px;">
-              <i>If Gmail or Outlook did not open automatically, copy the email address below and send your email manually.</i>
-            </div>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-              <button class="btn dark" style="padding: 8px 18px; font-size: 12px; font-weight: 800;" onclick="copyHiringEmailPrompt()">📋 Copy Email: info@angelbot.ai</button>
-            </div>
+            <p style="font-size: 12px; color: #cbd5e1; margin: 0; line-height: 1.4;">
+              Hiring email <b style="color:var(--gold);">info@angelbot.ai</b> has also been copied to your clipboard.
+            </p>
           </div>
         `;
       }
-
-      // Explicit fallback prompt if mail apps fail to open
-      setTimeout(() => {
-        prompt("Send your resume directly to AngelBot AI hiring email below:", email);
-      }, 400);
     }
 
-    function copyHiringEmailPrompt() {
-      let email = "info@angelbot.ai";
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(email);
-          alert("📋 Email copied to clipboard: info@angelbot.ai\n\nSend your resume/profile directly to this address!");
-        } else {
-          prompt("Copy hiring email address below:", email);
-        }
-      } catch(e) {
-        prompt("Copy hiring email address below:", email);
+    /* ----------------------------------------------------
+       HELPER & PUZZLE FUNCTIONS
+    ---------------------------------------------------- */
+    function shuffle(array) {
+      let arr = [...array];
+      for (let idx = arr.length - 1; idx > 0; idx--) {
+        const j = Math.floor(Math.random() * (idx + 1));
+        const temp = arr[idx];
+        arr[idx] = arr[j];
+        arr[j] = temp;
       }
+      return arr;
+    }
+
+    function togglePuzzleHint(hintId, btnId) {
+      let h = document.getElementById(hintId);
+      let b = document.getElementById(btnId);
+      if (!h) return;
+      if (h.style.display === "none" || !h.style.display) {
+        h.style.display = "block";
+        if (b) b.textContent = "🙈 Hide Puzzle Hint";
+      } else {
+        h.style.display = "none";
+        if (b) b.textContent = "💡 Show Puzzle Hint";
+      }
+    }
+
+    // Puzzle 1: B2B Temple Deal Runner 🏃 (3 Lifelines Arcade Challenge)
+    let runnerLane = 1; // 0: Left, 1: Center, 2: Right
+    let runnerAction = "normal"; // "normal", "jump", "slide"
+    let runnerActionTimer = null;
+    let runnerLives = 3; // 3 Lifelines
+    let runnerKeysCollected = { cio: false, cfo: false, sec: false };
+    let runnerDistance = 0;
+    let runnerAnimId = null;
+    let runnerItems = [];
+    let runnerSpeed = 1.35; // Comfortable reading speed
+
+    function renderTempleRunner(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      runnerLane = 1;
+      runnerAction = "normal";
+      runnerLives = 3;
+      runnerDistance = 0;
+      runnerSpeed = 1.35;
+      runnerKeysCollected = { cio: false, cfo: false, sec: false };
+
+      // Hide situation div completely
+      let sitEl = document.getElementById("situation");
+      if (sitEl) {
+        sitEl.style.display = "none";
+        sitEl.innerHTML = "";
+      }
+
+      box.innerHTML = `
+        <div class="puzzle-wrap temple-runner-wrap">
+          <!-- Key Badges & Health Lives (Strict Single Row) -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:0 2px;flex-wrap:nowrap;gap:6px;">
+            <div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap;overflow:hidden;">
+              <span id="runner-badge-cio" style="padding:3px 7px;border-radius:99px;border:1px solid var(--border);background:rgba(255,255,255,0.08);color:#f8fafc;font-weight:800;font-size:11px;white-space:nowrap;">🧠 Chief Information Officer: ❌</span>
+              <span id="runner-badge-cfo" style="padding:3px 7px;border-radius:99px;border:1px solid var(--border);background:rgba(255,255,255,0.08);color:#f8fafc;font-weight:800;font-size:11px;white-space:nowrap;">💰 Chief Financial Officer: ❌</span>
+              <span id="runner-badge-sec" style="padding:3px 7px;border-radius:99px;border:1px solid var(--border);background:rgba(255,255,255,0.08);color:#f8fafc;font-weight:800;font-size:11px;white-space:nowrap;">🛡️ Security: ❌</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;background:rgba(244,63,94,0.15);padding:3px 8px;border-radius:99px;border:1px solid rgba(244,63,94,0.4);white-space:nowrap;flex-shrink:0;">
+              <span style="font-size:10.5px;font-weight:900;color:var(--red);">3 LIVES</span>
+              <span id="runnerLivesText" style="font-size:11.5px;font-weight:900;color:var(--red);">
+                ❤️ ❤️ ❤️
+              </span>
+            </div>
+          </div>
+
+          <!-- Temple Runner Track Canvas Area -->
+          <div class="temple-canvas-container" id="templeCanvas">
+
+            <!-- Track Perspective Lanes -->
+            <div style="position:absolute;bottom:0;left:15%;width:23.3%;height:100%;border-right:2px dashed rgba(255,255,255,0.15);"></div>
+            <div style="position:absolute;bottom:0;left:38.3%;width:23.3%;height:100%;border-right:2px dashed rgba(255,255,255,0.15);"></div>
+
+            <!-- Items Layer -->
+            <div id="runnerItemsLayer" style="position:absolute;inset:0;"></div>
+
+            <!-- Player Avatar with Jump / Slide animation -->
+            <div id="runnerPlayer" style="position:absolute;bottom:15px;left:43.3%;width:13.3%;height:38px;background:rgba(56,189,248,0.25);border:2px solid #38bdf8;border-radius:10px;display:grid;place-items:center;font-size:20px;box-shadow:0 0 15px #38bdf8;transition:left 0.05s linear, transform 0.12s ease-out, height 0.12s ease-out;z-index:5;">
+              🏃
+            </div>
+          </div>
+
+          <!-- Touch / Onscreen Action Controls with Embedded Keyboard Hints -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;max-width:440px;margin:0 auto;">
+            <button class="btn primary" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;display:flex;flex-direction:column;align-items:center;" onclick="changeRunnerLane(-1)"><span>⬅️ LEFT</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(← Left)</span></button>
+            <button class="btn green" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;display:flex;flex-direction:column;align-items:center;" onclick="triggerRunnerAction('jump')"><span>🦘 JUMP 🚧</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(Low Wall)</span></button>
+            <button class="btn dark" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;background:rgba(251,191,36,0.15);color:var(--gold);border:1px solid rgba(251,191,36,0.4);display:flex;flex-direction:column;align-items:center;" onclick="triggerRunnerAction('slide')"><span>🛹 SLIDE 📐</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(High Beam)</span></button>
+            <button class="btn primary" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;display:flex;flex-direction:column;align-items:center;" onclick="changeRunnerLane(1)"><span>RIGHT ➡️</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(→ Right)</span></button>
+          </div>
+        </div>
+      `;
+
+      // Keyboard Controls setup
+      window.onkeydown = (evt) => {
+        if (activeQs[i] && activeQs[i].type === "runner" && !answered) {
+          if (evt.key === "ArrowLeft" || evt.key === "a") changeRunnerLane(-1);
+          else if (evt.key === "ArrowRight" || evt.key === "d") changeRunnerLane(1);
+          else if (evt.key === "ArrowUp" || evt.key === "w" || evt.key === " ") triggerRunnerAction("jump");
+          else if (evt.key === "ArrowDown" || evt.key === "s") triggerRunnerAction("slide");
+        }
+      };
+
+      initTempleRunnerGame();
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      let nb = document.getElementById("nextBtn");
+      if (nb) nb.style.display = "inline-flex";
+    }
+
+    function changeRunnerLane(dir) {
+      if (answered || !isTimerStarted) return;
+      runnerLane = Math.max(0, Math.min(2, runnerLane + dir));
+      let player = document.getElementById("runnerPlayer");
+      if (player) {
+        let laneLefts = ["20%", "43.3%", "66.6%"];
+        player.style.left = laneLefts[runnerLane];
+      }
+    }
+
+    function triggerRunnerAction(act) {
+      if (answered || !isTimerStarted || runnerAction !== "normal") return;
+      runnerAction = act;
+      let player = document.getElementById("runnerPlayer");
+      if (player) {
+        if (act === "jump") {
+          player.style.transform = "translateY(-45px) scale(1.1)";
+          player.innerHTML = "🦘";
+        } else if (act === "slide") {
+          player.style.transform = "scaleY(0.5) translateY(20px)";
+          player.innerHTML = "🛹";
+        }
+      }
+      setTimeout(() => {
+        runnerAction = "normal";
+        if (player) {
+          player.style.transform = "none";
+          player.innerHTML = "🏃";
+        }
+      }, 500);
+    }
+
+    function initTempleRunnerGame() {
+      // Tactical puzzle layout with 3 Lifelines, moderate speed, fake decoy keys, and mandatory jump/slides
+      runnerItems = [
+        { lane: 0, y: -60, type: "key", id: "cio", icon: "🧠", label: "CIO Clearance" },
+        { lane: 1, y: -60, type: "decoy", icon: "💣", label: "Fake Decoy Key!" },
+        
+        { lane: 0, y: -160, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
+        { lane: 1, y: -160, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
+        { lane: 2, y: -160, type: "obs", icon: "⛔", label: "Procurement Stall" },
+        
+        { lane: 2, y: -270, type: "key", id: "cfo", icon: "💰", label: "CFO Approval" },
+        { lane: 0, y: -270, type: "decoy", icon: "💣", label: "Fake Decoy Key!" },
+        
+        { lane: 0, y: -380, type: "obs_jump", icon: "🚧", label: "Spike Trap (JUMP!)" },
+        { lane: 1, y: -380, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
+        
+        { lane: 1, y: -490, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
+        { lane: 2, y: -490, type: "decoy", icon: "💣", label: "Fake Decoy Key!" },
+        
+        { lane: 0, y: -600, type: "obs", icon: "⛔", label: "Legal Freeze" },
+        { lane: 1, y: -600, type: "obs_jump", icon: "🚧", label: "Laser Barrier (JUMP!)" },
+        { lane: 2, y: -600, type: "obs_slide", icon: "📐", label: "High Gate (SLIDE!)" },
+        
+        { lane: 1, y: -740, type: "contract", icon: "📜", label: "Target Contract" }
+      ];
+
+      if (runnerAnimId) cancelAnimationFrame(runnerAnimId);
+      updateTempleRunnerLoop();
+    }
+
+    function updateTempleRunnerLoop() {
+      let layer = document.getElementById("runnerItemsLayer");
+      if (!layer) return;
+      layer.innerHTML = "";
+
+      if (!isTimerStarted) {
+        if (!answered) runnerAnimId = requestAnimationFrame(updateTempleRunnerLoop);
+        return;
+      }
+
+      runnerDistance += 0.25;
+      let distText = document.getElementById("runnerDistText");
+      if (distText) distText.textContent = Math.min(100, Math.floor(runnerDistance));
+
+      let laneLefts = ["20%", "43.3%", "66.6%"];
+
+      runnerItems.forEach(item => {
+        item.y += runnerSpeed;
+
+        if (item.y > 0 && item.y < 280) {
+          let el = document.createElement("div");
+          el.style.cssText = `position:absolute;top:${item.y}px;left:${laneLefts[item.lane]};width:13.3%;height:32px;border-radius:8px;display:grid;place-items:center;font-size:18px;z-index:2;`;
+          
+          if (item.type === "obs" || item.type === "obs_jump" || item.type === "obs_slide") {
+            el.style.background = "rgba(244,63,94,0.4)";
+            el.style.border = "1.5px solid var(--red)";
+            if (item.type === "obs_jump") el.style.borderBottom = "4px solid #ff1744";
+            if (item.type === "obs_slide") {
+              el.style.borderTop = "4px solid #ff1744";
+              el.style.background = "rgba(239,68,68,0.45)";
+            }
+          } else if (item.type === "decoy") {
+            el.style.background = "rgba(244,63,94,0.2)";
+            el.style.border = "1.5px dashed var(--red)";
+          } else if (item.type === "key") {
+            el.style.background = "rgba(251,191,36,0.35)";
+            el.style.border = "1.5px solid var(--gold)";
+            el.style.boxShadow = "0 0 12px rgba(251,191,36,0.6)";
+          } else if (item.type === "contract") {
+            el.style.width = "70%";
+            el.style.left = "15%";
+            el.style.height = "42px";
+            el.style.background = "linear-gradient(90deg, rgba(16,185,129,0.5), rgba(251,191,36,0.6), rgba(16,185,129,0.5))";
+            el.style.border = "2px solid #fbbf24";
+            el.style.borderRadius = "10px";
+            el.style.color = "#ffffff";
+            el.style.fontWeight = "900";
+            el.style.fontSize = "14px";
+            el.style.boxShadow = "0 0 25px rgba(251,191,36,0.8), 0 0 15px rgba(16,185,129,0.8)";
+            el.innerHTML = "📜 TARGET CONTRACT 🏆";
+          }
+          if (item.type !== "contract") el.textContent = item.icon;
+          layer.appendChild(el);
+        }
+
+        // Precise collision detection with Jump / Slide evasions & Decoy handling
+        if (item.y >= 210 && item.y <= 255 && !item.hit) {
+          if (item.type === "contract" || item.lane === runnerLane) {
+            item.hit = true;
+            let evaded = false;
+            if (item.type === "obs_jump" && runnerAction === "jump") evaded = true;
+            if (item.type === "obs_slide" && runnerAction === "slide") evaded = true;
+
+            if (evaded) {
+              let f = document.getElementById("feedback");
+              if (f) {
+                f.className = "feedback good";
+                f.style.display = "block";
+                f.innerHTML = `<b>🔥 PERFECT TACTICAL ${runnerAction.toUpperCase()}!</b> Dodged ${item.label}!`;
+              }
+            } else {
+              if (item.type.startsWith("obs") || item.type === "decoy") {
+                runnerLives--;
+                let livesEl = document.getElementById("runnerLivesText");
+                if (livesEl) {
+                  let hearts = "";
+                  for (let h = 0; h < 3; h++) hearts += (h < runnerLives ? "❤️ " : "🖤 ");
+                  livesEl.textContent = hearts;
+                }
+
+                if (runnerLives <= 0) {
+                  let fb = document.getElementById("feedbackBar");
+                  if (fb) fb.style.display = "flex";
+                  let f = document.getElementById("feedback");
+                  if (f) {
+                    f.className = "feedback bad";
+                    f.style.display = "block";
+                    f.innerHTML = `<b>💥 GAME OVER on Temple Runner!</b> Out of hearts! Auto-advancing to Next Challenge...`;
+                  }
+                  let currQ = activeQs[i];
+                  let fakeOpt = ["TEMPLE_RUNNER", currQ ? currQ.t : "3D B2B Temple Deal Runner", 0, "Wiped out on Temple Runner obstacles! Keep honing your decision accuracy for the next challenge!", "HIGH"];
+                  setTimeout(() => choose(fakeOpt, document.createElement("div")), 800);
+                  return;
+                } else {
+                  let fb = document.getElementById("feedbackBar");
+                  if (fb) fb.style.display = "flex";
+                  let f = document.getElementById("feedback");
+                  if (f) {
+                    f.className = "feedback bad";
+                    f.style.display = "block";
+                    f.innerHTML = `<b>⚠️ Hit ${item.type === "decoy" ? "Fake Decoy Key" : item.label}!</b> Lost 1 Heart! (${runnerLives} hearts remaining)`;
+                  }
+                }
+              } else if (item.type === "key") {
+                runnerKeysCollected[item.id] = true;
+                let labelName = item.id === "cio" ? "Chief Information Officer" : (item.id === "cfo" ? "Chief Financial Officer" : "Security");
+                let badge = document.getElementById(`runner-badge-${item.id}`);
+                if (badge) {
+                  badge.style.borderColor = "var(--green)";
+                  badge.style.color = "var(--green)";
+                  badge.innerHTML = `${item.icon} ${labelName}: ✅`;
+                }
+                let fb = document.getElementById("feedbackBar");
+                if (fb) fb.style.display = "flex";
+                let f = document.getElementById("feedback");
+                if (f) {
+                  f.className = "feedback good";
+                  f.style.display = "block";
+                  f.innerHTML = `<b>✨ Secured REAL ${item.icon} ${item.label}!</b> Next key unlocked!`;
+                }
+              } else if (item.type === "contract") {
+                let allKeys = runnerKeysCollected.cio && runnerKeysCollected.cfo && runnerKeysCollected.sec;
+                let currQ = activeQs[i];
+                let puzzleTitle = currQ ? currQ.t : "3D B2B Temple Deal Runner";
+                if (allKeys) {
+                  let fakeOpt = ["TEMPLE_RUNNER", puzzleTitle, 9, "Masterful B2B Tactical Run! You dodged fake decoys & traps, collected all 3 real executive keys and reached the Target Contract! Progressing to Next Challenge...", "LOW"];
+                  choose(fakeOpt, document.createElement("div"));
+                  return;
+                } else {
+                  let fakeOpt = ["TEMPLE_RUNNER", puzzleTitle, 0, "Reached the contract post without all 3 executive clearances! Progressing to Next Challenge...", "HIGH"];
+                  choose(fakeOpt, document.createElement("div"));
+                  return;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!answered) {
+        runnerAnimId = requestAnimationFrame(updateTempleRunnerLoop);
+      }
+    }
+
+    // Puzzle 3: 4x4 Commercial Revenue Sudoku (Challenging 4-Blank Grid)
+    function renderSudoku(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-sudoku" style="padding:10px 14px;text-align:center;">
+          <div class="sudoku-grid">
+            <div class="sudoku-cell">2</div><div class="sudoku-cell missing" style="background:rgba(251,191,36,0.25);border-color:var(--gold);color:var(--gold);">❓</div><div class="sudoku-cell">1</div><div class="sudoku-cell">3</div>
+            <div class="sudoku-cell">1</div><div class="sudoku-cell">3</div><div class="sudoku-cell">2</div><div class="sudoku-cell missing" style="background:rgba(244,63,94,0.25);border-color:var(--red);color:var(--red);">⚡</div>
+            <div class="sudoku-cell">4</div><div class="sudoku-cell">1</div><div class="sudoku-cell missing">⭐</div><div class="sudoku-cell">2</div>
+            <div class="sudoku-cell missing" style="background:rgba(56,189,248,0.25);border-color:#38bdf8;color:#38bdf8;">🔷</div><div class="sudoku-cell">2</div><div class="sudoku-cell">4</div><div class="sudoku-cell">1</div>
+          </div>
+          <div class="options" id="sudokuOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;"></div>
+        </div>
+      `;
+      let optsBox = document.getElementById("sudokuOpts");
+      let rawOptions = [
+        ["", "❓=4 | ⚡=4 | ⭐=3 | 🔷=3", 9, "Masterful Sudoku Solving! ❓=4 (Row 1), ⚡=4 (Row 2), ⭐=3 (Row 3), and 🔷=3 (Row 4) perfectly satisfy all rows and columns without duplicates!", "LOW"],
+        ["", "❓=3 | ⚡=1 | ⭐=2 | 🔷=4", 2, "Incorrect: Number 3 already exists in Row 1!", "MED"],
+        ["", "❓=4 | ⚡=1 | ⭐=2 | 🔷=3", 1, "Incorrect: Number 1 already exists in Column 2 and Number 2 already exists in Column 3!", "MED"],
+        ["", "❓=4 | ⚡=3 | ⭐=2 | 🔷=1", 0, "Incorrect: Number 2 already exists in Column 3!", "HIGH"]
+      ];
+      let options = shuffle(rawOptions);
+      options.forEach((o, idx) => {
+        let b = document.createElement("button");
+        b.className = "option";
+        b.style.cssText = "padding:6px 10px;font-size:12px;";
+        b.disabled = !isTimerStarted;
+        let letter = String.fromCharCode(65 + idx);
+        o[0] = letter;
+        b.innerHTML = `<b>${letter}.</b> ${o[1]}`;
+        b.onclick = () => {
+          if (!isTimerStarted) return;
+          choose(o, b);
+          let fb = document.getElementById("feedbackBar");
+          if (fb) fb.style.display = "flex";
+          document.getElementById("nextBtn").style.display = "inline-flex";
+        };
+        optsBox.appendChild(b);
+      });
+    }
+
+    // Puzzle 6: King's Deal Tower Climb (Direct Interactive Block Movement)
+    function renderBlock(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-dots" style="padding:8px 10px;text-align:center;">
+          <!-- Tower Staircase Grid -->
+          <div class="tower-staircase" style="display:flex;flex-direction:column;gap:4px;max-width:360px;margin:0 auto 8px;">
+            <!-- Step 4 (Top Goal) -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;">
+              <div style="width:82%;background:rgba(251,191,36,0.2);border:1px solid var(--gold);border-radius:8px;padding:6px 10px;color:#fbbf24;font-weight:800;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;">
+                <span>🏆 STEP 4: ENTERPRISE CONTRACT</span><span id="kingPos4" style="font-size:16px;">📜</span>
+              </div>
+            </div>
+
+            <!-- Step 3 (Missing Bridge Block Slot) -->
+            <div style="display:flex;align-items:center;justify-content:center;">
+              <div id="gapBlock" style="width:82%;background:rgba(244,63,94,0.18);border:2px dashed var(--red);border-radius:8px;padding:6px 10px;color:#f43f5e;font-weight:800;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;transition:all 0.4s ease;">
+                <span id="gapBlockText">❓ STEP 3: MOVE BLOCK HERE</span><span id="kingPos3"></span>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="display:flex;align-items:center;justify-content:flex-start;">
+              <div style="width:82%;background:rgba(56,189,248,0.15);border:1px solid var(--blue);border-radius:8px;padding:6px 10px;color:#38bdf8;font-weight:700;font-size:11px;display:flex;justify-content:space-between;align-items:center;">
+                <span>⚡ STEP 2: TECH ARCHITECTURE OK</span><span id="kingPos2"></span>
+              </div>
+            </div>
+
+            <!-- Step 1 (Start) -->
+            <div style="display:flex;align-items:center;justify-content:flex-start;">
+              <div style="width:82%;background:rgba(16,185,129,0.15);border:1px solid var(--green);border-radius:8px;padding:6px 10px;color:#10b981;font-weight:700;font-size:11px;display:flex;justify-content:space-between;align-items:center;">
+                <span>🎯 STEP 1: QUALIFIED DEAL</span><span id="kingPos1" style="font-size:16px;">👑</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Interactive Block Dock -->
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 8px;max-width:380px;margin:0 auto;">
+            <p style="font-size:10.5px;color:var(--gold);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">👇 Moveable Block Dock (Click to Move):</p>
+            <div id="blockDock" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;"></div>
+          </div>
+        </div>
+      `;
+
+      let dock = document.getElementById("blockDock");
+      let blocks = [
+        { id: "b1", label: "🧱 Budget Block", isCorrect: true, text: "Executive Budget Approved", msg: "Flawless block placement! The Executive Budget Block snaps into Step 3, allowing King 👑 to climb straight to the Top Contract 📜!" },
+        { id: "b2", label: "📉 50% Price Cut", isCorrect: false, text: "Heavy Price Cut Block", msg: "The price cut block collapsed under pressure! Pick the solid Executive Budget block to support the climb." },
+        { id: "b3", label: "👻 Verbal Promise", isCorrect: false, text: "Unapproved Verbal Block", msg: "Unapproved verbal blocks wobble and collapse! Select the solid Executive Budget block." }
+      ];
+
+      shuffle(blocks).forEach(item => {
+        let b = document.createElement("button");
+        b.className = "btn";
+        b.style.cssText = "padding:6px 4px;font-size:11px;font-weight:700;border-radius:8px;background:rgba(56,189,248,0.12);border:1px solid var(--blue);color:var(--text);cursor:pointer;transition:transform 0.2s, background 0.2s;";
+        b.innerHTML = item.label;
+        
+        b.onmouseenter = () => b.style.transform = "translateY(-2px)";
+        b.onmouseleave = () => b.style.transform = "translateY(0)";
+
+        b.onclick = () => {
+          if (answered || !isTimerStarted) return;
+          if (item.isCorrect) {
+            let gap = document.getElementById("gapBlock");
+            let p1 = document.getElementById("kingPos1");
+            let p2 = document.getElementById("kingPos2");
+
+            if (gap) {
+              gap.style.background = "rgba(16,185,129,0.3)";
+              gap.style.borderColor = "var(--green)";
+              gap.style.color = "var(--green)";
+              gap.style.transform = "scale(1.02)";
+              document.getElementById("gapBlockText").innerHTML = `✅ STEP 3: ${item.text}`;
+            }
+
+            dock.querySelectorAll("button").forEach(btn => btn.disabled = true);
+
+            if (p1) p1.textContent = "";
+            if (p2) p2.textContent = "👑";
+
+            setTimeout(() => {
+              let p2_cur = document.getElementById("kingPos2");
+              let p3_cur = document.getElementById("kingPos3");
+              if (p2_cur) p2_cur.textContent = "";
+              if (p3_cur) p3_cur.textContent = "👑";
+
+              setTimeout(() => {
+                let p3_cur2 = document.getElementById("kingPos3");
+                let p4_cur = document.getElementById("kingPos4");
+                if (p3_cur2) p3_cur2.textContent = "";
+                if (p4_cur) {
+                  p4_cur.textContent = "👑 📜";
+                  p4_cur.style.fontSize = "18px";
+                }
+              }, 400);
+            }, 350);
+
+            let fakeOpt = ["BLOCK", "King's Deal Tower Climb", 9, item.msg, "LOW"];
+            choose(fakeOpt, b);
+          } else {
+            b.style.background = "rgba(244,63,94,0.3)";
+            b.style.borderColor = "var(--red)";
+            dock.querySelectorAll("button").forEach(btn => btn.disabled = true);
+            let fakeWrongOpt = ["BLOCK", "King's Deal Tower Climb", 0, item.msg, "MED"];
+            choose(fakeWrongOpt, b);
+          }
+          let fb = document.getElementById("feedbackBar");
+          if (fb) fb.style.display = "flex";
+          let nb = document.getElementById("nextBtn");
+          if (nb) nb.style.display = "inline-flex";
+        };
+        dock.appendChild(b);
+      });
+    }
+
+    // Puzzle 5: Classic Nostalgic Water Ring Toss Game 🌊⭕📌
+    let waterRings = [];
+    let waterScore = 0;
+    let waterAnimId = null;
+
+    function renderWaterRings(q) {
+      renderSequence(q);
+    }
+
+    function renderSequence(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      waterScore = 0;
+
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-dots" style="padding:14px;text-align:center;">
+
+          <!-- Water Tank Chamber (Expanded for High Visibility) -->
+          <div id="waterTank" style="position:relative;width:100%;max-width:480px;height:235px;margin:0 auto 10px;background:linear-gradient(180deg, rgba(14,165,233,0.35) 0%, rgba(3,105,161,0.65) 100%);border:3px solid #38bdf8;border-radius:20px;overflow:hidden;box-shadow:inset 0 0 25px rgba(56,189,248,0.4), 0 8px 24px rgba(0,0,0,0.4);">
+            <!-- Water Bubbles Background -->
+            <div id="bubbleLayer" style="position:absolute;inset:0;pointer-events:none;"></div>
+
+            <!-- Target Pegs / Posts (Positioned with ample headroom for stacked rings) -->
+            <div style="position:absolute;bottom:8px;left:24%;display:flex;flex-direction:column;align-items:center;">
+              <div id="pegLeftRings" style="display:flex;flex-direction:column-reverse;gap:2px;margin-bottom:2px;"></div>
+              <div style="width:14px;height:150px;background:linear-gradient(90deg, #fef08a, #fbbf24, #d97706);border-radius:7px;box-shadow:0 0 14px rgba(251,191,36,0.7), 0 0 4px #fef08a;border:1px solid #fef08a;"></div>
+              <div style="font-size:9.5px;color:#fbbf24;font-weight:900;margin-top:2px;white-space:nowrap;text-shadow:0 0 4px #000;">📌 DEAL & PROFIT</div>
+            </div>
+
+            <div style="position:absolute;bottom:8px;right:24%;display:flex;flex-direction:column;align-items:center;">
+              <div id="pegRightRings" style="display:flex;flex-direction:column-reverse;gap:2px;margin-bottom:2px;"></div>
+              <div style="width:14px;height:150px;background:linear-gradient(90deg, #fef08a, #fbbf24, #d97706);border-radius:7px;box-shadow:0 0 14px rgba(251,191,36,0.7), 0 0 4px #fef08a;border:1px solid #fef08a;"></div>
+              <div style="font-size:9.5px;color:#fbbf24;font-weight:900;margin-top:2px;white-space:nowrap;text-shadow:0 0 4px #000;">📌 CLIENT & GROWTH</div>
+            </div>
+
+            <!-- Floating Rings Container -->
+            <div id="ringContainer" style="position:absolute;inset:0;pointer-events:none;"></div>
+
+            <!-- Water Nozzles at bottom -->
+            <div style="position:absolute;bottom:4px;left:15%;font-size:18px;">💨</div>
+            <div style="position:absolute;bottom:4px;right:15%;font-size:18px;">💨</div>
+          </div>
+
+          <!-- Interactive Pump Control Buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:440px;margin:0 auto;">
+            <button id="pumpLeftBtn" class="btn" disabled style="padding:10px 14px;font-size:13.5px;font-weight:800;border-radius:12px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:not-allowed;opacity:0.6;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:all 0.15s ease;">
+              💨 PUMP LEFT JET
+            </button>
+            <button id="pumpRightBtn" class="btn" disabled style="padding:10px 14px;font-size:13.5px;font-weight:800;border-radius:12px;background:linear-gradient(135deg, #0284c7, #0369a1);border:1px solid #38bdf8;color:#fff;cursor:not-allowed;opacity:0.6;box-shadow:0 4px 12px rgba(2,132,199,0.4);transition:all 0.15s ease;">
+              💨 PUMP RIGHT JET
+            </button>
+          </div>
+        </div>
+      `;
+
+      initWaterRingsGame();
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      let nb = document.getElementById("nextBtn");
+      if (nb) nb.style.display = "inline-flex";
+    }
+
+    function initWaterRingsGame() {
+      let container = document.getElementById("ringContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      document.getElementById("pegLeftRings").innerHTML = "";
+      document.getElementById("pegRightRings").innerHTML = "";
+
+      // Rings rest horizontally spread out along bottom floor (y: 195px), away from posts, waiting for pump action!
+      waterRings = [
+        { id: 1, label: "🔴 Deal", color: "#f43f5e", targetPeg: "left", x: 18, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 2, label: "🔵 Profit", color: "#38bdf8", targetPeg: "left", x: 62, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 3, label: "🟢 Budget", color: "#10b981", targetPeg: "left", x: 106, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 4, label: "🟡 Growth", color: "#fbbf24", targetPeg: "right", x: 375, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 5, label: "🟣 Client", color: "#c084fc", targetPeg: "right", x: 418, y: 195, vx: 0, vy: 0, landed: false },
+        { id: 6, label: "🟠 Contract", color: "#fb923c", targetPeg: "right", x: 460, y: 195, vx: 0, vy: 0, landed: false }
+      ];
+
+      waterRings.forEach(r => {
+        let el = document.createElement("div");
+        el.id = `ring-${r.id}`;
+        el.style.cssText = `position:absolute;padding:3px 7px;min-width:48px;height:24px;border:2.5px solid ${r.color};background:rgba(15,23,42,0.65);border-radius:12px;box-shadow:0 0 10px ${r.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;left:${r.x}px;top:${r.y}px;transition:transform 0.1s linear;white-space:nowrap;`;
+        el.textContent = r.label;
+        container.appendChild(el);
+      });
+
+      let pLeft = document.getElementById("pumpLeftBtn");
+      let pRight = document.getElementById("pumpRightBtn");
+      if (pLeft) {
+        pLeft.disabled = !isTimerStarted;
+        pLeft.style.opacity = isTimerStarted ? "1" : "0.6";
+        pLeft.style.cursor = isTimerStarted ? "pointer" : "not-allowed";
+        pLeft.onclick = () => pumpWater("left");
+      }
+      if (pRight) {
+        pRight.disabled = !isTimerStarted;
+        pRight.style.opacity = isTimerStarted ? "1" : "0.6";
+        pRight.style.cursor = isTimerStarted ? "pointer" : "not-allowed";
+        pRight.onclick = () => pumpWater("right");
+      }
+
+      if (waterAnimId) {
+        cancelAnimationFrame(waterAnimId);
+        waterAnimId = null;
+      }
+      if (isTimerStarted) {
+        updateWaterPhysics();
+      }
+    }
+
+    function pumpWater(side) {
+      if (answered || !isTimerStarted) return;
+      if ((typeof waterAnimId === "undefined" || !waterAnimId) && typeof updateWaterPhysics === "function") {
+        updateWaterPhysics();
+      }
+
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      let nb = document.getElementById("nextBtn");
+      if (nb) nb.style.display = "inline-flex";
+
+      let layer = document.getElementById("bubbleLayer");
+      if (layer) {
+        for (let b = 0; b < 4; b++) {
+          let bubble = document.createElement("div");
+          let startX = side === "left" ? 12 + Math.random() * 12 : 76 + Math.random() * 12;
+          bubble.style.cssText = `position:absolute;bottom:8px;left:${startX}%;width:${8 + Math.random() * 8}px;height:${8 + Math.random() * 8}px;background:rgba(255,255,255,0.8);border-radius:50%;animation:bubbleUp 0.7s ease-out forwards;pointer-events:none;`;
+          layer.appendChild(bubble);
+          setTimeout(() => bubble.remove(), 700);
+        }
+      }
+
+      let tank = document.getElementById("waterTank");
+      let tankW = tank ? tank.clientWidth : 540;
+
+      // Realistic hydrodynamic jet: lifts rings with authentic turbulent water flow
+      waterRings.forEach(r => {
+        if (r.landed) return;
+        let ringCenterX = r.x + 24;
+
+        if (side === "left" && ringCenterX < tankW * 0.55) {
+          let nozzleX = tankW * 0.16;
+          let dist = Math.abs(ringCenterX - nozzleX);
+          let power = Math.max(0.3, 1 - (dist / (tankW * 0.42)));
+          r.vy = -7.6 * power - Math.random() * 2.5;
+          r.vx += (Math.random() * 3.4 - 1.5) * power;
+        } else if (side === "right" && ringCenterX > tankW * 0.45) {
+          let nozzleX = tankW * 0.84;
+          let dist = Math.abs(ringCenterX - nozzleX);
+          let power = Math.max(0.3, 1 - (dist / (tankW * 0.42)));
+          r.vy = -7.6 * power - Math.random() * 2.5;
+          r.vx -= (Math.random() * 3.4 - 1.5) * power;
+        }
+      });
+    }
+
+    function updateWaterPhysics() {
+      let container = document.getElementById("ringContainer");
+      if (!container || !isTimerStarted || answered) return;
+
+      let tank = document.getElementById("waterTank");
+      let tankW = tank ? tank.clientWidth : 540;
+      let tankH = tank ? tank.clientHeight : 260;
+
+      let leftBar = document.querySelector("#pegLeftRings + div");
+      let rightBar = document.querySelector("#pegRightRings + div");
+      let tankRect = tank?.getBoundingClientRect();
+
+      let lBarR = leftBar && tankRect ? leftBar.getBoundingClientRect() : null;
+      let rBarR = rightBar && tankRect ? rightBar.getBoundingClientRect() : null;
+
+      let postLeftX = lBarR ? (lBarR.left - tankRect.left + lBarR.width / 2) : 174;
+      let postRightX = rBarR ? (rBarR.left - tankRect.left + rBarR.width / 2) : 357;
+      let postTopY = lBarR ? (lBarR.top - tankRect.top) : 85;
+
+      let leftCount = waterRings.filter(w => w.landed && w.peg === "left").length;
+      let rightCount = waterRings.filter(w => w.landed && w.peg === "right").length;
+
+      waterRings.forEach(r => {
+        if (r.landed) return;
+
+        // Natural buoyancy and fluid drift
+        r.vx += (Math.sin(Date.now() / 200 + r.id) * 0.08);
+        r.vy += 0.14;
+        r.vy *= 0.965;
+        r.vx *= 0.94;
+
+        r.x += r.vx;
+        r.y += r.vy;
+
+        let ringW = 48;
+        let ringH = 24;
+        let ringCenterX = r.x + ringW / 2;
+        let ringCenterY = r.y + ringH / 2;
+
+        // Tank boundaries
+        if (r.x < 8) { r.x = 8; r.vx = Math.abs(r.vx) * 0.5; }
+        if (r.x > tankW - ringW - 8) { r.x = tankW - ringW - 8; r.vx = -Math.abs(r.vx) * 0.5; }
+        if (r.y < 8) { r.y = 8; r.vy = Math.abs(r.vy) * 0.2; }
+        if (r.y > 194) { r.y = 194; r.vy = 0; r.vx *= 0.8; }
+
+        let targetPostX = r.targetPeg === "left" ? postLeftX : postRightX;
+        let currentPegCount = r.targetPeg === "left" ? leftCount : rightCount;
+
+        // 1. CATCHMENT FIRST: Ring must align directly with the target post tip while descending
+        if (currentPegCount < 3) {
+          let hDist = Math.abs(ringCenterX - targetPostX);
+          let vDist = ringCenterY - postTopY;
+
+          // Subtle natural drift assist over post tip
+          if (hDist < 14 && vDist >= -20 && vDist <= 2 && r.vy > 0) {
+            r.vx += (targetPostX - ringCenterX) * 0.008;
+          }
+
+          // Catchment check requiring player alignment (15px tolerance)
+          if (isTimerStarted && !r.landed && r.vy > 0.05 && r.vy < 3.8) {
+            if (hDist <= 15 && vDist >= -10 && vDist <= 22) {
+              landRingOnPeg(r, r.targetPeg);
+              if (r.targetPeg === "left") leftCount++;
+              else rightCount++;
+              return; // Ring has successfully landed!
+            }
+          }
+        }
+
+        // 2. Shaft bounce: ONLY well below the top tip (below postTopY + 26)
+        [postLeftX, postRightX].forEach(px => {
+          if (ringCenterY > postTopY + 26 && ringCenterY < 235) {
+            let dx = ringCenterX - px;
+            if (Math.abs(dx) < 18) {
+              r.vx = dx < 0 ? -1.3 : 1.3;
+              r.x += r.vx;
+            }
+          }
+        });
+
+        let el = document.getElementById(`ring-${r.id}`);
+        if (el) {
+          el.style.left = `${r.x}px`;
+          el.style.top = `${r.y}px`;
+        }
+      });
+
+      let currentLanded = waterRings.filter(w => w.landed).length;
+      if (currentLanded >= 6 && !answered) {
+        let fakeOpt = ["WATER_RINGS", "Nostalgic B2B Water Ring Toss Arcade", 9, "Nostalgic Water Ring Toss Cleared! You hooked all 6 deal rings onto the target posts!", "LOW"];
+        let fakeBtn = document.createElement("div");
+        choose(fakeOpt, fakeBtn);
+        return;
+      }
+
+      waterAnimId = requestAnimationFrame(updateWaterPhysics);
+    }
+
+    function landRingOnPeg(ring, pegSide) {
+      ring.landed = true;
+      ring.peg = pegSide;
+      let el = document.getElementById(`ring-${ring.id}`);
+      if (el) el.remove();
+
+      let pegEl = document.getElementById(pegSide === "left" ? "pegLeftRings" : "pegRightRings");
+      if (pegEl) {
+        let landedRing = document.createElement("div");
+        landedRing.style.cssText = `padding:2px 7px;min-width:52px;height:19px;border:2px solid #fff;border-radius:10px;background:${ring.color};box-shadow:0 0 10px ${ring.color}, 0 2px 5px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);transform:scale(1.02);animation:pulse 0.3s ease-out;`;
+        landedRing.textContent = ring.label;
+        pegEl.appendChild(landedRing);
+      }
+
+      waterScore++;
+      let countText = document.getElementById("ringCountText");
+      if (countText) countText.textContent = `${waterScore} / 6`;
+    }
+
+    // Upgraded 6x6 B2B Deal Master Maze
+    let mazePos = { r: 0, c: 0 };
+    let mazeGoal = { r: 5, c: 5 };
+    let mazeMovesLeft = 20;
+    let mazeCollectedKeys = {};
+    let activeMazeConfig = null;
+
+    const mazeConfigs = {
+      executive: {
+        title: "Executive Alignment Maze",
+        subtitle: "Navigate 💼 to collect 3 Leader Clearances (🧠 Tech, 💰 Finance, 🛡️ Security) to unlock Contract (📜):",
+        keys: [
+          { r: 0, c: 5, id: "k1", icon: "🧠", label: "Chief Information Officer" },
+          { r: 3, c: 1, id: "k2", icon: "💰", label: "Chief Financial Officer" },
+          { r: 5, c: 1, id: "k3", icon: "🛡️", label: "Security Signoff" }
+        ],
+        obstacles: [
+          { r: 1, c: 1, label: "⛔ Delay Trap", icon: "⛔" },
+          { r: 1, c: 3, label: "📉 Price Cut", icon: "📉" },
+          { r: 2, c: 4, label: "👻 No Reply", icon: "👻" },
+          { r: 3, c: 3, label: "🛑 Legal Hold", icon: "🛑" },
+          { r: 4, c: 1, label: "⛔ Budget Cut", icon: "⛔" }
+        ],
+        solveMessage: "Masterful Strategy! You collected all 3 leader approvals to sign the contract!"
+      },
+      procurement: {
+        title: "Procurement & Terms Maze",
+        subtitle: "Navigate 💼 to collect 3 Commercial Terms (📝 Guarantee, ⚖️ Compliance, 🏷️ Pricing) to unlock Contract (📜):",
+        keys: [
+          { r: 0, c: 4, id: "k1", icon: "📝", label: "Service Guarantee" },
+          { r: 2, c: 1, id: "k2", icon: "⚖️", label: "Legal Approval" },
+          { r: 4, c: 2, id: "k3", icon: "🏷️", label: "Fair Pricing" }
+        ],
+        obstacles: [
+          { r: 1, c: 2, label: "🛑 Term Delay", icon: "🛑" },
+          { r: 2, c: 3, label: "📉 Margin Cut", icon: "📉" },
+          { r: 3, c: 4, label: "⛔ Contract Trap", icon: "⛔" },
+          { r: 4, c: 0, label: "👻 No Reply", icon: "👻" }
+        ],
+        solveMessage: "Brilliant Negotiation! You locked in all 3 commercial terms!"
+      },
+      expansion: {
+        title: "Account Expansion Maze",
+        subtitle: "Navigate 💼 to collect 3 Growth Boosters (📈 Upgrade, 🤝 Renewal, ⚡ Add-on) to unlock Scale (📜):",
+        keys: [
+          { r: 1, c: 5, id: "k1", icon: "📈", label: "Account Upgrade" },
+          { r: 3, c: 2, id: "k2", icon: "🤝", label: "Yearly Renewal" },
+          { r: 5, c: 0, id: "k3", icon: "⚡", label: "Add-on Feature" }
+        ],
+        obstacles: [
+          { r: 0, c: 3, label: "📉 Cancellation", icon: "📉" },
+          { r: 2, c: 4, label: "⛔ Downsizing", icon: "⛔" },
+          { r: 4, c: 1, label: "👻 Client Left", icon: "👻" },
+          { r: 3, c: 5, label: "🛑 Project Freeze", icon: "🛑" }
+        ],
+        solveMessage: "Outstanding Management! You expanded account revenue and secured multi-year renewal!"
+      },
+      pipeline: {
+        title: "Pipeline Velocity Maze",
+        subtitle: "Navigate 💼 to collect 3 Milestone Badges (🎯 Target Fit, 📊 Value Case, 🛡️ Security Check) to close Deal (📜):",
+        keys: [
+          { r: 0, c: 3, id: "k1", icon: "🎯", label: "Target Lead" },
+          { r: 2, c: 5, id: "k2", icon: "📊", label: "Value Case" },
+          { r: 4, c: 1, id: "k3", icon: "🛡️", label: "Security Check" }
+        ],
+        obstacles: [
+          { r: 1, c: 1, label: "⛔ Unfit Lead", icon: "⛔" },
+          { r: 2, c: 3, label: "📉 Spam Filter", icon: "📉" },
+          { r: 3, c: 0, label: "👻 No-Show Demo", icon: "👻" },
+          { r: 4, c: 4, label: "🛑 Competitor Pitch", icon: "🛑" }
+        ],
+        solveMessage: "Flawless Pipeline Execution! You navigated all pipeline stages to win the enterprise deal!"
+      }
+    };
+
+    function renderMaze(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      mazePos = { r: 0, c: 0 };
+      mazeMovesLeft = 20;
+      
+      let configKey = q.mazeId || "executive";
+      activeMazeConfig = mazeConfigs[configKey] || mazeConfigs.executive;
+      
+      mazeCollectedKeys = {};
+      activeMazeConfig.keys.forEach(k => mazeCollectedKeys[k.id] = false);
+
+      // Hide situation div completely
+      let sitEl = document.getElementById("situation");
+      if (sitEl) {
+        sitEl.style.display = "none";
+        sitEl.innerHTML = "";
+      }
+
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-maze" style="padding:14px;">
+          <div id="mazeKeyBadges" style="display:flex; justify-content:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; font-size:13.5px;">
+            ${activeMazeConfig.keys.map(k => `
+              <span id="badge-${k.id}" style="padding:4px 10px; border-radius:99px; border:1.5px solid var(--border); background:rgba(255,255,255,0.08); color:#f8fafc; font-weight:800; font-size:13.5px;">
+                ${k.icon} ${k.label}: ❌
+              </span>
+            `).join("")}
+          </div>
+
+          <div class="maze-grid" id="mazeBoard"></div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; max-width:300px; margin:6px auto 0;">
+            <span id="mazeMovesCounter" style="font-size:11.5px; color:var(--muted); font-weight:700;">Moves: 20</span>
+            <div class="maze-pad" style="margin-top:0;">
+              <div></div>
+              <button class="maze-btn" onclick="moveMaze(-1, 0)">⬆️</button>
+              <div></div>
+              <button class="maze-btn" onclick="moveMaze(0, -1)">⬅️</button>
+              <button class="maze-btn" onclick="moveMaze(1, 0)">⬇️</button>
+              <button class="maze-btn" onclick="moveMaze(0, 1)">➡️</button>
+            </div>
+          </div>
+        </div>
+      `;
+      drawMazeBoard();
+    }
+
+    function drawMazeBoard() {
+      let board = document.getElementById("mazeBoard");
+      if (!board || !activeMazeConfig) return;
+      board.innerHTML = "";
+      
+      activeMazeConfig.keys.forEach(k => {
+        let badge = document.getElementById(`badge-${k.id}`);
+        let isDone = mazeCollectedKeys[k.id];
+        if (badge) {
+          badge.style.borderColor = isDone ? "var(--green)" : "var(--border)";
+          badge.style.color = isDone ? "var(--green)" : "var(--muted)";
+          badge.innerHTML = `${k.icon} ${k.label}: ${isDone ? "✅ OK" : "❌"}`;
+        }
+      });
+
+      let movesEl = document.getElementById("mazeMovesCounter");
+      if (movesEl) movesEl.textContent = `Moves: ${mazeMovesLeft}`;
+
+      let allKeysCollected = activeMazeConfig.keys.every(k => mazeCollectedKeys[k.id]);
+
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
+          let cell = document.createElement("div");
+          cell.className = "maze-cell";
+          
+          let isPlayer = (mazePos.r === r && mazePos.c === c);
+          let isGoal = (mazeGoal.r === r && mazeGoal.c === c);
+          let obs = activeMazeConfig.obstacles.find(o => o.r === r && o.c === c);
+          let keyObj = activeMazeConfig.keys.find(k => k.r === r && k.c === c);
+          
+          if (isPlayer) {
+            cell.classList.add("player");
+            cell.textContent = "💼";
+          } else if (isGoal) {
+            cell.classList.add("goal");
+            if (!allKeysCollected) cell.classList.add("locked");
+            cell.textContent = allKeysCollected ? "📜" : "🔒";
+          } else if (obs) {
+            cell.classList.add("obstacle");
+            cell.textContent = obs.icon || "⛔";
+          } else if (keyObj && !mazeCollectedKeys[keyObj.id]) {
+            cell.classList.add("key");
+            cell.textContent = keyObj.icon;
+          }
+          
+          cell.onclick = () => {
+            let dr = r - mazePos.r;
+            let dc = c - mazePos.c;
+            if (Math.abs(dr) + Math.abs(dc) === 1) {
+              moveMaze(dr, dc);
+            }
+          };
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    function moveMaze(dr, dc) {
+      if (answered || !isTimerStarted || !activeMazeConfig || mazeMovesLeft <= 0) return;
+      let nr = mazePos.r + dr;
+      let nc = mazePos.c + dc;
+      if (nr < 0 || nr > 5 || nc < 0 || nc > 5) return;
+      
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      document.getElementById("nextBtn").style.display = "inline-flex";
+
+      let obs = activeMazeConfig.obstacles.find(o => o.r === nr && o.c === nc);
+      if (obs) {
+        let f = document.getElementById("feedback");
+        f.className = "feedback bad";
+        f.style.display = "block";
+        f.innerHTML = `<b>⚠️ Stalled by ${obs.label}!</b> Try another direction or click 'Next Scenario →'`;
+        return;
+      }
+
+      mazeMovesLeft--;
+      let movesEl = document.getElementById("mazeMovesCounter");
+      if (movesEl) movesEl.textContent = `Moves: ${mazeMovesLeft}`;
+
+      mazePos = { r: nr, c: nc };
+
+      let keyObj = activeMazeConfig.keys.find(k => k.r === nr && k.c === nc);
+      if (keyObj && !mazeCollectedKeys[keyObj.id]) {
+        mazeCollectedKeys[keyObj.id] = true;
+        let f = document.getElementById("feedback");
+        f.className = "feedback good";
+        f.style.display = "block";
+        f.innerHTML = `<b>✨ Secured ${keyObj.icon} ${keyObj.label}!</b> Keep moving!`;
+      }
+      
+      drawMazeBoard();
+      
+      let allKeysCollected = activeMazeConfig.keys.every(k => mazeCollectedKeys[k.id]);
+
+      if (mazePos.r === mazeGoal.r && mazePos.c === mazeGoal.c) {
+        if (!allKeysCollected) {
+          let f = document.getElementById("feedback");
+          f.className = "feedback bad";
+          f.style.display = "block";
+          f.innerHTML = "<b>🔒 Contract Locked!</b> You must first collect all 3 required keys/clearances!";
+          return;
+        }
+        let fakeOption = ["MAZE", "6x6 Executive Deal Maze", 9, activeMazeConfig.solveMessage, "LOW"];
+        choose(fakeOption, document.createElement("div"));
+        return;
+      }
+
+      if (mazeMovesLeft <= 0) {
+        disablePuzzleControls();
+        if (activeQs[i] && activeQs[i].isPuzzle) {
+          history = history.filter(x => x.t !== activeQs[i].t);
+          history.push({ t: activeQs[i].t, p: 0, c: "OUT OF MOVES", isPuzzle: true });
+        }
+        let f = document.getElementById("feedback");
+        f.className = "feedback bad";
+        f.style.display = "block";
+        f.innerHTML = "<b>⏰ Out of Moves!</b> You ran out of moves before reaching the contract. Click 'Next Puzzle →' to continue!";
+        document.getElementById("nextBtn").style.display = "inline-flex";
+        return;
+      }
+    }
+
+    // Puzzle 4: B2B Snakes & Ladders Pipeline Climb
+    let snakePos = 1;
+    let snakeMovesLeft = 6;
+    let currentRoll = 0;
+    let pendingTargetTile = null;
+
+    function renderDots(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      snakePos = 1;
+      snakeMovesLeft = 6;
+      currentRoll = 0;
+      pendingTargetTile = null;
+
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-dots" style="padding:10px 14px;text-align:center;">
+          <p style="font-size:12.5px;color:#e2eaf4;margin-bottom:6px;">Roll the dice (🎲), then <b>tap the glowing target tile</b> to move your avatar!</p>
+          
+          <!-- 12-Tile Snakes & Ladders Grid Board -->
+          <div class="snake-board" id="snakeBoard"></div>
+
+          <!-- Interactive Control Bar -->
+          <div style="display:flex;justify-content:space-between;align-items:center;max-width:300px;margin:8px auto 0;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);font-weight:700;">Rolls: <span id="snakeRollsText" style="color:#fff;">6</span></div>
+            <button id="rollDiceBtn" class="btn primary" style="padding:8px 16px;font-size:13px;font-weight:800;" onclick="rollSnakeDice()">🎲 ROLL DICE</button>
+          </div>
+          <p id="snakeStatus" style="font-size:12px;color:var(--gold);font-weight:700;margin-top:6px;">Click 'Roll Dice' to begin!</p>
+        </div>
+      `;
+
+      drawSnakeBoard();
+    }
+
+    const snakeTiles = [
+      { id: 12, label: "📜 Contract", type: "goal" },
+      { id: 11, label: "🐍 Cancel Risk", type: "snake", jumpTo: 7, msg: "🐍 Bit by Cancel Risk! Slid down to Tile 7!" },
+      { id: 10, label: "🪜 VP Approval", type: "ladder", jumpTo: 12, msg: "🪜 Scaled VP Approval Ladder! Boosted straight to Tile 12 Contract!" },
+      { id: 9, label: "⚖️ Legal Review", type: "normal" },
+      { id: 8, label: "🐍 Extra Demands", type: "snake", jumpTo: 4, msg: "🐍 Hit Extra Demands Snake! Slid back to Tile 4!" },
+      { id: 7, label: "📊 ROI Case", type: "normal" },
+      { id: 6, label: "🪜 Exec Sponsor", type: "ladder", jumpTo: 10, msg: "🪜 Exec Sponsor Ladder! Climbed straight to Tile 10 VP Approval!" },
+      { id: 5, label: "💬 Discovery", type: "normal" },
+      { id: 4, label: "🐍 Budget Cut", type: "snake", jumpTo: 2, msg: "🐍 Budget Cut Snake! Slid down to Tile 2!" },
+      { id: 3, label: "🪜 Fast Lead", type: "ladder", jumpTo: 7, msg: "🪜 Fast Lead Ladder! Climbed to Tile 7 ROI Case!" },
+      { id: 2, label: "🎯 Target Lead", type: "normal" },
+      { id: 1, label: "🚀 Start Deal", type: "start" }
+    ];
+
+    function drawSnakeBoard() {
+      let board = document.getElementById("snakeBoard");
+      if (!board) return;
+      board.innerHTML = "";
+
+      let displayOrder = [12, 11, 10, 9, 5, 6, 7, 8, 4, 3, 2, 1];
+      displayOrder.forEach(tileId => {
+        let t = snakeTiles.find(x => x.id === tileId);
+        let cell = document.createElement("div");
+        cell.className = "snake-cell";
+        if (t.type === "ladder") cell.classList.add("ladder");
+        if (t.type === "snake") cell.classList.add("snake");
+
+        if (snakePos === t.id) {
+          cell.classList.add("player");
+          cell.innerHTML = `<span style="font-size:15px;">💼</span><span style="font-size:9.5px;color:#fff;">Tile ${t.id}</span>`;
+        } else if (pendingTargetTile === t.id) {
+          cell.classList.add("target");
+          cell.innerHTML = `<span style="font-size:15px;">👉 MOVE</span><span style="font-size:9.5px;color:var(--gold);">Tile ${t.id}</span>`;
+          cell.onclick = () => moveAvatarToTargetTile(t.id);
+        } else {
+          cell.innerHTML = `<span>${t.label}</span><span style="font-size:8.5px;opacity:0.7;">Tile ${t.id}</span>`;
+        }
+        board.appendChild(cell);
+      });
+
+      let rollsEl = document.getElementById("snakeRollsText");
+      if (rollsEl) rollsEl.textContent = snakeMovesLeft;
+    }
+
+    function rollSnakeDice() {
+      if (answered || !isTimerStarted || snakeMovesLeft <= 0 || pendingTargetTile !== null) return;
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      document.getElementById("nextBtn").style.display = "inline-flex";
+
+      let roll = Math.floor(Math.random() * 3) + 1; // Roll 1 to 3 for balanced challenge
+      currentRoll = roll;
+      snakeMovesLeft--;
+      pendingTargetTile = Math.min(12, snakePos + roll);
+
+      document.getElementById("rollDiceBtn").disabled = true;
+
+      let status = document.getElementById("snakeStatus");
+      status.style.color = "var(--gold)";
+      status.textContent = `🎲 Rolled ${roll}! Tap glowing Tile ${pendingTargetTile} to move your deal avatar!`;
+
+      drawSnakeBoard();
+    }
+
+    function moveAvatarToTargetTile(targetTileId) {
+      if (pendingTargetTile !== targetTileId) return;
+
+      snakePos = targetTileId;
+      pendingTargetTile = null;
+
+      let currentTile = snakeTiles.find(x => x.id === snakePos);
+      let status = document.getElementById("snakeStatus");
+
+      drawSnakeBoard();
+
+      if (currentTile && currentTile.jumpTo) {
+        let isSnake = currentTile.type === "snake";
+        status.style.color = isSnake ? "var(--red)" : "var(--green)";
+        status.innerHTML = isSnake 
+          ? `<b>🐍 SNAKE BITE!</b> ${currentTile.msg} Sliding down to Tile ${currentTile.jumpTo}...` 
+          : `<b>🪜 LADDER BOOST!</b> ${currentTile.msg} Climbing up to Tile ${currentTile.jumpTo}...`;
+
+        // Animate the snake slide / ladder climb after a brief pause so player sees the movement!
+        setTimeout(() => {
+          snakePos = currentTile.jumpTo;
+          drawSnakeBoard();
+
+          if (snakePos >= 12) {
+            status.style.color = "var(--green)";
+            status.textContent = "🏆 Mastered! You climbed to Contract (Tile 12)!";
+            document.getElementById("rollDiceBtn").disabled = true;
+            let fakeOption = ["SNAKES_LADDERS", "Snakes & Ladders Cleared", 9, "Flawless Pipeline Climb! You rode ladders and reached the Contract!", "LOW"];
+            choose(fakeOption, document.createElement("div"));
+          } else if (snakeMovesLeft <= 0) {
+            status.style.color = "var(--red)";
+            status.textContent = "⏰ Out of dice rolls! Click Next to continue!";
+            document.getElementById("rollDiceBtn").disabled = true;
+            let fakeOption = ["SNAKES_LADDERS", "Snakes & Ladders Out of Rolls", 0, "Out of dice rolls before reaching the Contract tile!", "HIGH"];
+            choose(fakeOption, document.createElement("div"));
+          } else {
+            document.getElementById("rollDiceBtn").disabled = false;
+          }
+        }, 700);
+      } else {
+        status.style.color = "#fff";
+        status.textContent = `Landed on Tile ${snakePos}! Roll again!`;
+
+        if (snakePos >= 12) {
+          status.style.color = "var(--green)";
+          status.textContent = "🏆 Mastered! You climbed to Contract (Tile 12)!";
+          document.getElementById("rollDiceBtn").disabled = true;
+          let fakeOption = ["SNAKES_LADDERS", "B2B Snakes & Ladders Pipeline Climb", 9, "Flawless Pipeline Climb! You rode ladders and reached the Contract!", "LOW"];
+          choose(fakeOption, document.createElement("div"));
+        } else if (snakeMovesLeft <= 0) {
+          status.style.color = "var(--red)";
+          status.textContent = "⏰ Out of dice rolls! Click Next to continue!";
+          document.getElementById("rollDiceBtn").disabled = true;
+          let fakeOption = ["SNAKES_LADDERS", "B2B Snakes & Ladders Pipeline Climb", 0, "Out of dice rolls before reaching the Contract tile!", "HIGH"];
+          choose(fakeOption, document.createElement("div"));
+        } else {
+          document.getElementById("rollDiceBtn").disabled = false;
+        }
+      }
+    }
+
+    // Puzzle 4: Strategy Cipher Match (Simple 4-Step Pattern)
+    let cipherSequence = [];
+    let cipherUserSeq = [];
+
+    function generateCipherPattern() {
+      // Pick 4 random card steps out of 1..6 for a fun, clear pattern!
+      let cards = [1, 2, 3, 4, 5, 6];
+      cipherSequence = shuffle(cards).slice(0, 4);
+    }
+
+    function renderCipher(q) {
+      let box = document.getElementById("puzzleBox");
+      box.style.display = "block";
+      generateCipherPattern();
+      cipherUserSeq = [];
+      
+      box.innerHTML = `
+        <div class="puzzle-wrap theme-cipher" style="padding:14px;">
+          <div style="margin-bottom: 8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn dark" id="playCipherBtn" style="padding:6px 14px;font-size:12px;font-weight:700;color:var(--gold);background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);" onclick="playCipherPattern()">▶️ Play Pattern</button>
+          </div>
+          <div class="cipher-grid">
+            <div class="cipher-card" id="card-1" onclick="handleCipherClick(1)">1. 🎯 Target Audience</div>
+            <div class="cipher-card" id="card-2" onclick="handleCipherClick(2)">2. 💬 Initial Call</div>
+            <div class="cipher-card" id="card-3" onclick="handleCipherClick(3)">3. 💡 Product Value</div>
+            <div class="cipher-card" id="card-4" onclick="handleCipherClick(4)">4. 📊 ROI (Return On Investment)</div>
+            <div class="cipher-card" id="card-5" onclick="handleCipherClick(5)">5. 🤝 Trade Terms</div>
+            <div class="cipher-card" id="card-6" onclick="handleCipherClick(6)">6. 🚀 Close Deal</div>
+          </div>
+          <p id="cipherStatus" style="font-size:12.5px;color:var(--gold);font-weight:700;margin-top:8px;">Watch the glowing cards, then click them in the same order!</p>
+        </div>
+      `;
+      setTimeout(playCipherPattern, 400);
+    }
+
+    function playCipherPattern() {
+      let btn = document.getElementById("playCipherBtn");
+      if (btn) btn.disabled = true;
+      cipherUserSeq = [];
+      let status = document.getElementById("cipherStatus");
+      if (status) {
+        status.style.color = "var(--gold)";
+        status.textContent = "👀 Watch the cards light up...";
+      }
+      
+      document.querySelectorAll(".cipher-card").forEach(c => c.classList.remove("lit", "success", "error"));
+
+      cipherSequence.forEach((cardId, index) => {
+        setTimeout(() => {
+          let card = document.getElementById(`card-${cardId}`);
+          if (card) {
+            card.classList.add("lit");
+            setTimeout(() => card.classList.remove("lit"), 450);
+          }
+          if (index === cipherSequence.length - 1) {
+            setTimeout(() => {
+              if (status) {
+                status.style.color = "var(--blue)";
+                status.textContent = "👉 Your Turn: Click the cards in the same order!";
+              }
+              if (btn) btn.disabled = false;
+            }, 550);
+          }
+        }, index * 650);
+      });
+    }
+
+    function handleCipherClick(id) {
+      if (answered) return;
+      let fb = document.getElementById("feedbackBar");
+      if (fb) fb.style.display = "flex";
+      document.getElementById("nextBtn").style.display = "inline-flex";
+      
+      cipherUserSeq.push(id);
+      let card = document.getElementById(`card-${id}`);
+      let expectedCardId = cipherSequence[cipherUserSeq.length - 1];
+
+      if (id !== expectedCardId) {
+        if (card) {
+          card.classList.add("error");
+          setTimeout(() => card.classList.remove("error"), 400);
+        }
+        let status = document.getElementById("cipherStatus");
+        if (status) {
+          status.style.color = "var(--red)";
+          status.textContent = "💡 Oops! Wrong order. Click 'Play Pattern' to watch again!";
+        }
+        cipherUserSeq = [];
+        return;
+      }
+
+      if (card) {
+        card.classList.add("lit");
+        setTimeout(() => card.classList.remove("lit"), 300);
+      }
+      
+      let status = document.getElementById("cipherStatus");
+      if (status) {
+        status.style.color = "var(--green)";
+        status.textContent = `Great! (${cipherUserSeq.length} of ${cipherSequence.length} matched)`;
+      }
+
+      if (cipherUserSeq.length === cipherSequence.length) {
+        document.querySelectorAll(".cipher-card").forEach(c => c.classList.add("success"));
+        if (status) {
+          status.style.color = "var(--green)";
+          status.textContent = "🎉 Pattern Matched! Strategy Unlocked!";
+        }
+        let fakeOption = ["CIPHER", "Strategy Cipher Memory Match", 9, "Great memory! You correctly matched the 4-step commercial strategy pattern!", "LOW"];
+        choose(fakeOption, card);
+      }
+    }
+
+    function apply() {
+      document.getElementById("roleModal").classList.add("active");
+    }
+
+    function closeRoleModal() {
+      document.getElementById("roleModal").classList.remove("active");
+    }
+
+    function submitRoleApplication(mode) {
+      let selectedRadio = document.querySelector('input[name="targetRole"]:checked');
+      let selectedRole = selectedRadio ? selectedRadio.value : "IT Presales/ B2B Sales /Paid Internship Marketing";
+
+      let email = "info@angelbot.ai";
+      let subject = `Application for ${selectedRole} — AngelBot AI (Incubated & Funded by ONGC Startup Fund)`;
+
+      let body = `Dear AngelBot AI Hiring Team,
+
+I am applying for: ${selectedRole}
+(AngelBot AI — Incubated & Funded by ONGC Startup Fund)
+
+Why I am a strong fit:
+• 
+• 
+
+Resume attached for your review. Looking forward to discussing this opportunity!
+
+Best regards,
+[Name] | [Phone] | [LinkedIn]`;
+
+      if (mode === 'copy') {
+        let textToCopy = `To: ${email}\nSubject: ${subject}\n\n${body}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          alert("📋 Application Email & Draft copied to clipboard!\n\nSend your resume directly to: info@angelbot.ai");
+        }).catch(() => {
+          prompt("Copy hiring email address below:", email);
+        });
+        closeRoleModal();
+        return;
+      }
+
+      if (mode === 'outlookweb') {
+        let webUrl = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(webUrl, '_blank');
+        closeRoleModal();
+        return;
+      }
+
+      if (mode === 'gmail') {
+        let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(gmailUrl, '_blank');
+        closeRoleModal();
+        return;
+      }
+
+      // Default Outlook App / Local Mail Protocol
+      let mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      closeRoleModal();
+      window.location.href = mailtoUrl;
     }
   </script>
 </body>
