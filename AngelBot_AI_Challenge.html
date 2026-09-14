@@ -1768,32 +1768,31 @@
       </div>
     </section>
 
-    <section id="result" class="screen panel" style="padding:22px 26px;">
-      <!-- Hero Top Section: Role Application -->
-      <div style="text-align: center; margin-bottom: 14px;">
+    <section id="result" class="screen panel" style="padding:24px 28px;">
+      <!-- Hero Top Section: Role Application Header -->
+      <div style="text-align: center; margin-bottom: 18px;">
         <div style="display: inline-block; padding: 12px 24px; border-radius: 99px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(56, 189, 248, 0.2)); border: 2px solid var(--green); color: #ffffff; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; box-shadow: 0 0 30px rgba(16, 185, 129, 0.4), 0 4px 20px rgba(0,0,0,0.5); text-transform: uppercase;">🚀 Join AngelBot AI for <span style="color: #38bdf8; text-shadow: 0 0 14px rgba(56,189,248,0.7);">Presales</span>, <span style="color: #fbbf24; text-shadow: 0 0 14px rgba(251,191,36,0.7);">Sales</span> and <span style="color: #34d399; text-shadow: 0 0 14px rgba(52,211,153,0.7);">Marketing</span></div>
-        
       </div>
 
-      <!-- Prominent Role Selection Cards (Hero Focus) -->
-      <div style="background: linear-gradient(145deg, rgba(50, 173, 255, 0.08), rgba(32, 209, 139, 0.04)); border: 1px solid var(--panel-border); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;">
-        <div style="padding: 12px 0 4px; display: flex; justify-content: center; align-items: center;">
-          <button class="btn green" style="padding: 14px 36px; font-size: 16px; font-weight: 900; box-shadow: 0 4px 24px rgba(16,185,129,0.4); cursor: pointer; border: none; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;" onclick="submitRoleApplication('gmail')">
+      <!-- Bigger & Prominent Marks / Performance Score Section (FIRST) -->
+      <div style="background: linear-gradient(145deg, rgba(13, 27, 44, 0.95), rgba(6, 14, 25, 0.98)); border: 2px solid var(--panel-border); border-radius: 20px; padding: 22px 26px; margin-bottom: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+          <div class="score" id="scoreRing" style="margin: 0; min-width: 76px; height: 76px;">
+            <div class="scoreinner" style="width: 64px; height: 64px;"><span id="final" style="font-size: 22px; font-weight: 900;">0</span><small style="font-size: 11px;">/100</small></div>
+          </div>
+          <div style="flex: 1;" id="report"></div>
+        </div>
+        <button class="btn dark" style="padding: 10px 18px; font-size: 13px; font-weight: 800;" onclick="restartSimulator()">🔄 Retry Simulator</button>
+      </div>
+
+      <!-- Primary Action: Send Application Now Section (BELOW Marks Section) -->
+      <div style="background: linear-gradient(145deg, rgba(50, 173, 255, 0.08), rgba(32, 209, 139, 0.04)); border: 2px solid var(--green); border-radius: 20px; padding: 22px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(16,185,129,0.25); text-align: center;">
+        <div style="padding: 8px 0 4px; display: flex; justify-content: center; align-items: center;">
+          <button class="btn green" style="padding: 16px 44px; font-size: 18px; font-weight: 900; box-shadow: 0 6px 30px rgba(16,185,129,0.5); cursor: pointer; border: none; border-radius: 14px; display: inline-flex; align-items: center; gap: 10px; transition: transform 0.15s ease;" onclick="submitRoleApplication('gmail')">
             <span>📧</span> SEND APPLICATION NOW →
           </button>
         </div>
         <div id="applySuccessBox" style="display:none; margin-top: 14px;"></div>
-      </div>
-
-      <!-- Compact Bottom Summary Card: Performance Report -->
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; background: rgba(13, 27, 44, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 10px 16px; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-          <div class="score" id="scoreRing" style="margin: 0; min-width: 56px; height: 56px;">
-            <div class="scoreinner" style="width: 48px; height: 48px;"><span id="final" style="font-size: 16px;">0</span><small style="font-size: 9px;">/100</small></div>
-          </div>
-          <div style="max-width: 480px;" id="report"></div>
-        </div>
-        <button class="btn dark" style="padding: 8px 14px; font-size: 12px;" onclick="restartSimulator()">🔄 Retry Simulator</button>
       </div>
     </section>
   </div>
@@ -2365,7 +2364,7 @@
         let d = document.createElement("div");
         d.className = "resultbox";
         d.style.marginBottom = "8px";
-        d.style.fontSize = "13.5px";
+        d.style.fontSize = "15px"; d.style.padding = "8px 12px";
         d.style.textAlign = "center";
         d.innerHTML = x;
         report.appendChild(d);
