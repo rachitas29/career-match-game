@@ -2269,14 +2269,11 @@
         let solvedPuzzles = history.filter(x => x.isPuzzle && x.p >= 8).length;
         let failedPuzzles = history.filter(x => x.isPuzzle && x.p < 8);
 
-        // User's Updated Rule:
-        // If user solves 4 or 5 puzzles: get 1 failed puzzle unlocked to play
-        // If user solves 2 or 3 puzzles: get 2 failed puzzles unlocked to play
+        // Rule:
+        // If user solves 1 or 2 puzzles: get 1 failed puzzle unlocked to play
         let maxRetries = 0;
-        if (solvedPuzzles === 4 || solvedPuzzles === 5) {
+        if (solvedPuzzles >= 1 && solvedPuzzles < attemptedPuzzles) {
           maxRetries = 1; // 1 failed puzzle unlocked
-        } else if (solvedPuzzles === 2 || solvedPuzzles === 3) {
-          maxRetries = 2; // 2 failed puzzles unlocked
         }
 
         let retriesAvailable = Math.min(maxRetries, failedPuzzles.length);
@@ -2293,28 +2290,24 @@
             item.l = `BONUS RETRY ${idx + 1}/${activeQs.length} · ${cleanTitle}`;
           });
 
-          triggerRetryUnlockModal(solvedPuzzles, retriesAvailable, activeQs);
+          triggerRetryUnlockModal(solvedPuzzles, retriesAvailable, activeQs, attemptedPuzzles);
           return;
         }
       }
       renderFinalResults();
     }
 
-    function triggerRetryUnlockModal(solvedPuzzles, retriesAvailable, retryQueue) {
+    function triggerRetryUnlockModal(solvedPuzzles, retriesAvailable, retryQueue, totalPuz) {
       let modal = document.getElementById("retryUnlockModal");
       let titleEl = document.getElementById("retryModalTitle");
       let subEl = document.getElementById("retryModalSubtitle");
       let descEl = document.getElementById("retryModalDesc");
 
       if (titleEl) {
-        titleEl.textContent = retriesAvailable === 2 ? "🎉 2 Bonus Retries Unlocked!" : "🎉 1 Bonus Retry Unlocked!";
+        titleEl.textContent = "🎉 1 Bonus Retry Unlocked!";
       }
       if (subEl) {
-        if (solvedPuzzles === 4 || solvedPuzzles === 5) {
-          subEl.innerHTML = `Awesome performance! You solved <b>${solvedPuzzles}/${totalPuz}</b> puzzles.<br>Because you solved ${solvedPuzzles} puzzles, you earned <b>1 Bonus Retry Chance</b> to replay a failed puzzle and boost your score!`;
-        } else if (solvedPuzzles === 2 || solvedPuzzles === 3) {
-          subEl.innerHTML = `Good effort! You solved <b>${solvedPuzzles}/${totalPuz}</b> puzzles.<br>Because you solved ${solvedPuzzles} puzzles, you earned <b>2 Bonus Retry Chances</b> to replay 2 failed puzzles and boost your score!`;
-        }
+        subEl.innerHTML = `Great effort! You solved <b>${solvedPuzzles}/${totalPuz}</b> puzzle${solvedPuzzles > 1 ? 's' : ''}.<br>Because you solved ${solvedPuzzles} puzzle${solvedPuzzles > 1 ? 's' : ''}, you earned <b>1 Bonus Retry Chance</b> to replay a failed puzzle and boost your score!`;
       }
       if (descEl) {
         let puzNames = retryQueue.map(p => `• <b>${p.t}</b>`).join("<br>");
