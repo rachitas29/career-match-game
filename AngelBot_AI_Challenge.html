@@ -2353,15 +2353,16 @@
       let retryStatusText = isRetryPhase ? ` &nbsp;|&nbsp; <b>Bonus Retries:</b> <span style="color:var(--gold);font-weight:800;">Applied 🎯</span>` : "";
 
       [
-        `<b>Final Arcade Score:</b> <span style="color:var(--green);font-size:18px;">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/${totalPuz} &nbsp;|&nbsp; <b>Solved (Won):</b> <span style="color:var(--green);font-weight:900;font-size:18px;">${solvedPuzzles}/${totalPuz}</span>${retryStatusText}`,
+        `<div style="display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:nowrap; white-space:nowrap;"><b>Final Arcade Score:</b> <span style="color:var(--green);font-size:18px;">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/${totalPuz} &nbsp;|&nbsp; <span style="white-space:nowrap;"><b>Solved (Won):</b> <span style="color:var(--green);font-weight:900;font-size:18px;">${solvedPuzzles}/${totalPuz}</span></span>${retryStatusText}</div>`,
         `<b>Mastery Level:</b> <span style="color:var(--purple);font-size:18px;font-weight:900;">${final >= 80 ? "🏆 Master B2B Strategist" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>`
       ].forEach(x => {
         let d = document.createElement("div");
         d.className = "resultbox";
         d.style.marginBottom = "10px";
-        d.style.fontSize = "17px"; d.style.padding = "12px 18px";
+        d.style.fontSize = "16px"; d.style.padding = "12px 18px";
         d.style.textAlign = "center";
         d.style.borderRadius = "12px";
+        d.style.whiteSpace = "nowrap";
         d.innerHTML = x;
         report.appendChild(d);
       });
