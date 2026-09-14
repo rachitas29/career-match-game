@@ -1772,39 +1772,12 @@
       <!-- Hero Top Section: Role Application -->
       <div style="text-align: center; margin-bottom: 14px;">
         <span style="padding:4px 14px; border-radius:99px; background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3); font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase;">🚀 Join AngelBot AI Team</span>
-        <p style="font-size: 13px; color: var(--muted); margin: 6px 0 0;">Choose the opportunity matching your background to submit your application directly:</p>
+        
       </div>
 
       <!-- Prominent Role Selection Cards (Hero Focus) -->
-      <div style="background: linear-gradient(145deg, rgba(50, 173, 255, 0.08), rgba(32, 209, 139, 0.04)); border: 1px solid var(--panel-border); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 16px;">
-          <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(13, 27, 44, 0.7); border: 2px solid var(--green); border-radius: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.15);">
-            <input type="radio" name="targetRole" value="Paid Internship / Marketing Internship / Marketing Survey – International (UK & UAE Markets)" checked style="accent-color: var(--green); margin-top: 3px; transform: scale(1.2);">
-            <div>
-              <b style="color: #fff; display: block; font-size: 13px; line-height: 1.35;">Paid Internship / Marketing Internship / Marketing Survey – International <span style="color: var(--green); font-size: 11px; font-weight: 800;">(No Exp Required)</span></b>
-              <small style="color: #cbd5e1; font-size: 11px; line-height: 1.35; display: block; margin-top: 3px;">Product positioning, content & growth strategy across UK & UAE international markets</small>
-            </div>
-          </label>
-
-          <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(13, 27, 44, 0.5); border: 1px solid var(--panel-border); border-radius: 14px; cursor: pointer;">
-            <input type="radio" name="targetRole" value="Marketing (1+ Yrs Experience • IT Background)" style="accent-color: var(--green); margin-top: 3px; transform: scale(1.2);">
-            <div>
-              <b style="color: #fff; display: block; font-size: 13px; line-height: 1.35;">Marketing Specialist <span style="color: var(--blue); font-size: 11px; font-weight: 800;">(1+ Yrs Exp • IT Background)</span></b>
-              <small style="color: var(--muted); font-size: 11px; line-height: 1.35; display: block; margin-top: 3px;">Strategic product positioning, demand generation & content marketing</small>
-            </div>
-          </label>
-
-          <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(13, 27, 44, 0.5); border: 1px solid var(--panel-border); border-radius: 14px; cursor: pointer;">
-            <input type="radio" name="targetRole" value="B2B Sales (5+ Yrs Experience • IT Background)" style="accent-color: var(--green); margin-top: 3px; transform: scale(1.2);">
-            <div>
-              <b style="color: #fff; display: block; font-size: 13px; line-height: 1.35;">B2B Sales Specialist <span style="color: var(--blue); font-size: 11px; font-weight: 800;">(5+ Yrs Exp • IT Background)</span></b>
-              <small style="color: var(--muted); font-size: 11px; line-height: 1.35; display: block; margin-top: 3px;">Enterprise deal strategy, pipeline acquisition & key account closing</small>
-            </div>
-          </label>
-        </div>
-
-        <!-- Primary Action Bar (Sending Application) -->
-        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+      <div style="background: linear-gradient(145deg, rgba(50, 173, 255, 0.08), rgba(32, 209, 139, 0.04)); border: 1px solid var(--panel-border); border-radius: 18px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;">
+        <div style="padding: 12px 0 4px; display: flex; justify-content: center; align-items: center;">
           <button class="btn green" style="padding: 14px 36px; font-size: 16px; font-weight: 900; box-shadow: 0 4px 24px rgba(16,185,129,0.4); cursor: pointer; border: none; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;" onclick="submitRoleApplication('gmail')">
             <span>📧</span> SEND APPLICATION NOW →
           </button>
@@ -2388,8 +2361,7 @@
     }
 
     function submitRoleApplication(mode) {
-      let selected = document.querySelector('input[name="targetRole"]:checked');
-      let roleVal = selected ? selected.value : "Paid Internship / Marketing Internship / Marketing Survey – International";
+      let roleVal = "AngelBot AI Challenge Applicant";
       let email = "info@angelbot.ai";
       let rawSub = `Application for Role: ${roleVal}`;
       let rawBody = `Hello AngelBot AI Hiring Team,\n\nI completed the AngelBot AI Challenge and I am applying for:\nRole: ${roleVal}\n\nPlease find my resume/profile attached.\n\nBest regards,`;
