@@ -1,6 +1,5 @@
 {
-  "version": 2,
-  "public": true,
+  "name": "angelbot-ai-challenge",
   "cleanUrls": true,
   "headers": [
     {
@@ -13,10 +12,10 @@
       ]
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
