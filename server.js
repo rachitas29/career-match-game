@@ -84,13 +84,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
-    const publicIndex = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(publicIndex)) {
-        return res.sendFile(publicIndex);
-    }
     const rootIndex = path.join(__dirname, 'index.html');
     if (fs.existsSync(rootIndex)) {
         return res.sendFile(rootIndex);
+    }
+    const publicIndex = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(publicIndex)) {
+        return res.sendFile(publicIndex);
     }
     res.send('AngelBot B2B Revenue Challenge');
 });
@@ -1266,7 +1266,7 @@ app.get('/api/payments', (req, res) => {
 
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Global Error Handler
