@@ -1,5 +1,6 @@
 {
-  "name": "angelbot-ai-challenge",
+  "version": 2,
+  "public": true,
   "cleanUrls": true,
   "headers": [
     {
@@ -17,5 +18,11 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "services": {
+    "account-management-app": {
+      "root": ".",
+      "entrypoint": "server.js"
+    }
+  }
 }
