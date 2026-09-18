@@ -1,6 +1,4 @@
 {
-  "version": 2,
-  "public": true,
   "cleanUrls": true,
   "headers": [
     {
@@ -16,13 +14,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/AngelBot_AI_Challenge.html"
     }
-  ],
-  "services": {
-    "account-management-app": {
-      "root": ".",
-      "entrypoint": "server.js"
-    }
-  }
+  ]
 }
