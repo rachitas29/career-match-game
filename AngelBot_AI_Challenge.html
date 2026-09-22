@@ -1841,7 +1841,7 @@
           <span>🔓 BENEFIT UNLOCKED: RETRY CREDIT EARNED</span>
         </div>
         <div style="font-size:13px;color:#f0fdf4;line-height:1.45;">
-          <b>Arcade Mastery:</b> Completing all 3 arcade puzzles earns you the <b>B2B Master Strategist Badge</b> and boosts your score to <b>100/100</b>!
+          <b>Arcade Mastery:</b> Completing all 3 arcade puzzles earns you the <b>Solar Gold Badge</b> and boosts your score to <b>100/100</b>!
         </div>
         <div style="margin-top:8px;font-size:11.5px;color:var(--gold);font-weight:700;" id="cheerPuzzleCount">
           Progress: [ 1 / 3 ] Puzzles Solved 🎯
@@ -2354,7 +2354,7 @@
 
       [
         `<b>Final Arcade Score:</b> <span style="color:var(--green);font-size:17px;font-weight:900;">${final}/100</span> &nbsp;|&nbsp; <b>Attempted:</b> ${attemptedPuzzles}/${totalPuz} &nbsp;|&nbsp; <b>Solved (Won):</b> <span style="color:var(--green);font-weight:900;font-size:17px;">${solvedPuzzles}/${totalPuz}</span>`,
-        `<b>Mastery Level:</b> <span style="color:var(--purple);font-size:17px;font-weight:900;">${final >= 80 ? "🏆 Master B2B Strategist" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>${retryStatusText}`
+        `<b>Mastery Level:</b> <span style="color:var(--purple);font-size:17px;font-weight:900;">${final >= 80 ? "🏆 Solar Gold Badge" : (final >= 50 ? "⚡ B2B Deal Executor" : "🎯 B2B Arcade Challenger")}</span>${retryStatusText}`
       ].forEach(x => {
         let d = document.createElement("div");
         d.className = "resultbox";
