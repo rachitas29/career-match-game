@@ -1927,6 +1927,13 @@
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
+    // Handle browser back button: if user clicks back during game or result, return directly to first home screen
+    window.addEventListener("popstate", (e) => {
+      if (typeof interval !== "undefined") clearInterval(interval);
+      if (typeof runnerAnimId !== "undefined" && runnerAnimId) cancelAnimationFrame(runnerAnimId);
+      show("home");
+    });
+
     function start(isRetry = false) {
       window.i = 0;
       window.raw = 0;
@@ -1943,6 +1950,9 @@
         sessionStorage.removeItem("angelbot_is_retry");
       }
       activeQs = buildFullGameSequence(isRetry);
+      try {
+        history.pushState({ screen: "game" }, "", "#play");
+      } catch (err) {}
       show("game");
       render();
     }
@@ -1959,6 +1969,9 @@
       retryQueue = [];
       currentRetryItem = null;
       activeQs = buildFullGameSequence(true);
+      try {
+        history.pushState({ screen: "game" }, "", "#play");
+      } catch (err) {}
       show("game");
       render();
     }
