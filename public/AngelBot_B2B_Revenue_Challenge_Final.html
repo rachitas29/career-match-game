@@ -2624,37 +2624,51 @@
 
         if (item.y > 0 && item.y < 280) {
           let el = document.createElement("div");
-          el.style.cssText = `position:absolute;top:${item.y}px;left:${laneLefts[item.lane]};width:20%;height:34px;border-radius:8px;display:grid;place-items:center;font-size:18px;z-index:2;`;
+          el.style.cssText = `position:absolute;top:${item.y}px;z-index:2;display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 6px 15px rgba(0,0,0,0.5);border-radius:10px;text-align:center;letter-spacing:0.5px;`;
           
-          if (item.type === "obs" || item.type === "obs_jump" || item.type === "obs_slide") {
-            el.style.background = "rgba(244,63,94,0.4)";
-            el.style.border = "1.5px solid var(--red)";
-            if (item.type === "obs_jump") el.style.borderBottom = "4px solid #ff1744";
-            if (item.type === "obs_slide") {
-              el.style.borderTop = "4px solid #ff1744";
-              el.style.background = "rgba(239,68,68,0.45)";
-            }
-          } else if (item.type === "decoy") {
-            el.style.background = "rgba(244,63,94,0.2)";
-            el.style.border = "1.5px dashed var(--red)";
-          } else if (item.type === "key") {
-            el.style.background = "rgba(251,191,36,0.35)";
-            el.style.border = "1.5px solid var(--gold)";
-            el.style.boxShadow = "0 0 12px rgba(251,191,36,0.6)";
-          } else if (item.type === "contract") {
-            el.style.width = "70%";
-            el.style.left = "15%";
+          if (item.type === "obs_jump") {
+            // Big Solid Red Brick Wall (Low Wall - JUMP)
+            el.style.width = "74%";
+            el.style.left = "13%";
             el.style.height = "42px";
-            el.style.background = "linear-gradient(90deg, rgba(16,185,129,0.5), rgba(251,191,36,0.6), rgba(16,185,129,0.5))";
-            el.style.border = "2px solid #fbbf24";
-            el.style.borderRadius = "10px";
+            el.style.background = "linear-gradient(180deg, #ef4444 0%, #b91c1c 100%)";
+            el.style.border = "2px solid #fca5a5";
             el.style.color = "#ffffff";
-            el.style.fontWeight = "900";
+            el.style.fontSize = "13px";
+            el.style.boxShadow = "0 0 16px rgba(239,68,68,0.7), inset 0 2px 4px rgba(255,255,255,0.3)";
+            el.innerHTML = `🧱 <b>BIG WALL (JUMP! 🦘)</b>`;
+          } else if (item.type === "obs_slide") {
+            // Big Overhead Laser/Iron Arch Gate (High Beam Gate - SLIDE)
+            el.style.width = "78%";
+            el.style.left = "11%";
+            el.style.height = "48px";
+            el.style.background = "linear-gradient(180deg, rgba(245,158,11,0.95), rgba(180,83,9,0.95))";
+            el.style.border = "2.5px dashed #fef08a";
+            el.style.color = "#ffffff";
+            el.style.fontSize = "13px";
+            el.style.boxShadow = "0 0 20px rgba(245,158,11,0.8), inset 0 -4px 0 #78350f";
+            el.innerHTML = `🚨 <b>HIGH GATE (SLIDE! 🛹)</b>`;
+          } else if (item.type === "key") {
+            el.style.width = "60%";
+            el.style.left = "20%";
+            el.style.height = "36px";
+            el.style.background = "linear-gradient(90deg, rgba(251,191,36,0.9), rgba(245,158,11,0.9))";
+            el.style.border = "2px solid #ffffff";
+            el.style.color = "#0f172a";
+            el.style.fontSize = "12.5px";
+            el.style.boxShadow = "0 0 15px rgba(251,191,36,0.8)";
+            el.innerHTML = `${item.icon} <b>${item.label.toUpperCase()} KEY</b>`;
+          } else if (item.type === "contract") {
+            el.style.width = "80%";
+            el.style.left = "10%";
+            el.style.height = "46px";
+            el.style.background = "linear-gradient(90deg, #10b981, #fbbf24, #10b981)";
+            el.style.border = "2px solid #ffffff";
+            el.style.color = "#ffffff";
             el.style.fontSize = "14px";
-            el.style.boxShadow = "0 0 25px rgba(251,191,36,0.8), 0 0 15px rgba(16,185,129,0.8)";
-            el.innerHTML = "📜 TARGET CONTRACT 🏆";
+            el.style.boxShadow = "0 0 25px rgba(251,191,36,0.9), 0 0 15px rgba(16,185,129,0.9)";
+            el.innerHTML = "📜 <b>TARGET CONTRACT 🏆</b>";
           }
-          if (item.type !== "contract") el.textContent = item.icon;
           layer.appendChild(el);
         }
 
