@@ -2477,8 +2477,8 @@
       }
     }
 
-    // Puzzle 1: B2B Temple Deal Runner 🏃 (3 Lifelines Arcade Challenge)
-    let runnerLane = 1; // 0: Left, 1: Center, 2: Right
+    // Puzzle 1: B2B Temple Deal Runner 🏃 (Single Direction Forward Runner)
+    let runnerLane = 1; // Locked to 1 central directional path
     let runnerAction = "normal"; // "normal", "jump", "slide"
     let runnerActionTimer = null;
     let runnerLives = 5; // 5 Lifelines for extra comfort
@@ -2522,28 +2522,25 @@
             </div>
           </div>
 
-          <!-- Temple Runner Track Canvas Area -->
-          <div class="temple-canvas-container" id="templeCanvas">
+          <!-- Temple Runner Single Track Canvas Area -->
+          <div class="temple-canvas-container" id="templeCanvas" style="position:relative;background:linear-gradient(180deg, rgba(15,23,42,0.95), rgba(30,41,59,0.98));border-radius:12px;overflow:hidden;border:1.5px solid rgba(255,255,255,0.1);">
 
-            <!-- Track Perspective Lanes -->
-            <div style="position:absolute;bottom:0;left:15%;width:23.3%;height:100%;border-right:2px dashed rgba(255,255,255,0.15);"></div>
-            <div style="position:absolute;bottom:0;left:38.3%;width:23.3%;height:100%;border-right:2px dashed rgba(255,255,255,0.15);"></div>
+            <!-- Single Track Boundaries -->
+            <div style="position:absolute;bottom:0;left:30%;width:40%;height:100%;background:rgba(255,255,255,0.03);border-left:2px dashed rgba(56,189,248,0.3);border-right:2px dashed rgba(56,189,248,0.3);"></div>
 
             <!-- Items Layer -->
             <div id="runnerItemsLayer" style="position:absolute;inset:0;"></div>
 
-            <!-- Player Avatar with Jump / Slide animation -->
-            <div id="runnerPlayer" style="position:absolute;bottom:15px;left:43.3%;width:13.3%;height:38px;background:rgba(56,189,248,0.25);border:2px solid #38bdf8;border-radius:10px;display:grid;place-items:center;font-size:20px;box-shadow:0 0 15px #38bdf8;transition:left 0.05s linear, transform 0.12s ease-out, height 0.12s ease-out;z-index:5;">
+            <!-- Player Avatar with Jump / Slide animation (Locked in Center Lane) -->
+            <div id="runnerPlayer" style="position:absolute;bottom:15px;left:40%;width:20%;height:38px;background:rgba(56,189,248,0.25);border:2px solid #38bdf8;border-radius:10px;display:grid;place-items:center;font-size:20px;box-shadow:0 0 15px #38bdf8;transition:transform 0.12s ease-out, height 0.12s ease-out;z-index:5;">
               🏃
             </div>
           </div>
 
-          <!-- Touch / Onscreen Action Controls with Embedded Keyboard Hints -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;max-width:440px;margin:0 auto;">
-            <button class="btn primary" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;display:flex;flex-direction:column;align-items:center;" onclick="changeRunnerLane(-1)"><span>⬅️ LEFT</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(← Left)</span></button>
-            <button class="btn green" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;display:flex;flex-direction:column;align-items:center;" onclick="triggerRunnerAction('jump')"><span>🦘 JUMP 🚧</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(Low Wall)</span></button>
-            <button class="btn dark" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;background:rgba(251,191,36,0.15);color:var(--gold);border:1px solid rgba(251,191,36,0.4);display:flex;flex-direction:column;align-items:center;" onclick="triggerRunnerAction('slide')"><span>🛹 SLIDE 📐</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(High Beam)</span></button>
-            <button class="btn primary" style="padding:6px 2px;font-size:11px;font-weight:800;border-radius:10px;display:flex;flex-direction:column;align-items:center;" onclick="changeRunnerLane(1)"><span>RIGHT ➡️</span><span style="font-size:9.5px;opacity:0.75;font-weight:600;">(→ Right)</span></button>
+          <!-- Single Directional Action Controls -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:360px;margin:8px auto 0 auto;">
+            <button class="btn green" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('jump')"><span>🦘 JUMP OVER (🚧)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Up Arrow / Space]</span></button>
+            <button class="btn dark" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;background:rgba(251,191,36,0.18);color:var(--gold);border:1px solid rgba(251,191,36,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('slide')"><span>🛹 SLIDE UNDER (📐)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Down Arrow]</span></button>
           </div>
         </div>
       `;
@@ -2551,9 +2548,7 @@
       // Keyboard Controls setup
       window.onkeydown = (evt) => {
         if (activeQs[i] && activeQs[i].type === "runner" && !answered) {
-          if (evt.key === "ArrowLeft" || evt.key === "a") changeRunnerLane(-1);
-          else if (evt.key === "ArrowRight" || evt.key === "d") changeRunnerLane(1);
-          else if (evt.key === "ArrowUp" || evt.key === "w" || evt.key === " ") triggerRunnerAction("jump");
+          if (evt.key === "ArrowUp" || evt.key === "w" || evt.key === " ") triggerRunnerAction("jump");
           else if (evt.key === "ArrowDown" || evt.key === "s") triggerRunnerAction("slide");
         }
       };
@@ -2566,13 +2561,8 @@
     }
 
     function changeRunnerLane(dir) {
-      if (answered) return;
-      runnerLane = Math.max(0, Math.min(2, runnerLane + dir));
-      let player = document.getElementById("runnerPlayer");
-      if (player) {
-        let laneLefts = ["20%", "43.3%", "66.6%"];
-        player.style.left = laneLefts[runnerLane];
-      }
+      // Single directional runner - locked center lane
+      runnerLane = 1;
     }
 
     function triggerRunnerAction(act) {
@@ -2598,23 +2588,15 @@
     }
 
     function initTempleRunnerGame() {
-      // Simplified & relaxed track layout: clear key lanes, no decoys, generous spaces
+      // Single Directional Track: all items spawn sequentially along the single center track!
       runnerItems = [
-        { lane: 0, y: -60, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
-        
-        { lane: 1, y: -180, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
-        { lane: 2, y: -180, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
-        
-        { lane: 1, y: -300, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
-        
-        { lane: 0, y: -420, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
-        { lane: 2, y: -420, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
-        
-        { lane: 2, y: -540, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
-        
-        { lane: 1, y: -660, type: "obs_jump", icon: "🚧", label: "Low Barrier (JUMP!)" },
-        
-        { lane: 1, y: -800, type: "contract", icon: "📜", label: "Target Contract" }
+        { lane: 1, y: -80, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
+        { lane: 1, y: -220, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
+        { lane: 1, y: -360, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
+        { lane: 1, y: -500, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
+        { lane: 1, y: -640, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
+        { lane: 1, y: -780, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
+        { lane: 1, y: -940, type: "contract", icon: "📜", label: "Target Contract" }
       ];
 
       if (runnerAnimId) cancelAnimationFrame(runnerAnimId);
@@ -2635,14 +2617,14 @@
       let distText = document.getElementById("runnerDistText");
       if (distText) distText.textContent = Math.min(100, Math.floor(runnerDistance));
 
-      let laneLefts = ["20%", "43.3%", "66.6%"];
+      let laneLefts = ["40%", "40%", "40%"];
 
       runnerItems.forEach(item => {
         item.y += runnerSpeed;
 
         if (item.y > 0 && item.y < 280) {
           let el = document.createElement("div");
-          el.style.cssText = `position:absolute;top:${item.y}px;left:${laneLefts[item.lane]};width:13.3%;height:32px;border-radius:8px;display:grid;place-items:center;font-size:18px;z-index:2;`;
+          el.style.cssText = `position:absolute;top:${item.y}px;left:${laneLefts[item.lane]};width:20%;height:34px;border-radius:8px;display:grid;place-items:center;font-size:18px;z-index:2;`;
           
           if (item.type === "obs" || item.type === "obs_jump" || item.type === "obs_slide") {
             el.style.background = "rgba(244,63,94,0.4)";
