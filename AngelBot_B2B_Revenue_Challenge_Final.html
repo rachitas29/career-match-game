@@ -2544,10 +2544,16 @@
             </div>
           </div>
 
-          <!-- Single Directional Action Controls -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:360px;margin:8px auto 0 auto;">
-            <button class="btn green" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('jump')"><span>🦘 JUMP OVER (🚧 WALL)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Up Arrow / Space]</span></button>
-            <button class="btn dark" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;background:rgba(251,191,36,0.18);color:var(--gold);border:1px solid rgba(251,191,36,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('slide')"><span>🛹 SLIDE UNDER (🚨 GATE)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Down Arrow]</span></button>
+          <!-- Ultra-Visible Action Controls -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:420px;margin:10px auto 0 auto;">
+            <button class="btn" style="padding:14px 8px;font-size:15px;font-weight:900;border-radius:14px;background:linear-gradient(135deg, #10b981, #059669);color:#ffffff;border:2.5px solid #a7f3d0;box-shadow:0 0 20px rgba(16,185,129,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;" onclick="triggerRunnerAction('jump')">
+              <span style="font-size:16px;">🦘 JUMP OVER</span>
+              <span style="font-size:11px;opacity:0.95;font-weight:700;">[Up Arrow / Spacebar]</span>
+            </button>
+            <button class="btn" style="padding:14px 8px;font-size:15px;font-weight:900;border-radius:14px;background:linear-gradient(135deg, #f59e0b, #d97706);color:#ffffff;border:2.5px solid #fef08a;box-shadow:0 0 20px rgba(245,158,11,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;" onclick="triggerRunnerAction('slide')">
+              <span style="font-size:16px;">🛹 SLIDE UNDER</span>
+              <span style="font-size:11px;opacity:0.95;font-weight:700;">[Down Arrow]</span>
+            </button>
           </div>
         </div>
       `;
@@ -2577,20 +2583,36 @@
       let player = document.getElementById("runnerPlayer");
       if (player) {
         if (act === "jump") {
-          player.style.transform = "translateY(-45px) scale(1.1)";
-          player.innerHTML = "🦘";
+          player.style.transform = "translateY(-75px) scale(1.25)";
+          player.style.border = "3.5px solid #a7f3d0";
+          player.style.background = "linear-gradient(180deg, #10b981, #047857)";
+          player.style.boxShadow = "0 0 30px #10b981";
+          player.style.fontSize = "20px";
+          player.style.color = "#ffffff";
+          player.style.fontWeight = "900";
+          player.innerHTML = "🦘 JUMP!";
         } else if (act === "slide") {
-          player.style.transform = "scaleY(0.5) translateY(20px)";
-          player.innerHTML = "🛹";
+          player.style.transform = "scaleY(0.4) translateY(40px) scaleX(1.15)";
+          player.style.border = "3.5px solid #fef08a";
+          player.style.background = "linear-gradient(180deg, #f59e0b, #b45309)";
+          player.style.boxShadow = "0 0 30px #f59e0b";
+          player.style.fontSize = "20px";
+          player.style.color = "#ffffff";
+          player.style.fontWeight = "900";
+          player.innerHTML = "🛹 SLIDE!";
         }
       }
       setTimeout(() => {
         runnerAction = "normal";
         if (player) {
           player.style.transform = "none";
+          player.style.border = "2.5px solid #ffffff";
+          player.style.background = "linear-gradient(180deg, #38bdf8, #0284c7)";
+          player.style.boxShadow = "0 0 20px #0284c7";
+          player.style.fontSize = "22px";
           player.innerHTML = "🏃";
         }
-      }, 500);
+      }, 550);
     }
 
     function initTempleRunnerGame() {
