@@ -1581,6 +1581,15 @@
       }
     }
 
+    @media (max-width: 920px) {
+      #gameMainGrid {
+        grid-template-columns: 1fr !important;
+      }
+      #rulesPanel {
+        margin-top: 12px;
+      }
+    }
+
     @media (max-width: 768px) {
       .hero {
         grid-template-columns: 1fr;
@@ -1606,15 +1615,26 @@
         text-align: center !important;
       }
 
-      .chessboard-grid {
-        grid-template-columns: repeat(8, 22px) !important;
-        grid-template-rows: repeat(8, 22px) !important;
+      #result {
+        padding: 20px 18px !important;
       }
 
-      .chess-cell {
-        width: 22px !important;
-        height: 22px !important;
-        font-size: 14px !important;
+      #result > div:nth-child(2) {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 20px 16px !important;
+      }
+
+      #result > div:nth-child(2) > div:first-child {
+        flex-direction: column !important;
+        min-width: 100% !important;
+        text-align: center !important;
+      }
+
+      #result > div:nth-child(2) button {
+        width: 100% !important;
+        justify-content: center !important;
       }
     }
 
@@ -1662,16 +1682,27 @@
       }
 
       .score {
-        width: 120px;
-        height: 120px;
+        width: 90px !important;
+        height: 90px !important;
+        min-width: 90px !important;
       }
 
       .scoreinner {
-        font-size: 28px;
+        width: 76px !important;
+        height: 76px !important;
+        font-size: 24px !important;
+      }
+
+      .scoreinner span {
+        font-size: 24px !important;
       }
 
       .modal-card {
         padding: 16px 12px;
+      }
+
+      .temple-canvas-container {
+        height: 220px !important;
       }
     }
 
