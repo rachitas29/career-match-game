@@ -2637,53 +2637,53 @@
           el.style.cssText = `position:absolute;top:${item.y}px;z-index:2;display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 6px 16px rgba(0,0,0,0.6);border-radius:8px;text-align:center;letter-spacing:0.5px;`;
           
           if (item.type === "obs_jump") {
-            // Road Barrier Wall with Hazard Stripes (Low Wall - JUMP)
-            el.style.width = "74%";
-            el.style.left = "13%";
-            el.style.height = "42px";
-            el.style.background = "repeating-linear-gradient(45deg, #dc2626, #dc2626 12px, #1e293b 12px, #1e293b 24px)";
-            el.style.border = "3px solid #f87171";
+            // Compact Road Barrier (Low Wall - JUMP)
+            el.style.width = "54%";
+            el.style.left = "23%";
+            el.style.height = "25px";
+            el.style.background = "repeating-linear-gradient(45deg, #dc2626, #dc2626 10px, #1e293b 10px, #1e293b 20px)";
+            el.style.border = "2px solid #f87171";
             el.style.color = "#ffffff";
-            el.style.fontSize = "13px";
-            el.style.textShadow = "0 2px 4px #000";
-            el.style.boxShadow = "0 0 18px rgba(220,38,38,0.8)";
-            el.innerHTML = `🚧 <b>ROAD BLOCK (JUMP! 🦘)</b>`;
+            el.style.fontSize = "10.5px";
+            el.style.textShadow = "0 1px 3px #000";
+            el.style.boxShadow = "0 0 12px rgba(220,38,38,0.7)";
+            el.innerHTML = `🚧 <b>WALL (JUMP! 🦘)</b>`;
           } else if (item.type === "obs_slide") {
-            // Overhead Highway Toll Gate (High Gate - SLIDE)
-            el.style.width = "76%";
-            el.style.left = "12%";
-            el.style.height = "48px";
-            el.style.background = "repeating-linear-gradient(-45deg, #eab308, #eab308 12px, #0f172a 12px, #0f172a 24px)";
-            el.style.border = "3px solid #fef08a";
+            // Compact Overhead Highway Gate (High Gate - SLIDE)
+            el.style.width = "58%";
+            el.style.left = "21%";
+            el.style.height = "28px";
+            el.style.background = "repeating-linear-gradient(-45deg, #eab308, #eab308 10px, #0f172a 10px, #0f172a 20px)";
+            el.style.border = "2px solid #fef08a";
             el.style.color = "#ffffff";
-            el.style.fontSize = "13px";
-            el.style.textShadow = "0 2px 4px #000";
-            el.style.boxShadow = "0 0 22px rgba(234,179,8,0.9)";
-            el.innerHTML = `🚨 <b>HIGHWAY GATE (SLIDE! 🛹)</b>`;
+            el.style.fontSize = "10.5px";
+            el.style.textShadow = "0 1px 3px #000";
+            el.style.boxShadow = "0 0 14px rgba(234,179,8,0.8)";
+            el.innerHTML = `🚨 <b>GATE (SLIDE! 🛹)</b>`;
           } else if (item.type === "key") {
             // Executive Key Road Badge
-            el.style.width = "62%";
-            el.style.left = "19%";
-            el.style.height = "38px";
+            el.style.width = "48%";
+            el.style.left = "26%";
+            el.style.height = "25px";
             el.style.background = "linear-gradient(90deg, #f59e0b, #d97706)";
-            el.style.border = "2.5px solid #ffffff";
+            el.style.border = "1.5px solid #ffffff";
             el.style.color = "#ffffff";
-            el.style.fontSize = "13px";
-            el.style.textShadow = "0 1px 3px #000";
-            el.style.boxShadow = "0 0 16px rgba(245,158,11,0.8)";
+            el.style.fontSize = "10.5px";
+            el.style.textShadow = "0 1px 2px #000";
+            el.style.boxShadow = "0 0 12px rgba(245,158,11,0.7)";
             el.innerHTML = `${item.icon} <b>${item.label.toUpperCase()}</b>`;
           } else if (item.type === "contract") {
             // Finish Line Road Banner
-            el.style.width = "76%";
-            el.style.left = "12%";
-            el.style.height = "48px";
+            el.style.width = "62%";
+            el.style.left = "19%";
+            el.style.height = "32px";
             el.style.background = "linear-gradient(90deg, #10b981, #f59e0b, #10b981)";
-            el.style.border = "3px solid #ffffff";
+            el.style.border = "2px solid #ffffff";
             el.style.color = "#ffffff";
-            el.style.fontSize = "14px";
-            el.style.textShadow = "0 2px 4px #000";
-            el.style.boxShadow = "0 0 25px rgba(245,158,11,0.9), 0 0 18px rgba(16,185,129,0.9)";
-            el.innerHTML = "🏁 <b>FINISH LINE CONTRACT 🏆</b>";
+            el.style.fontSize = "11.5px";
+            el.style.textShadow = "0 1px 3px #000";
+            el.style.boxShadow = "0 0 18px rgba(245,158,11,0.8), 0 0 12px rgba(16,185,129,0.8)";
+            el.innerHTML = "🏁 <b>TARGET CONTRACT 🏆</b>";
           }
           layer.appendChild(el);
         }
