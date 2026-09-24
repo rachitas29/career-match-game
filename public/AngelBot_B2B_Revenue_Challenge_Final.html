@@ -2522,7 +2522,7 @@
     }
 
     function changeRunnerLane(dir) {
-      if (answered || !isTimerStarted) return;
+      if (answered) return;
       runnerLane = Math.max(0, Math.min(2, runnerLane + dir));
       let player = document.getElementById("runnerPlayer");
       if (player) {
@@ -2532,7 +2532,7 @@
     }
 
     function triggerRunnerAction(act) {
-      if (answered || !isTimerStarted || runnerAction !== "normal") return;
+      if (answered || runnerAction !== "normal") return;
       runnerAction = act;
       let player = document.getElementById("runnerPlayer");
       if (player) {
