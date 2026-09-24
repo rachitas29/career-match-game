@@ -2594,15 +2594,19 @@
     }
 
     function initTempleRunnerGame() {
-      // Single Directional Road Track: all road obstacles spawn sequentially along the road!
+      // Single Directional Road Track with exciting extra road distractions!
       runnerItems = [
-        { lane: 1, y: -80, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
-        { lane: 1, y: -220, type: "obs_jump", icon: "🚧", label: "Low Barrier" },
-        { lane: 1, y: -360, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
-        { lane: 1, y: -500, type: "obs_slide", icon: "🚨", label: "Overhead Gate" },
-        { lane: 1, y: -640, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
-        { lane: 1, y: -780, type: "obs_jump", icon: "🚧", label: "Low Wall" },
-        { lane: 1, y: -940, type: "contract", icon: "📜", label: "Target Contract" }
+        { lane: 1, y: -70, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
+        { lane: 1, y: -190, type: "obs_jump", icon: "🚧", label: "Low Wall" },
+        { lane: 1, y: -300, type: "decoy_jump", icon: "🕳️", label: "Road Pothole" },
+        { lane: 1, y: -410, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
+        { lane: 1, y: -520, type: "obs_slide", icon: "🚨", label: "Overhead Gate" },
+        { lane: 1, y: -630, type: "decoy_slide", icon: "⚠️", label: "Low Cable" },
+        { lane: 1, y: -740, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
+        { lane: 1, y: -850, type: "obs_jump", icon: "🚧", label: "Road Barrier" },
+        { lane: 1, y: -960, type: "decoy_jump", icon: "💥", label: "Speed Spike" },
+        { lane: 1, y: -1070, type: "obs_slide", icon: "🚨", label: "Arch Gate" },
+        { lane: 1, y: -1200, type: "contract", icon: "📜", label: "Target Contract" }
       ];
 
       if (runnerAnimId) cancelAnimationFrame(runnerAnimId);
@@ -2660,6 +2664,30 @@
             el.style.textShadow = "0 1px 3px #000";
             el.style.boxShadow = "0 0 14px rgba(234,179,8,0.8)";
             el.innerHTML = `🚨 <b>GATE (SLIDE! 🛹)</b>`;
+          } else if (item.type === "decoy_jump") {
+            // Road Pothole / Speed Spike Distraction (Low Obstacle - JUMP)
+            el.style.width = "50%";
+            el.style.left = "25%";
+            el.style.height = "24px";
+            el.style.background = "linear-gradient(90deg, #9333ea, #c084fc)";
+            el.style.border = "2px solid #e9d5ff";
+            el.style.color = "#ffffff";
+            el.style.fontSize = "10px";
+            el.style.textShadow = "0 1px 2px #000";
+            el.style.boxShadow = "0 0 12px rgba(147,51,234,0.8)";
+            el.innerHTML = `${item.icon} <b>${item.label.toUpperCase()} (JUMP! 🦘)</b>`;
+          } else if (item.type === "decoy_slide") {
+            // Low Cable / Danger Beam Distraction (High Obstacle - SLIDE)
+            el.style.width = "52%";
+            el.style.left = "24%";
+            el.style.height = "26px";
+            el.style.background = "linear-gradient(90deg, #ea580c, #fb923c)";
+            el.style.border = "2px solid #ffedd5";
+            el.style.color = "#ffffff";
+            el.style.fontSize = "10px";
+            el.style.textShadow = "0 1px 2px #000";
+            el.style.boxShadow = "0 0 12px rgba(234,88,12,0.8)";
+            el.innerHTML = `${item.icon} <b>${item.label.toUpperCase()} (SLIDE! 🛹)</b>`;
           } else if (item.type === "key") {
             // Executive Key Road Badge
             el.style.width = "48%";
@@ -2693,8 +2721,8 @@
           if (item.type === "contract" || item.lane === runnerLane) {
             item.hit = true;
             let evaded = false;
-            if (item.type === "obs_jump" && runnerAction === "jump") evaded = true;
-            if (item.type === "obs_slide" && runnerAction === "slide") evaded = true;
+            if ((item.type === "obs_jump" || item.type === "decoy_jump") && runnerAction === "jump") evaded = true;
+            if ((item.type === "obs_slide" || item.type === "decoy_slide") && runnerAction === "slide") evaded = true;
 
             if (evaded) {
               let f = document.getElementById("feedback");
@@ -2704,7 +2732,7 @@
                 f.innerHTML = `<b>🔥 PERFECT TACTICAL ${runnerAction.toUpperCase()}!</b> Dodged ${item.label}!`;
               }
             } else {
-              if (item.type.startsWith("obs") || item.type === "decoy") {
+              if (item.type.startsWith("obs") || item.type.startsWith("decoy")) {
                 runnerLives--;
                 let livesEl = document.getElementById("runnerLivesText");
                 if (livesEl) {
