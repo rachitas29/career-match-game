@@ -2522,25 +2522,32 @@
             </div>
           </div>
 
-          <!-- Temple Runner Single Track Canvas Area -->
-          <div class="temple-canvas-container" id="templeCanvas" style="position:relative;background:linear-gradient(180deg, rgba(15,23,42,0.95), rgba(30,41,59,0.98));border-radius:12px;overflow:hidden;border:1.5px solid rgba(255,255,255,0.1);">
+          <!-- Temple Runner Road Canvas Area -->
+          <div class="temple-canvas-container" id="templeCanvas" style="position:relative;background:#0f172a;border-radius:14px;overflow:hidden;border:3px solid #334155;box-shadow:inset 0 0 30px #000;">
 
-            <!-- Single Track Boundaries -->
-            <div style="position:absolute;bottom:0;left:30%;width:40%;height:100%;background:rgba(255,255,255,0.03);border-left:2px dashed rgba(56,189,248,0.3);border-right:2px dashed rgba(56,189,248,0.3);"></div>
+            <!-- Left & Right Grass Curbs / Road Shoulders with Solid White Borders -->
+            <div style="position:absolute;top:0;left:0;width:12%;height:100%;background:linear-gradient(90deg, #15803d, #166534);border-right:3px solid #ffffff;z-index:1;"></div>
+            <div style="position:absolute;top:0;right:0;width:12%;height:100%;background:linear-gradient(90deg, #166534, #15803d);border-left:3px solid #ffffff;z-index:1;"></div>
+
+            <!-- Asphalt Road Surface Texture -->
+            <div style="position:absolute;top:0;left:12%;width:76%;height:100%;background:#1e293b;background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 0);background-size:12px 12px;"></div>
+
+            <!-- Moving Dashed Yellow Center Line -->
+            <div id="roadCenterLine" style="position:absolute;top:-40px;left:49%;width:2%;height:350px;border-left:5px dashed #facc15;opacity:0.9;z-index:1;"></div>
 
             <!-- Items Layer -->
             <div id="runnerItemsLayer" style="position:absolute;inset:0;"></div>
 
-            <!-- Player Avatar with Jump / Slide animation (Locked in Center Lane) -->
-            <div id="runnerPlayer" style="position:absolute;bottom:15px;left:40%;width:20%;height:38px;background:rgba(56,189,248,0.25);border:2px solid #38bdf8;border-radius:10px;display:grid;place-items:center;font-size:20px;box-shadow:0 0 15px #38bdf8;transition:transform 0.12s ease-out, height 0.12s ease-out;z-index:5;">
+            <!-- Player Avatar on the Road -->
+            <div id="runnerPlayer" style="position:absolute;bottom:15px;left:40%;width:20%;height:40px;background:linear-gradient(180deg, #38bdf8, #0284c7);border:2.5px solid #ffffff;border-radius:12px;display:grid;place-items:center;font-size:22px;box-shadow:0 0 20px #0284c7;transition:transform 0.12s ease-out, height 0.12s ease-out;z-index:5;">
               🏃
             </div>
           </div>
 
           <!-- Single Directional Action Controls -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:360px;margin:8px auto 0 auto;">
-            <button class="btn green" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('jump')"><span>🦘 JUMP OVER (🚧)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Up Arrow / Space]</span></button>
-            <button class="btn dark" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;background:rgba(251,191,36,0.18);color:var(--gold);border:1px solid rgba(251,191,36,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('slide')"><span>🛹 SLIDE UNDER (📐)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Down Arrow]</span></button>
+            <button class="btn green" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('jump')"><span>🦘 JUMP OVER (🚧 WALL)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Up Arrow / Space]</span></button>
+            <button class="btn dark" style="padding:10px 4px;font-size:13px;font-weight:800;border-radius:12px;background:rgba(251,191,36,0.18);color:var(--gold);border:1px solid rgba(251,191,36,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;" onclick="triggerRunnerAction('slide')"><span>🛹 SLIDE UNDER (🚨 GATE)</span><span style="font-size:10px;opacity:0.8;font-weight:600;">[Down Arrow]</span></button>
           </div>
         </div>
       `;
@@ -2561,7 +2568,6 @@
     }
 
     function changeRunnerLane(dir) {
-      // Single directional runner - locked center lane
       runnerLane = 1;
     }
 
@@ -2588,14 +2594,14 @@
     }
 
     function initTempleRunnerGame() {
-      // Single Directional Track: all items spawn sequentially along the single center track!
+      // Single Directional Road Track: all road obstacles spawn sequentially along the road!
       runnerItems = [
         { lane: 1, y: -80, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
-        { lane: 1, y: -220, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
+        { lane: 1, y: -220, type: "obs_jump", icon: "🚧", label: "Low Barrier" },
         { lane: 1, y: -360, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
-        { lane: 1, y: -500, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
+        { lane: 1, y: -500, type: "obs_slide", icon: "🚨", label: "Overhead Gate" },
         { lane: 1, y: -640, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
-        { lane: 1, y: -780, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
+        { lane: 1, y: -780, type: "obs_jump", icon: "🚧", label: "Low Wall" },
         { lane: 1, y: -940, type: "contract", icon: "📜", label: "Target Contract" }
       ];
 
@@ -2617,57 +2623,67 @@
       let distText = document.getElementById("runnerDistText");
       if (distText) distText.textContent = Math.min(100, Math.floor(runnerDistance));
 
-      let laneLefts = ["40%", "40%", "40%"];
+      // Scroll yellow center road line continuously
+      let roadLine = document.getElementById("roadCenterLine");
+      if (roadLine) {
+        roadLine.style.top = `${(runnerDistance * 8) % 40 - 40}px`;
+      }
 
       runnerItems.forEach(item => {
         item.y += runnerSpeed;
 
         if (item.y > 0 && item.y < 280) {
           let el = document.createElement("div");
-          el.style.cssText = `position:absolute;top:${item.y}px;z-index:2;display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 6px 15px rgba(0,0,0,0.5);border-radius:10px;text-align:center;letter-spacing:0.5px;`;
+          el.style.cssText = `position:absolute;top:${item.y}px;z-index:2;display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 6px 16px rgba(0,0,0,0.6);border-radius:8px;text-align:center;letter-spacing:0.5px;`;
           
           if (item.type === "obs_jump") {
-            // Big Solid Red Brick Wall (Low Wall - JUMP)
+            // Road Barrier Wall with Hazard Stripes (Low Wall - JUMP)
             el.style.width = "74%";
             el.style.left = "13%";
             el.style.height = "42px";
-            el.style.background = "linear-gradient(180deg, #ef4444 0%, #b91c1c 100%)";
-            el.style.border = "2px solid #fca5a5";
+            el.style.background = "repeating-linear-gradient(45deg, #dc2626, #dc2626 12px, #1e293b 12px, #1e293b 24px)";
+            el.style.border = "3px solid #f87171";
             el.style.color = "#ffffff";
             el.style.fontSize = "13px";
-            el.style.boxShadow = "0 0 16px rgba(239,68,68,0.7), inset 0 2px 4px rgba(255,255,255,0.3)";
-            el.innerHTML = `🧱 <b>BIG WALL (JUMP! 🦘)</b>`;
+            el.style.textShadow = "0 2px 4px #000";
+            el.style.boxShadow = "0 0 18px rgba(220,38,38,0.8)";
+            el.innerHTML = `🚧 <b>ROAD BLOCK (JUMP! 🦘)</b>`;
           } else if (item.type === "obs_slide") {
-            // Big Overhead Laser/Iron Arch Gate (High Beam Gate - SLIDE)
-            el.style.width = "78%";
-            el.style.left = "11%";
+            // Overhead Highway Toll Gate (High Gate - SLIDE)
+            el.style.width = "76%";
+            el.style.left = "12%";
             el.style.height = "48px";
-            el.style.background = "linear-gradient(180deg, rgba(245,158,11,0.95), rgba(180,83,9,0.95))";
-            el.style.border = "2.5px dashed #fef08a";
+            el.style.background = "repeating-linear-gradient(-45deg, #eab308, #eab308 12px, #0f172a 12px, #0f172a 24px)";
+            el.style.border = "3px solid #fef08a";
             el.style.color = "#ffffff";
             el.style.fontSize = "13px";
-            el.style.boxShadow = "0 0 20px rgba(245,158,11,0.8), inset 0 -4px 0 #78350f";
-            el.innerHTML = `🚨 <b>HIGH GATE (SLIDE! 🛹)</b>`;
+            el.style.textShadow = "0 2px 4px #000";
+            el.style.boxShadow = "0 0 22px rgba(234,179,8,0.9)";
+            el.innerHTML = `🚨 <b>HIGHWAY GATE (SLIDE! 🛹)</b>`;
           } else if (item.type === "key") {
-            el.style.width = "60%";
-            el.style.left = "20%";
-            el.style.height = "36px";
-            el.style.background = "linear-gradient(90deg, rgba(251,191,36,0.9), rgba(245,158,11,0.9))";
-            el.style.border = "2px solid #ffffff";
-            el.style.color = "#0f172a";
-            el.style.fontSize = "12.5px";
-            el.style.boxShadow = "0 0 15px rgba(251,191,36,0.8)";
-            el.innerHTML = `${item.icon} <b>${item.label.toUpperCase()} KEY</b>`;
+            // Executive Key Road Badge
+            el.style.width = "62%";
+            el.style.left = "19%";
+            el.style.height = "38px";
+            el.style.background = "linear-gradient(90deg, #f59e0b, #d97706)";
+            el.style.border = "2.5px solid #ffffff";
+            el.style.color = "#ffffff";
+            el.style.fontSize = "13px";
+            el.style.textShadow = "0 1px 3px #000";
+            el.style.boxShadow = "0 0 16px rgba(245,158,11,0.8)";
+            el.innerHTML = `${item.icon} <b>${item.label.toUpperCase()}</b>`;
           } else if (item.type === "contract") {
-            el.style.width = "80%";
-            el.style.left = "10%";
-            el.style.height = "46px";
-            el.style.background = "linear-gradient(90deg, #10b981, #fbbf24, #10b981)";
-            el.style.border = "2px solid #ffffff";
+            // Finish Line Road Banner
+            el.style.width = "76%";
+            el.style.left = "12%";
+            el.style.height = "48px";
+            el.style.background = "linear-gradient(90deg, #10b981, #f59e0b, #10b981)";
+            el.style.border = "3px solid #ffffff";
             el.style.color = "#ffffff";
             el.style.fontSize = "14px";
-            el.style.boxShadow = "0 0 25px rgba(251,191,36,0.9), 0 0 15px rgba(16,185,129,0.9)";
-            el.innerHTML = "📜 <b>TARGET CONTRACT 🏆</b>";
+            el.style.textShadow = "0 2px 4px #000";
+            el.style.boxShadow = "0 0 25px rgba(245,158,11,0.9), 0 0 18px rgba(16,185,129,0.9)";
+            el.innerHTML = "🏁 <b>FINISH LINE CONTRACT 🏆</b>";
           }
           layer.appendChild(el);
         }
