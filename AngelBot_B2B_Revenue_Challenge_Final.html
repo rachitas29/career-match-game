@@ -2437,21 +2437,21 @@
     let runnerLane = 1; // 0: Left, 1: Center, 2: Right
     let runnerAction = "normal"; // "normal", "jump", "slide"
     let runnerActionTimer = null;
-    let runnerLives = 3; // 3 Lifelines
+    let runnerLives = 5; // 5 Lifelines for extra comfort
     let runnerKeysCollected = { cio: false, cfo: false, sec: false };
     let runnerDistance = 0;
     let runnerAnimId = null;
     let runnerItems = [];
-    let runnerSpeed = 1.35; // Comfortable reading speed
+    let runnerSpeed = 0.9; // Smooth, easy & relaxed speed
 
     function renderTempleRunner(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
       runnerLane = 1;
       runnerAction = "normal";
-      runnerLives = 3;
+      runnerLives = 5;
       runnerDistance = 0;
-      runnerSpeed = 1.35;
+      runnerSpeed = 0.9;
       runnerKeysCollected = { cio: false, cfo: false, sec: false };
 
       // Hide situation div completely
@@ -2471,9 +2471,9 @@
               <span id="runner-badge-sec" style="padding:3px 7px;border-radius:99px;border:1px solid var(--border);background:rgba(255,255,255,0.08);color:#f8fafc;font-weight:800;font-size:11px;white-space:nowrap;">🛡️ Security: ❌</span>
             </div>
             <div style="display:flex;align-items:center;gap:4px;background:rgba(244,63,94,0.15);padding:3px 8px;border-radius:99px;border:1px solid rgba(244,63,94,0.4);white-space:nowrap;flex-shrink:0;">
-              <span style="font-size:10.5px;font-weight:900;color:var(--red);">3 LIVES</span>
+              <span style="font-size:10.5px;font-weight:900;color:var(--red);">5 LIVES</span>
               <span id="runnerLivesText" style="font-size:11.5px;font-weight:900;color:var(--red);">
-                ❤️ ❤️ ❤️
+                ❤️ ❤️ ❤️ ❤️ ❤️
               </span>
             </div>
           </div>
@@ -2554,29 +2554,23 @@
     }
 
     function initTempleRunnerGame() {
-      // Tactical puzzle layout with 3 Lifelines, moderate speed, fake decoy keys, and mandatory jump/slides
+      // Simplified & relaxed track layout: clear key lanes, no decoys, generous spaces
       runnerItems = [
-        { lane: 0, y: -60, type: "key", id: "cio", icon: "🧠", label: "CIO Clearance" },
-        { lane: 1, y: -60, type: "decoy", icon: "💣", label: "Fake Decoy Key!" },
+        { lane: 0, y: -60, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
         
-        { lane: 0, y: -160, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
-        { lane: 1, y: -160, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
-        { lane: 2, y: -160, type: "obs", icon: "⛔", label: "Procurement Stall" },
+        { lane: 1, y: -180, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
+        { lane: 2, y: -180, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
         
-        { lane: 2, y: -270, type: "key", id: "cfo", icon: "💰", label: "CFO Approval" },
-        { lane: 0, y: -270, type: "decoy", icon: "💣", label: "Fake Decoy Key!" },
+        { lane: 1, y: -300, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
         
-        { lane: 0, y: -380, type: "obs_jump", icon: "🚧", label: "Spike Trap (JUMP!)" },
-        { lane: 1, y: -380, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
+        { lane: 0, y: -420, type: "obs_slide", icon: "📐", label: "High Beam (SLIDE!)" },
+        { lane: 2, y: -420, type: "obs_jump", icon: "🚧", label: "Low Wall (JUMP!)" },
         
-        { lane: 1, y: -490, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
-        { lane: 2, y: -490, type: "decoy", icon: "💣", label: "Fake Decoy Key!" },
+        { lane: 2, y: -540, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
         
-        { lane: 0, y: -600, type: "obs", icon: "⛔", label: "Legal Freeze" },
-        { lane: 1, y: -600, type: "obs_jump", icon: "🚧", label: "Laser Barrier (JUMP!)" },
-        { lane: 2, y: -600, type: "obs_slide", icon: "📐", label: "High Gate (SLIDE!)" },
+        { lane: 1, y: -660, type: "obs_jump", icon: "🚧", label: "Low Barrier (JUMP!)" },
         
-        { lane: 1, y: -740, type: "contract", icon: "📜", label: "Target Contract" }
+        { lane: 1, y: -800, type: "contract", icon: "📜", label: "Target Contract" }
       ];
 
       if (runnerAnimId) cancelAnimationFrame(runnerAnimId);
@@ -2638,8 +2632,8 @@
           layer.appendChild(el);
         }
 
-        // Precise collision detection with Jump / Slide evasions & Decoy handling
-        if (item.y >= 210 && item.y <= 255 && !item.hit) {
+        // Forgiving, smooth collision detection window with Jump / Slide evasions
+        if (item.y >= 195 && item.y <= 265 && !item.hit) {
           if (item.type === "contract" || item.lane === runnerLane) {
             item.hit = true;
             let evaded = false;
@@ -2659,7 +2653,7 @@
                 let livesEl = document.getElementById("runnerLivesText");
                 if (livesEl) {
                   let hearts = "";
-                  for (let h = 0; h < 3; h++) hearts += (h < runnerLives ? "❤️ " : "🖤 ");
+                  for (let h = 0; h < 5; h++) hearts += (h < runnerLives ? "❤️ " : "🖤 ");
                   livesEl.textContent = hearts;
                 }
 
