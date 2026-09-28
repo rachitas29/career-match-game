@@ -1782,8 +1782,7 @@
         <div class="stat"><b id="confidence">50%</b><small>Deal Velocity</small></div>
       </div>
       <div id="situation" class="situation"></div>
-      
-      <!-- Split Layout: Main Puzzle Content (Left) & Puzzle Rules Sidebar + Action Controls (Right) -->
+      <!-- Split Layout: Main Puzzle Content (Left) & Puzzle Rules Sidebar (Right) -->
       <div style="display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; margin-top: 10px;" id="gameMainGrid">
         <div>
           <div id="hintContainer" style="margin: 10px 0; display: none;">
@@ -1794,11 +1793,10 @@
           </div>
           <div id="options" class="options"></div>
           <div id="puzzleBox" style="display:none;"></div>
-          <div id="feedback" class="feedback" style="margin-top: 10px; display: none;"></div>
         </div>
 
-        <!-- Right Side Rules Panel & Action Controls (Aligned level with puzzleBox) -->
-        <div id="rightSidebar" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- Right Side Rules Panel -->
+        <div id="rightSidebar">
           <div id="rulesPanel" style="background: linear-gradient(145deg, rgba(13, 27, 44, 0.9), rgba(6, 14, 25, 0.95)); border: 1.5px solid var(--panel-border); border-radius: 18px; padding: 16px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
             <div style="font-size: 14px; font-weight: 900; color: var(--gold); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 8px;">
               <span>📜 PUZZLE RULES & GUIDE</span>
@@ -1806,20 +1804,21 @@
             <ul id="rulesList" style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #e2e8f0; font-weight: 600; line-height: 1.55; display: flex; flex-direction: column; gap: 8px;">
             </ul>
           </div>
+        </div>
+      </div>
 
-          <!-- Action Controls & Timer Badge right below Rules Panel -->
-          <div id="feedbackBar" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-            <div id="actionBtns" style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%;">
-              <!-- Timer Display Badge -->
-              <div id="timerBox" class="timer-badge" style="display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 12px; font-weight: 900; font-size: 13.5px; background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 12px; height: 42px; color: #38bdf8; min-width: 78px; box-shadow: 0 0 14px rgba(56,189,248,0.25);">
-                ⏱️ <span id="timer">60</span>s
-              </div>
-              <!-- START TIMER Button (Royal Indigo) -->
-              <button id="startTimerBtn" class="btn" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 9px 14px; font-size: 13.5px; font-weight: 900; border-radius: 12px; height: 42px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; border: 2px solid #a5b4fc; cursor: pointer; box-shadow: 0 0 16px rgba(99,102,241,0.6); animation: pulse 1s infinite alternate;" onclick="startTimerNow()">▶️ START TIMER</button>
-              <!-- NEXT PUZZLE Button (Emerald Green) -->
-              <button id="nextBtn" class="btn green" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 9px 14px; font-size: 13.5px; font-weight: 900; border-radius: 12px; height: 42px; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: 2px solid #a7f3d0; box-shadow: 0 0 16px rgba(16,185,129,0.6);" onclick="next()">Next Puzzle →</button>
-            </div>
+      <!-- Single Line Bottom Action Bar (Timer + Start Timer + Next Puzzle Level with Bottom of Game Box) -->
+      <div id="feedbackBar" style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: nowrap; width: 100%;">
+        <div id="feedback" class="feedback" style="flex: 1; margin-top: 0; min-width: 200px; display: none;"></div>
+        <div id="actionBtns" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: nowrap; margin-left: auto;">
+          <!-- Timer Display Badge -->
+          <div id="timerBox" class="timer-badge" style="display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 14px; font-weight: 900; font-size: 14px; background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 12px; height: 44px; color: #38bdf8; min-width: 85px; box-shadow: 0 0 14px rgba(56,189,248,0.25);">
+            ⏱️ <span id="timer">60</span>s
           </div>
+          <!-- START TIMER Button (Royal Indigo) -->
+          <button id="startTimerBtn" class="btn" style="display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 10px 20px; font-size: 14px; font-weight: 900; border-radius: 12px; height: 44px; min-width: 155px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; border: 2px solid #a5b4fc; cursor: pointer; box-shadow: 0 0 18px rgba(99,102,241,0.6); animation: pulse 1s infinite alternate;" onclick="startTimerNow()">▶️ START TIMER</button>
+          <!-- NEXT PUZZLE Button (Emerald Green) -->
+          <button id="nextBtn" class="btn green" style="display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 10px 20px; font-size: 14px; font-weight: 900; border-radius: 12px; height: 44px; min-width: 155px; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: 2px solid #a7f3d0; box-shadow: 0 0 18px rgba(16,185,129,0.6);" onclick="next()">Next Puzzle →</button>
         </div>
       </div>
     </section>
