@@ -1794,8 +1794,11 @@
       </div>
 
       <div id="feedbackBar" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-        <div id="feedback" class="feedback" style="flex: 1; margin-top: 0; min-width: 220px; display: none;"></div>
-        <button id="nextBtn" class="btn green" style="display: inline-flex; white-space: nowrap; padding: 12px 24px; font-size: 15px; font-weight: 800; min-width: 170px; justify-content: center;" onclick="next()">Next Puzzle →</button>
+        <div id="feedback" class="feedback" style="flex: 1; margin-top: 0; min-width: 200px; display: none;"></div>
+        <div id="actionBtns" style="display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;">
+          <button id="startTimerBtn" class="btn" style="display: inline-flex; white-space: nowrap; padding: 11px 20px; font-size: 14px; font-weight: 900; border-radius: 12px; background: linear-gradient(135deg, var(--green), #16b375); color: #02170f; border: none; cursor: pointer; box-shadow: 0 0 16px rgba(16,185,129,0.5); animation: pulse 1s infinite alternate;" onclick="startTimerNow()">▶️ START TIMER</button>
+          <button id="nextBtn" class="btn green" style="display: inline-flex; white-space: nowrap; padding: 11px 20px; font-size: 14px; font-weight: 800; border-radius: 12px; justify-content: center;" onclick="next()">Next Puzzle →</button>
+        </div>
       </div>
     </section>
 
@@ -2106,10 +2109,16 @@
         });
       }
 
-      // Timer Display with Manual Start Timer option (Timer starts strictly ONLY when user clicks button)
+      // Timer Display in top header bar
       let timerBox = document.getElementById("timerBox");
-      timerBox.classList.remove("hot"); 
-      timerBox.innerHTML = `⏱️ <span id="timer">${timer}</span>s &nbsp; <button id="startTimerBtn" onclick="startTimerNow()" style="padding:6px 14px;font-size:12px;font-weight:800;border-radius:99px;background:linear-gradient(135deg, var(--green), #16b375);color:#02170f;border:none;cursor:pointer;margin-left:6px;box-shadow:0 0 14px rgba(16,185,129,0.5);animation:pulse 1s infinite alternate;">▶️ START TIMER</button>`;
+      if (timerBox) {
+        timerBox.classList.remove("hot"); 
+        timerBox.innerHTML = `⏱️ <span id="timer">${timer}</span>s`;
+      }
+
+      // Show START TIMER button right alongside NEXT PUZZLE button
+      let startBtn = document.getElementById("startTimerBtn");
+      if (startBtn) startBtn.style.display = "inline-flex";
     }
 
     function startTimerNow() {
