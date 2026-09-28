@@ -2481,21 +2481,21 @@
     let runnerLane = 1; // Locked to 1 central directional path
     let runnerAction = "normal"; // "normal", "jump", "slide"
     let runnerActionTimer = null;
-    let runnerLives = 5; // 5 Lifelines for extra comfort
+    let runnerLives = 3; // 3 Arcade Lifelines for exciting challenge
     let runnerKeysCollected = { cio: false, cfo: false, sec: false };
     let runnerDistance = 0;
     let runnerAnimId = null;
     let runnerItems = [];
-    let runnerSpeed = 0.9; // Smooth, easy & relaxed speed
+    let runnerSpeed = 1.5; // Fast & thrilling arcade speed
 
     function renderTempleRunner(q) {
       let box = document.getElementById("puzzleBox");
       box.style.display = "block";
       runnerLane = 1;
       runnerAction = "normal";
-      runnerLives = 5;
+      runnerLives = 3;
       runnerDistance = 0;
-      runnerSpeed = 0.9;
+      runnerSpeed = 1.5;
       runnerKeysCollected = { cio: false, cfo: false, sec: false };
 
       // Hide situation div completely
@@ -2515,9 +2515,9 @@
               <span id="runner-badge-sec" style="padding:3px 7px;border-radius:99px;border:1px solid var(--border);background:rgba(255,255,255,0.08);color:#f8fafc;font-weight:800;font-size:11px;white-space:nowrap;">🛡️ Security: ❌</span>
             </div>
             <div style="display:flex;align-items:center;gap:4px;background:rgba(244,63,94,0.15);padding:3px 8px;border-radius:99px;border:1px solid rgba(244,63,94,0.4);white-space:nowrap;flex-shrink:0;">
-              <span style="font-size:10.5px;font-weight:900;color:var(--red);">5 LIVES</span>
+              <span style="font-size:10.5px;font-weight:900;color:var(--red);">3 LIVES</span>
               <span id="runnerLivesText" style="font-size:11.5px;font-weight:900;color:var(--red);">
-                ❤️ ❤️ ❤️ ❤️ ❤️
+                ❤️ ❤️ ❤️
               </span>
             </div>
           </div>
@@ -2759,7 +2759,7 @@
                 let livesEl = document.getElementById("runnerLivesText");
                 if (livesEl) {
                   let hearts = "";
-                  for (let h = 0; h < 5; h++) hearts += (h < runnerLives ? "❤️ " : "🖤 ");
+                  for (let h = 0; h < 3; h++) hearts += (h < runnerLives ? "❤️ " : "🖤 ");
                   livesEl.textContent = hearts;
                 }
 
