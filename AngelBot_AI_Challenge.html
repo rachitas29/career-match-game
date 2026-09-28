@@ -2616,20 +2616,57 @@
     }
 
     function initTempleRunnerGame() {
-      // Single Directional Road Track with exciting extra road distractions!
-      runnerItems = [
-        { lane: 1, y: -70, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" },
-        { lane: 1, y: -190, type: "obs_jump", icon: "🚧", label: "Low Wall" },
-        { lane: 1, y: -300, type: "decoy_jump", icon: "🕳️", label: "Road Pothole" },
-        { lane: 1, y: -410, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" },
-        { lane: 1, y: -520, type: "obs_slide", icon: "🚨", label: "Overhead Gate" },
-        { lane: 1, y: -630, type: "decoy_slide", icon: "⚠️", label: "Low Cable" },
-        { lane: 1, y: -740, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" },
-        { lane: 1, y: -850, type: "obs_jump", icon: "🚧", label: "Road Barrier" },
-        { lane: 1, y: -960, type: "decoy_jump", icon: "💥", label: "Speed Spike" },
-        { lane: 1, y: -1070, type: "obs_slide", icon: "🚨", label: "Arch Gate" },
-        { lane: 1, y: -1200, type: "contract", icon: "📜", label: "Target Contract" }
+      // Dynamic Road Track: Randomizes patterns (Jump->Jump, Slide->Slide, Jump->Slide, Slide->Jump)
+      let jumpObs = [
+        { type: "obs_jump", icon: "🚧", label: "Low Wall" },
+        { type: "decoy_jump", icon: "🕳️", label: "Road Pothole" },
+        { type: "decoy_jump", icon: "💥", label: "Speed Spike" }
       ];
+      let slideObs = [
+        { type: "obs_slide", icon: "🚨", label: "Overhead Gate" },
+        { type: "decoy_slide", icon: "⚠️", label: "Low Cable" },
+        { type: "obs_slide", icon: "🚨", label: "Laser Arch" }
+      ];
+
+      // Varied obstacle sequence pool
+      let patternTypes = shuffle(["slide", "jump", "slide", "slide", "jump", "jump", "slide", "jump"]);
+      
+      runnerItems = [
+        { lane: 1, y: -70, type: "key", id: "cio", icon: "🧠", label: "Tech Signoff" }
+      ];
+
+      let currentY = -180;
+      let cfoPlaced = false;
+      let secPlaced = false;
+
+      for (let idx = 0; idx < patternTypes.length; idx++) {
+        let isSlide = patternTypes[idx] === "slide";
+        let pool = isSlide ? slideObs : jumpObs;
+        let choice = pool[Math.floor(Math.random() * pool.length)];
+
+        runnerItems.push({
+          lane: 1,
+          y: currentY,
+          type: choice.type,
+          icon: choice.icon,
+          label: choice.label
+        });
+
+        currentY -= 125;
+
+        if (idx === 2 && !cfoPlaced) {
+          runnerItems.push({ lane: 1, y: currentY, type: "key", id: "cfo", icon: "💰", label: "Finance Signoff" });
+          currentY -= 120;
+          cfoPlaced = true;
+        }
+        if (idx === 5 && !secPlaced) {
+          runnerItems.push({ lane: 1, y: currentY, type: "key", id: "sec", icon: "🛡️", label: "Security Signoff" });
+          currentY -= 120;
+          secPlaced = true;
+        }
+      }
+
+      runnerItems.push({ lane: 1, y: currentY - 40, type: "contract", icon: "📜", label: "Target Contract" });
 
       if (runnerAnimId) cancelAnimationFrame(runnerAnimId);
       updateTempleRunnerLoop();
